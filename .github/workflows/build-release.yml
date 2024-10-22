@@ -19,7 +19,7 @@ jobs:
       OS: linux
       ARCH: x86_64
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: mlugg/setup-zig@v1
         with:
