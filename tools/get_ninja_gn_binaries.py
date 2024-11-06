@@ -68,7 +68,7 @@ def DownloadAndUnpack(url, output_dir):
         f.seek(0)
         EnsureDirExists(output_dir)
         t = tarfile.open(mode='r:gz', fileobj=f)
-        t.extractall(path=output_dir)
+        t.extractall(path=output_dir, filter='fully_trusted')
 
 
 def Update():
