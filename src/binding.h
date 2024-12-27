@@ -946,6 +946,8 @@ void v8_inspector__Client__IMPL__consoleAPIMessage(
     InspectorClientImpl *self, int contextGroupId, MessageErrorLevel level,
     StringView *message, StringView *url, unsigned lineNumber,
     unsigned columnNumber, StackTrace *StackTrace);
+const Context* v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
+    InspectorClientImpl* self, void* data, int contextGroupId);
 
 // InspectorSession
 

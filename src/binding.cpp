@@ -1681,6 +1681,8 @@ void v8_inspector__Client__IMPL__consoleAPIMessage(
     const v8_inspector::StringView &message,
     const v8_inspector::StringView &url, unsigned lineNumber,
     unsigned columnNumber, v8_inspector::V8StackTrace *stackTrace);
+const v8::Context* v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
+    v8_inspector__Client__IMPL* self, void* data, int contextGroupId);
 
 // c++ implementation (just wrappers around the c/zig functions)
 } // extern "C"
@@ -1704,6 +1706,9 @@ void v8_inspector__Client__IMPL::consoleAPIMessage(
   return v8_inspector__Client__IMPL__consoleAPIMessage(
       this, this->data, contextGroupId, level, message, url, lineNumber,
       columnNumber, stackTrace);
+}
+v8::Local<v8::Context> v8_inspector__Client__IMPL::ensureDefaultContextInGroup(int contextGroupId) {
+  return ptr_to_local(v8_inspector__Client__IMPL__ensureDefaultContextInGroup(this, this->data, contextGroupId));
 }
 
 extern "C" {
