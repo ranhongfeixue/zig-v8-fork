@@ -2299,7 +2299,9 @@ pub const Inspector = struct {
 
     rnd: RndGen = RndGen.init(0),
 
-    context: ?*const C_Context = null,
+    // The default JS context handle.
+    // Set when a context is created.
+    ctx_handle: ?*const C_Context = null,
 
     const RndGen = std.rand.DefaultPrng;
 
@@ -2373,7 +2375,7 @@ pub const Inspector = struct {
             contextGroupId,
             ctx.handle,
         );
-        self.context = ctx.handle;
+        self.ctx_handle = ctx.handle;
     }
 };
 
@@ -2462,7 +2464,7 @@ pub export fn v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
 ) callconv(.C) ?*const C_Context {
     std.log.debug("InspectorClient ensureDefaultContextInGroup called", .{});
     const inspector = Inspector.fromData(data);
-    return inspector.context;
+    return inspector.ctx_handle;
 }
 
 // InspectorChannel
