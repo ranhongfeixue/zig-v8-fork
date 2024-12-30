@@ -38,6 +38,7 @@ private:
                          const v8_inspector::StringView& url,
                          unsigned lineNumber, unsigned columnNumber,
                          v8_inspector::V8StackTrace* stackTrace) override;
+  v8::Local<v8::Context> ensureDefaultContextInGroup(int contextGroupId) override;
 };
 
 #endif // V8INSPECTORIMPL_H
