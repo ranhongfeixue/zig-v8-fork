@@ -57,6 +57,7 @@ pub const C_Data = c.Data;
 pub const C_FixedArray = c.FixedArray;
 pub const C_Module = c.Module;
 pub const C_InternalAddress = c.InternalAddress;
+pub const C_String = c.String;
 
 pub const MessageCallback = c.MessageCallback;
 pub const FunctionCallback = c.FunctionCallback;
