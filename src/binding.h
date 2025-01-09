@@ -188,6 +188,8 @@ void v8__Isolate__GetHeapStatistics(
     Isolate* self,
     HeapStatistics* stats);
 usize v8__HeapStatistics__SIZEOF();
+void* v8__Isolate__GetData(Isolate* self, int idx);
+void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 
 typedef struct StartupData {
     const char* data;

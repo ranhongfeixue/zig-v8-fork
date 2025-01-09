@@ -257,6 +257,14 @@ void v8__Isolate__GetHeapStatistics(
     self->GetHeapStatistics(stats);
 }
 
+void* v8__Isolate__GetData(v8::Isolate* self, int idx) {
+    return self->GetData(idx);
+}
+
+void v8__Isolate__SetData(v8::Isolate* self, int idx, void* val) {
+    self->SetData(idx, val);
+}
+
 size_t v8__HeapStatistics__SIZEOF() {
     return sizeof(v8::HeapStatistics);
 }
