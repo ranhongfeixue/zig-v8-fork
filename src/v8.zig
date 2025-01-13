@@ -413,6 +413,14 @@ pub const Isolate = struct {
     pub fn initExternal(self: Self, val: ?*anyopaque) External {
         return External.init(self, val);
     }
+
+    pub fn setData(self: Self, idx: u32, val: *anyopaque) void {
+        return c.v8__Isolate__SetData(self.handle, @as(c_int, @intCast(idx)), val);
+    }
+
+    pub fn getData(self: Self, idx: u32) ?*anyopaque {
+        return c.v8__Isolate__GetData(self.handle, @as(c_int, @intCast(idx)));
+    }
 };
 
 pub const HandleScope = struct {
