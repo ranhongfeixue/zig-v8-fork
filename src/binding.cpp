@@ -1627,6 +1627,16 @@ void v8_inspector__Session__dispatchProtocolMessage(
   session->dispatchProtocolMessage(str_view);
 }
 
+struct RemoteObject{};
+
+RemoteObject v8_inspector__Session__wrapObject(
+    v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
+    const v8::Context& ctx, const v8::Value& val,
+    const char *grpname, bool generatepreview) {
+  auto sv_grpname = toStringView(grpname);
+  return session->wrapObject(ptr_to_local(&ctx), ptr_to_local(&val), sv_grpname, generatepreview);
+}
+
 // InspectorChannel
 
 v8_inspector__Channel__IMPL * v8_inspector__Channel__IMPL__CREATE(v8::Isolate *isolate) {
