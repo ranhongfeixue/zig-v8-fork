@@ -12,6 +12,13 @@ pub const PropertyAttribute = struct {
     pub const DontDelete = c.DontDelete;
 };
 
+pub const PropertyHandlerFlags = struct {
+    pub const None = c.None;
+    pub const AllCanRead = c.kAllCanRead;
+    pub const NonMasking = c.kNonMasking;
+    pub const OnlyInterceptStrings = c.kOnlyInterceptStrings;
+};
+
 pub const PromiseRejectEvent = struct {
     pub const kPromiseRejectWithNoHandler = c.kPromiseRejectWithNoHandler;
     pub const kPromiseHandlerAddedAfterReject = c.kPromiseHandlerAddedAfterReject;
@@ -63,6 +70,24 @@ pub const MessageCallback = c.MessageCallback;
 pub const FunctionCallback = c.FunctionCallback;
 pub const AccessorNameGetterCallback = c.AccessorNameGetterCallback;
 pub const AccessorNameSetterCallback = c.AccessorNameSetterCallback;
+
+pub const IndexedPropertyGetterCallback = c.IndexedPropertyGetterCallback;
+pub const IndexedPropertySetterCallback = c.IndexedPropertySetterCallback;
+pub const IndexedPropertyQueryCallback = c.IndexedPropertyQueryCallback;
+pub const IndexedPropertyDeleterCallback = c.IndexedPropertyDeleterCallback;
+pub const IndexedPropertyEnumeratorCallback = c.IndexedPropertyEnumeratorCallback;
+pub const IndexedPropertyDefinerCallback = c.IndexedPropertyDefinerCallback;
+pub const IndexedPropertyDescriptorCallback = c.IndexedPropertyDescriptorCallback;
+pub const IndexedPropertyHandlerConfiguration = struct {
+    getter: ?IndexedPropertyGetterCallback = null,
+    setter: ?IndexedPropertySetterCallback = null,
+    query: ?IndexedPropertyQueryCallback = null,
+    deleter: ?IndexedPropertyDeleterCallback = null,
+    enumerator: ?IndexedPropertyEnumeratorCallback = null,
+    definer: ?IndexedPropertyDefinerCallback = null,
+    descriptor: ?IndexedPropertyDescriptorCallback = null,
+    flags: c.PropertyHandlerFlags = PropertyHandlerFlags.None,
+};
 
 pub const CreateParams = c.CreateParams;
 
@@ -942,6 +967,20 @@ pub const ObjectTemplate = struct {
 
     pub fn setInternalFieldCount(self: Self, count: u32) void {
         c.v8__ObjectTemplate__SetInternalFieldCount(self.handle, @as(c_int, @intCast(count)));
+    }
+
+    pub fn setIndexedProperty(self: Self, configuration: IndexedPropertyHandlerConfiguration, data_val: anytype) void {
+        c.v8__ObjectTemplate__SetIndexedHandler(self.handle, c.IndexedPropertyHandlerConfiguration{
+            .getter = configuration.getter orelse null,
+            .setter = configuration.setter orelse null,
+            .query = configuration.query orelse null,
+            .deleter = configuration.deleter orelse null,
+            .enumerator = configuration.enumerator orelse null,
+            .definer = configuration.definer orelse null,
+            .descriptor = configuration.descriptor orelse null,
+            .data = getDataHandle(data_val),
+            .flags = configuration.flags,
+        });
     }
 
     pub fn toValue(self: Self) Value {

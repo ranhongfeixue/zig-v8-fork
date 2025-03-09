@@ -864,6 +864,12 @@ void v8__ObjectTemplate__SetAccessor__DEFAULT4(
   ptr_to_local(&self)->SetAccessor(ptr_to_local(&key), getter, setter, ptr_to_local(&data));
 }
 
+void v8__ObjectTemplate__SetIndexedHandler(
+        const v8::ObjectTemplate& self,
+        const v8::IndexedPropertyHandlerConfiguration& configuration) {
+    ptr_to_local(&self)->SetHandler(configuration);
+}
+
 // Array
 
 const v8::Array* v8__Array__New(

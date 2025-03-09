@@ -772,6 +772,34 @@ void v8__ObjectTemplate__SetAccessor__DEFAULT4(
     AccessorNameSetterCallback setter,
     const Value* data);
 
+typedef enum PropertyHandlerFlags {
+       kAllCanRead = 1,
+       kNonMasking = 1 << 1,
+       kOnlyInterceptStrings = 1 << 2,
+} PropertyHandlerFlags;
+
+typedef void (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertySetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyEnumeratorCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDefinerCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDescriptorCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef struct IndexedPropertyHandlerConfiguration {
+    IndexedPropertyGetterCallback getter;
+    IndexedPropertySetterCallback setter;
+    IndexedPropertyQueryCallback query;
+    IndexedPropertyDeleterCallback deleter;
+    IndexedPropertyDeleterCallback enumerator;
+    IndexedPropertyDefinerCallback definer;
+    IndexedPropertyDescriptorCallback descriptor;
+    const Value* data;
+    PropertyHandlerFlags flags;
+} IndexedPropertyHandlerConfiguration;
+void v8__ObjectTemplate__SetIndexedHandler(
+    const ObjectTemplate* self,
+    IndexedPropertyHandlerConfiguration configuration);
+
 // ScriptOrigin
 typedef struct ScriptOriginOptions {
     const int flags_;
