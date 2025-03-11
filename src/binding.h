@@ -778,19 +778,20 @@ typedef enum PropertyHandlerFlags {
        kOnlyInterceptStrings = 1 << 2,
 } PropertyHandlerFlags;
 
+typedef struct PropertyDescriptor {} PropertyDescriptor;
 typedef void (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef void (*IndexedPropertySetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef void (*IndexedPropertyEnumeratorCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef void (*IndexedPropertyDefinerCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDefinerCallback)(uint32_t, PropertyDescriptor* desc, const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDescriptorCallback)(uint32_t, const PropertyCallbackInfo*);
 typedef struct IndexedPropertyHandlerConfiguration {
     IndexedPropertyGetterCallback getter;
     IndexedPropertySetterCallback setter;
     IndexedPropertyQueryCallback query;
     IndexedPropertyDeleterCallback deleter;
-    IndexedPropertyDeleterCallback enumerator;
+    IndexedPropertyEnumeratorCallback enumerator;
     IndexedPropertyDefinerCallback definer;
     IndexedPropertyDescriptorCallback descriptor;
     const Value* data;
@@ -996,6 +997,6 @@ InspectorSession* v8_inspector__Inspector__Connect(
 void v8_inspector__Inspector__ContextCreated(Inspector *self, const char *name,
                                              usize name_len, const char *origin,
                                              usize origin_len,
-					     const char *auxData, const usize auxData_len,
+                                             const char *auxData, const usize auxData_len,
                                              int contextGroupId,
     const Context* context);

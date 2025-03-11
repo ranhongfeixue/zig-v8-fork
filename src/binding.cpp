@@ -358,7 +358,7 @@ void v8__Context__Enter(const v8::Context& context) { ptr_to_local(&context)->En
 void v8__Context__Exit(const v8::Context& context) { ptr_to_local(&context)->Exit(); }
 
 v8::Isolate* v8__Context__GetIsolate(const v8::Context& self) {
-	return ptr_to_local(&self)->GetIsolate();
+       return ptr_to_local(&self)->GetIsolate();
 }
 
 const v8::Object* v8__Context__Global(
@@ -595,7 +595,7 @@ int64_t v8__Integer__Value(const v8::Integer& self) { return self.Value(); }
 // BigInt
 
 const v8::BigInt* v8__BigInt__New(
-        v8::Isolate* iso, 
+        v8::Isolate* iso,
         int64_t val) {
     return local_to_ptr(v8::BigInt::New(iso, val));
 }
@@ -1025,7 +1025,7 @@ const v8::Array* v8__Object__GetPropertyNames(
 }
 
 const v8::Value* v8__Object__GetPrototype(
-	const v8::Object& self) {
+       const v8::Object& self) {
   return local_to_ptr(ptr_to_local(&self)->GetPrototype());
 }
 
@@ -1253,7 +1253,7 @@ void v8__Function__SetName(
 // External
 
 const v8::External* v8__External__New(
-        v8::Isolate* isolate, 
+        v8::Isolate* isolate,
         void* value) {
     return local_to_ptr(v8::External::New(isolate, value));
 }
@@ -1475,11 +1475,11 @@ int v8__StackFrame__GetColumn(const v8::StackFrame& self) { return self.GetColum
 
 int v8__StackFrame__GetScriptId(const v8::StackFrame& self) { return self.GetScriptId(); }
 
-const v8::String* v8__StackFrame__GetScriptName(const v8::StackFrame& self) { 
+const v8::String* v8__StackFrame__GetScriptName(const v8::StackFrame& self) {
     return local_to_ptr(self.GetScriptName());
 }
 
-const v8::String* v8__StackFrame__GetScriptNameOrSourceURL(const v8::StackFrame& self) { 
+const v8::String* v8__StackFrame__GetScriptNameOrSourceURL(const v8::StackFrame& self) {
     return local_to_ptr(self.GetScriptNameOrSourceURL());
 }
 
@@ -1570,7 +1570,7 @@ v8_inspector::V8InspectorSession *v8_inspector__Inspector__Connect(
 void v8_inspector__Inspector__ContextCreated(v8_inspector::V8Inspector *self,
                                              const char *name, int name_len,
                                              const char *origin, int origin_len,
-					     const char *auxData, int auxData_len,
+                                             const char *auxData, int auxData_len,
                                              int contextGroupId,
                                              const v8::Context &ctx) {
   // create context info
