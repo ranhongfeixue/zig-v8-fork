@@ -1936,16 +1936,52 @@ pub const Value = struct {
         return c.v8__Value__IsArray(self.handle);
     }
 
+    pub fn isTypedArray(self: Self) bool {
+        return c.v8__Value__IsTypedArray(self.handle);
+    }
+
+    pub fn isUint8Array(self: Self) bool {
+        return c.v8__Value__IsUint8Array(self.handle);
+    }
+
+    pub fn isUint8ClampedArray(self: Self) bool {
+        return c.v8__Value__IsUint8ClampedArray(self.handle);
+    }
+
+    pub fn isInt8Array(self: Self) bool {
+        return c.v8__Value__IsInt8Array(self.handle);
+    }
+
+    pub fn isUint16Array(self: Self) bool {
+        return c.v8__Value__IsUint16Array(self.handle);
+    }
+
+    pub fn isInt16Array(self: Self) bool {
+        return c.v8__Value__IsInt16Array(self.handle);
+    }
+
+    pub fn isUint32Array(self: Self) bool {
+        return c.v8__Value__IsUint32Array(self.handle);
+    }
+
+    pub fn isInt32Array(self: Self) bool {
+        return c.v8__Value__IsInt32Array(self.handle);
+    }
+
+    pub fn isFloat32Array(self: Self) bool {
+        return c.v8__Value__IsFloat32Array(self.handle);
+    }
+
+    pub fn isFloat64Array(self: Self) bool {
+        return c.v8__Value__IsFloat64Array(self.handle);
+    }
+
     pub fn isArrayBuffer(self: Self) bool {
         return c.v8__Value__IsArrayBuffer(self.handle);
     }
 
     pub fn isArrayBufferView(self: Self) bool {
         return c.v8__Value__IsArrayBufferView(self.handle);
-    }
-
-    pub fn isUint8Array(self: Self) bool {
-        return c.v8__Value__IsUint8Array(self.handle);
     }
 
     pub fn isExternal(self: Self) bool {
