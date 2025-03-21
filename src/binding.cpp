@@ -754,11 +754,29 @@ bool v8__Value__IsString(const v8::Value& self) { return self.IsString(); }
 
 bool v8__Value__IsArray(const v8::Value& self) { return self.IsArray(); }
 
+bool v8__Value__IsTypedArray(const v8::Value& self) { return self.IsTypedArray(); }
+
+bool v8__Value__IsUint8Array(const v8::Value& self) { return self.IsUint8Array(); }
+
+bool v8__Value__IsUint8ClampedArray(const v8::Value& self) { return self.IsUint8ClampedArray(); }
+
+bool v8__Value__IsInt8Array(const v8::Value& self) { return self.IsInt8Array(); }
+
+bool v8__Value__IsUint16Array(const v8::Value& self) { return self.IsUint16Array(); }
+
+bool v8__Value__IsInt16Array(const v8::Value& self) { return self.IsInt16Array(); }
+
+bool v8__Value__IsUint32Array(const v8::Value& self) { return self.IsUint32Array(); }
+
+bool v8__Value__IsInt32Array(const v8::Value& self) { return self.IsInt32Array(); }
+
+bool v8__Value__IsFloat32Array(const v8::Value& self) { return self.IsFloat32Array(); }
+
+bool v8__Value__IsFloat64Array(const v8::Value& self) { return self.IsFloat64Array(); }
+
 bool v8__Value__IsArrayBuffer(const v8::Value& self) { return self.IsArrayBuffer(); }
 
 bool v8__Value__IsArrayBufferView(const v8::Value& self) { return self.IsArrayBufferView(); }
-
-bool v8__Value__IsUint8Array(const v8::Value& self) { return self.IsUint8Array(); }
 
 bool v8__Value__IsExternal(const v8::Value& self) { return self.IsExternal(); }
 
