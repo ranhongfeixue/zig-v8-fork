@@ -781,6 +781,35 @@ void v8__ObjectTemplate__SetAccessor__DEFAULT4(
     AccessorNameSetterCallback setter,
     const Value* data);
 
+typedef enum PropertyHandlerFlags {
+       kAllCanRead = 1,
+       kNonMasking = 1 << 1,
+       kOnlyInterceptStrings = 1 << 2,
+} PropertyHandlerFlags;
+
+typedef struct PropertyDescriptor {} PropertyDescriptor;
+typedef void (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDefinerCallback)(uint32_t, PropertyDescriptor* desc, const PropertyCallbackInfo*);
+typedef void (*IndexedPropertyDescriptorCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef struct IndexedPropertyHandlerConfiguration {
+    IndexedPropertyGetterCallback getter;
+    IndexedPropertySetterCallback setter;
+    IndexedPropertyQueryCallback query;
+    IndexedPropertyDeleterCallback deleter;
+    IndexedPropertyEnumeratorCallback enumerator;
+    IndexedPropertyDefinerCallback definer;
+    IndexedPropertyDescriptorCallback descriptor;
+    const Value* data;
+    PropertyHandlerFlags flags;
+} IndexedPropertyHandlerConfiguration;
+void v8__ObjectTemplate__SetIndexedHandler(
+    const ObjectTemplate* self,
+    IndexedPropertyHandlerConfiguration configuration);
+
 // ScriptOrigin
 typedef struct ScriptOriginOptions {
     const int flags_;
@@ -977,6 +1006,6 @@ InspectorSession* v8_inspector__Inspector__Connect(
 void v8_inspector__Inspector__ContextCreated(Inspector *self, const char *name,
                                              usize name_len, const char *origin,
                                              usize origin_len,
-					     const char *auxData, const usize auxData_len,
+                                             const char *auxData, const usize auxData_len,
                                              int contextGroupId,
     const Context* context);
