@@ -15,16 +15,23 @@ pub fn build(b: *std.Build) !void {
     const mode = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
 
+    var build_opts = b.addOptions();
+    build_opts.addOption(
+        bool,
+        "inspector_subtype",
+        b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
+    );
+
     _ = createGetTools(b);
     _ = createGetV8(b, icu);
 
     const v8 = try createV8_Build(b, target, mode, use_zig_tc, icu);
 
-    const create_test = createTest(b, target, mode, use_zig_tc);
+    const create_test = createTest(b, target, mode, use_zig_tc, build_opts);
     const run_test = b.addRunArtifact(create_test);
     b.step("test", "Run tests.").dependOn(&run_test.step);
 
-    const build_exe = createCompileStep(b, path, target, mode, use_zig_tc);
+    const build_exe = createCompileStep(b, path, target, mode, use_zig_tc, build_opts);
     b.step("exe", "Build exe with main file at -Dpath").dependOn(&build_exe.step);
 
     const run_exe = b.addRunArtifact(build_exe);
@@ -510,13 +517,14 @@ fn linkV8(b: *std.Build, step: *std.Build.Step.Compile, use_zig_tc: bool) void {
     }
 }
 
-fn createTest(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.builtin.Mode, use_zig_tc: bool) *std.Build.Step.Compile {
+fn createTest(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.builtin.Mode, use_zig_tc: bool, build_opts: *std.Build.Step.Options) *std.Build.Step.Compile {
     const step = b.addTest(.{
         .root_source_file = b.path("./src/test.zig"),
         .target = target,
         .optimize = mode,
         .link_libc = true,
     });
+    step.root_module.addImport("default_exports", build_opts.createModule());
     step.addIncludePath(b.path("./src"));
     linkV8(b, step, use_zig_tc);
     return step;
@@ -733,7 +741,7 @@ pub const GetV8SourceStep = struct {
     }
 };
 
-fn createCompileStep(b: *std.Build, path: []const u8, target: std.Build.ResolvedTarget, mode: std.builtin.Mode, use_zig_tc: bool) *std.Build.Step.Compile {
+fn createCompileStep(b: *std.Build, path: []const u8, target: std.Build.ResolvedTarget, mode: std.builtin.Mode, use_zig_tc: bool, build_opts: *std.Build.Step.Options) *std.Build.Step.Compile {
     const basename = std.fs.path.basename(path);
     const i = std.mem.indexOf(u8, basename, ".zig") orelse basename.len;
     const name = basename[0..i];
@@ -746,7 +754,7 @@ fn createCompileStep(b: *std.Build, path: []const u8, target: std.Build.Resolved
         .link_libc = true,
     });
     step.addIncludePath(b.path("src"));
-
+    step.root_module.addImport("default_exports", build_opts.createModule());
     if (mode == .ReleaseSafe) {
         step.root_module.strip = true;
     }

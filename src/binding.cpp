@@ -1715,6 +1715,10 @@ void v8_inspector__Client__IMPL__consoleAPIMessage(
     unsigned columnNumber, v8_inspector::V8StackTrace *stackTrace);
 const v8::Context* v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     v8_inspector__Client__IMPL* self, void* data, int contextGroupId);
+char* v8_inspector__Client__IMPL__valueSubtype(
+    v8_inspector__Client__IMPL* self, v8::Local<v8::Value> value);
+char* v8_inspector__Client__IMPL__descriptionForValueSubtype(
+    v8_inspector__Client__IMPL* self, v8::Local<v8::Context> context, v8::Local<v8::Value> value);
 
 // c++ implementation (just wrappers around the c/zig functions)
 } // extern "C"
@@ -1741,6 +1745,14 @@ void v8_inspector__Client__IMPL::consoleAPIMessage(
 }
 v8::Local<v8::Context> v8_inspector__Client__IMPL::ensureDefaultContextInGroup(int contextGroupId) {
   return ptr_to_local(v8_inspector__Client__IMPL__ensureDefaultContextInGroup(this, this->data, contextGroupId));
+}
+std::unique_ptr<v8_inspector::StringBuffer> v8_inspector__Client__IMPL::valueSubtype(v8::Local<v8::Value> value) {
+    auto subType = v8_inspector__Client__IMPL__valueSubtype(this, value);
+    return v8_inspector::StringBuffer::create(toStringView(subType));
+}
+std::unique_ptr<v8_inspector::StringBuffer> v8_inspector__Client__IMPL::descriptionForValueSubtype(v8::Local<v8::Context> context, v8::Local<v8::Value> value) {
+    auto descriptions = v8_inspector__Client__IMPL__descriptionForValueSubtype(this, context, value);
+    return v8_inspector::StringBuffer::create(toStringView(descriptions));
 }
 
 extern "C" {
