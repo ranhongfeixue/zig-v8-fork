@@ -1625,9 +1625,7 @@ void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {
 void v8_inspector__Session__dispatchProtocolMessage(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
     const char *msg, int msg_len) {
-  std::string message; // NOTE Sjors: This looks like an unnecessary copy
-  message.assign(msg, msg_len);
-  auto str_view = toStringView(message);
+  auto str_view = toStringView(msg, msg_len);
   session->dispatchProtocolMessage(str_view);
 }
 
