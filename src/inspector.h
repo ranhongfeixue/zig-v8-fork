@@ -39,6 +39,8 @@ private:
                          unsigned lineNumber, unsigned columnNumber,
                          v8_inspector::V8StackTrace* stackTrace) override;
   v8::Local<v8::Context> ensureDefaultContextInGroup(int contextGroupId) override;
+  std::unique_ptr<v8_inspector::StringBuffer> valueSubtype(v8::Local<v8::Value>) override;
+  std::unique_ptr<v8_inspector::StringBuffer> descriptionForValueSubtype(v8::Local<v8::Context>, v8::Local<v8::Value>) override;
 };
 
 #endif // V8INSPECTORIMPL_H

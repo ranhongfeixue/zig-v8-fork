@@ -988,6 +988,10 @@ void v8_inspector__Client__IMPL__consoleAPIMessage(
     unsigned columnNumber, StackTrace *StackTrace);
 const Context* v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     InspectorClientImpl* self, void* data, int contextGroupId);
+const Context* v8_inspector__Client__IMPL__valueSubtype(
+    InspectorClientImpl* self, Value value);
+const Context* v8_inspector__Client__IMPL__descriptionForValueSubtype(
+    InspectorClientImpl* self, Context context, Value value);
 
 // InspectorSession
 
