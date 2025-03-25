@@ -2632,6 +2632,10 @@ pub export fn v8_inspector__Channel__IMPL__flushProtocolNotifications(
 pub const InspectorSession = struct {
     handle: *c.InspectorSession,
 
+    pub fn deinit(self: InspectorSession) void {
+        c.v8_inspector__Session__DELETE(self.handle);
+    }
+
     pub fn dispatchProtocolMessage(
         self: InspectorSession,
         isolate: Isolate,
