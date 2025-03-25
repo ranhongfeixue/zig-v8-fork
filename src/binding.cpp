@@ -104,7 +104,7 @@ v8::Platform* v8__Platform__NewDefaultPlatform(
         int thread_pool_size,
         bool idle_task_support) {
     return v8::platform::NewDefaultPlatform(
-        thread_pool_size,  
+        thread_pool_size,
         idle_task_support ? v8::platform::IdleTaskSupport::kEnabled : v8::platform::IdleTaskSupport::kDisabled,
         v8::platform::InProcessStackDumping::kDisabled,
         nullptr
@@ -1613,6 +1613,10 @@ void v8_inspector__Inspector__ContextCreated(v8_inspector::V8Inspector *self,
 }
 
 // InspectorSession
+
+void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {
+  delete self;
+}
 
 void v8_inspector__Session__dispatchProtocolMessage(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,

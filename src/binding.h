@@ -298,7 +298,7 @@ bool v8__TryCatch__HasCaught(const TryCatch* self);
 const Value* v8__TryCatch__StackTrace(const TryCatch* self, const Context* context);
 bool v8__TryCatch__IsVerbose(const TryCatch* self);
 void v8__TryCatch__SetVerbose(
-    TryCatch* self, 
+    TryCatch* self,
     bool value);
 const Value* v8__TryCatch__ReThrow(TryCatch* self);
 
@@ -568,7 +568,7 @@ int64_t v8__Integer__Value(const Integer* self);
 
 // BigInt
 const BigInt* v8__BigInt__New(
-    Isolate* iso, 
+    Isolate* iso,
     int64_t val);
 const BigInt* v8__BigInt__NewFromUnsigned(
     Isolate* iso,
@@ -697,7 +697,7 @@ void v8__Function__SetName(const Function* self, const String* name);
 
 // External
 const External* v8__External__New(
-    Isolate* isolate, 
+    Isolate* isolate,
     void* value);
 void* v8__External__Value(
     const External* self);
@@ -996,6 +996,7 @@ const Context* v8_inspector__Client__IMPL__descriptionForValueSubtype(
 // InspectorSession
 
 typedef struct InspectorSession InspectorSession;
+void v8_inspector__Session__DELETE(Inspector *self);
 void v8_inspector__Session__dispatchProtocolMessage(InspectorSession *session, Isolate *isolate, const char* msg, usize msg_len);
 
 // Inspector
