@@ -1633,10 +1633,10 @@ void v8_inspector__Session__dispatchProtocolMessage(
 
 v8_inspector::protocol::Runtime::API::RemoteObject* v8_inspector__Session__wrapObject(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
-    const v8::Context& ctx, const v8::Value& val,
+    const v8::Context* ctx, const v8::Value* val,
     const char *grpname, int grpname_len, bool generatepreview) {
   auto sv_grpname = toStringView(grpname, grpname_len);
-  auto remote_object = session->wrapObject(ptr_to_local(&ctx), ptr_to_local(&val), sv_grpname, generatepreview);
+  auto remote_object = session->wrapObject(ptr_to_local(ctx), ptr_to_local(val), sv_grpname, generatepreview);
   return remote_object.release();
 }
 
