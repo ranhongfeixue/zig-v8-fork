@@ -1002,10 +1002,10 @@ typedef struct RemoteObject RemoteObject;
 typedef struct InspectorSession InspectorSession;
 void v8_inspector__Session__DELETE(Inspector *self);
 void v8_inspector__Session__dispatchProtocolMessage(InspectorSession *session, Isolate *isolate, const char* msg, usize msg_len);
-RemoteObject v8_inspector__Session__wrapObject(
-    v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
-    const v8::Context& ctx, const v8::Value& val,
-    const char *grpname, bool generatepreview);
+RemoteObject* v8_inspector__Session__wrapObject(
+    InspectorSession *session, Isolate *isolate,
+    const Context& ctx, const Value& val,
+    const char *grpname, int grpname_len, bool generatepreview);
 
 // Inspector
 typedef struct Inspector Inspector;

@@ -2669,4 +2669,27 @@ pub const InspectorSession = struct {
             msg.len,
         );
     }
+
+    pub fn wrapObject(self: InspectorSession, isolate: Isolate, ctx: Context, val: Value, grpname: []const u8, generatepreview: bool) !RemoteObject {
+        const remote_obj = c.v8_inspector__Session__wrapObject(
+            self.handle,
+            isolate.handle,
+            ctx.handle,
+            val.handle,
+            grpname.ptr,
+            grpname.len,
+            generatepreview,
+        );
+        if (remote_obj) {
+            return RemoteObject{ .handle = remote_obj };
+        } else return error.JsException;
+    }
+};
+
+pub const RemoteObject = struct {
+    handle: *c.RemoteObject,
+
+    pub fn deinit(self: *RemoteObject) void {
+        c.v8_inspector__Session__DELETE(self.handle);
+    }
 };

@@ -5,6 +5,7 @@
 #include "include/v8-inspector.h"
 #include "include/v8.h"
 #include "src/api/api.h"
+#include "src/inspector/protocol/Runtime.h"
 
 #include "inspector.h"
 
@@ -1549,9 +1550,12 @@ void v8__base__SetDcheckFunction(void (*func)(const char*, int, const char*)) {
 
 // Utils
 
+static inline v8_inspector::StringView toStringView(const char *str, size_t length) {
+    auto* stringView = reinterpret_cast<const uint8_t*>(str);
+    return { stringView, length };
+}
 static inline v8_inspector::StringView toStringView(const std::string &str) {
-  auto* stringView = reinterpret_cast<const uint8_t*>(str.c_str());
-  return { stringView, str.length() };
+    return toStringView(str.c_str(), str.length());
 }
 
 static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspector::StringView stringView) {
@@ -1621,20 +1625,25 @@ void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {
 void v8_inspector__Session__dispatchProtocolMessage(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
     const char *msg, int msg_len) {
-  std::string message;
+  std::string message; // NOTE Sjors: This looks like an unnecessary copy
   message.assign(msg, msg_len);
   auto str_view = toStringView(message);
   session->dispatchProtocolMessage(str_view);
 }
 
-struct RemoteObject{};
-
-RemoteObject v8_inspector__Session__wrapObject(
+v8_inspector::protocol::Runtime::API::RemoteObject* v8_inspector__Session__wrapObject(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
     const v8::Context& ctx, const v8::Value& val,
-    const char *grpname, bool generatepreview) {
-  auto sv_grpname = toStringView(grpname);
-  return session->wrapObject(ptr_to_local(&ctx), ptr_to_local(&val), sv_grpname, generatepreview);
+    const char *grpname, int grpname_len, bool generatepreview) {
+  auto sv_grpname = toStringView(grpname, grpname_len);
+  auto remote_object = session->wrapObject(ptr_to_local(&ctx), ptr_to_local(&val), sv_grpname, generatepreview);
+  return remote_object.release();
+}
+
+// RemoteObject
+
+void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::API::RemoteObject* self) {
+  delete self;
 }
 
 // InspectorChannel

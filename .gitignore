@@ -7,3 +7,4 @@
 /vendor
 /libc_v8.a
 /.zig-cache/
+/.vscode/
