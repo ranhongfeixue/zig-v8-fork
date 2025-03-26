@@ -993,11 +993,19 @@ const Context* v8_inspector__Client__IMPL__valueSubtype(
 const Context* v8_inspector__Client__IMPL__descriptionForValueSubtype(
     InspectorClientImpl* self, Context context, Value value);
 
+
+// RemoteObject
+typedef struct RemoteObject RemoteObject;
+
 // InspectorSession
 
 typedef struct InspectorSession InspectorSession;
-void v8_inspector__Session__DELETE(Inspector *self);
+void v8_inspector__Session__DELETE(InspectorSession *self);
 void v8_inspector__Session__dispatchProtocolMessage(InspectorSession *session, Isolate *isolate, const char* msg, usize msg_len);
+RemoteObject* v8_inspector__Session__wrapObject(
+    InspectorSession *session, Isolate *isolate,
+    const Context* ctx, const Value* val,
+    const char *grpname, int grpname_len, bool generatepreview);
 
 // Inspector
 typedef struct Inspector Inspector;
