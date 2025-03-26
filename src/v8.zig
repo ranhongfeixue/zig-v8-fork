@@ -2551,7 +2551,6 @@ pub export fn v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     return inspector.ctx_handle;
 }
 
-
 usingnamespace if (@import("default_exports").inspector_subtype) struct {
     pub export fn v8_inspector__Client__IMPL__valueSubtype(
         _: *c.InspectorClientImpl,
@@ -2690,6 +2689,6 @@ pub const RemoteObject = struct {
     handle: *c.RemoteObject,
 
     pub fn deinit(self: *RemoteObject) void {
-        c.v8_inspector__Session__DELETE(self.handle);
+        c.v8_inspector__RemoteObject__DELETE(self.handle);
     }
 };
