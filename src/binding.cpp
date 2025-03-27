@@ -1769,11 +1769,17 @@ v8::Local<v8::Context> v8_inspector__Client__IMPL::ensureDefaultContextInGroup(i
 }
 std::unique_ptr<v8_inspector::StringBuffer> v8_inspector__Client__IMPL::valueSubtype(v8::Local<v8::Value> value) {
     auto subType = v8_inspector__Client__IMPL__valueSubtype(this, value);
+    if (subType == nullptr) {
+        return nullptr;
+    }
     return v8_inspector::StringBuffer::create(toStringView(subType));
 }
 std::unique_ptr<v8_inspector::StringBuffer> v8_inspector__Client__IMPL::descriptionForValueSubtype(v8::Local<v8::Context> context, v8::Local<v8::Value> value) {
-    auto descriptions = v8_inspector__Client__IMPL__descriptionForValueSubtype(this, context, value);
-    return v8_inspector::StringBuffer::create(toStringView(descriptions));
+    auto description = v8_inspector__Client__IMPL__descriptionForValueSubtype(this, context, value);
+    if (description == nullptr) {
+        return nullptr;
+    }
+    return v8_inspector::StringBuffer::create(toStringView(description));
 }
 
 extern "C" {
