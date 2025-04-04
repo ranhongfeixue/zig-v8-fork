@@ -2670,7 +2670,7 @@ pub const InspectorSession = struct {
     }
 
     pub fn wrapObject(self: InspectorSession, isolate: Isolate, ctx: Context, val: Value, grpname: []const u8, generatepreview: bool) !RemoteObject {
-        const remote_obj = c.v8_inspector__Session__wrapObject(
+        const remote_object = c.v8_inspector__Session__wrapObject(
             self.handle,
             isolate.handle,
             ctx.handle,
@@ -2679,125 +2679,98 @@ pub const InspectorSession = struct {
             grpname.len,
             generatepreview,
         ).?;
-        return RemoteObject{ .handle = remote_obj };
+        return RemoteObject.init(remote_object);
     }
 };
 
-/// RemoteObject is implemented as an interface to its members as opposed to a POD struct, since V8 is inconsistent with
-/// returning owning and non-owning data. This is partly due to v8 using UTF16 strings.
-/// NOTE: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
-/// The latter are not freed by the caller, but the former must be freed.
-/// The getter methods short-circuit if the dafavalues is not available as converting the defaults to V8 causes unnecessary overhead.
+/// Currently RemoteObject is implemented as a plain struct as opposed to an interface to its members.
+/// This likely needs to change if we need to call setters in the future, or as more uscases with remoteObject appear.
+/// An interface like implementation is not prefered as V8 is inconsistend with handing out owning an non-owning memory. This is partly due to v8 using UTF16 strings.
+/// For an interface implementation: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
+/// Now instead, we do not have to exposed that to our users, which only have to make a single deinit call.
+/// The getters short-circuit if the default values is not available as converting the defaults to V8 causes unnecessary overhead.
+///
+/// https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#type-RemoteObject
 pub const RemoteObject = struct {
     handle: *c.RemoteObject,
+    type: []const u8,
+    subtype: ?[]const u8,
+    class_name: ?[]const u8,
+    // NotYetImplemented: value,
+    // NotYetImplemented: unserializable_value,
+    description: ?[]const u8,
+    // NotYetImplemented: web_driver_value,
+    object_id: ?[]const u8,
+    // NotYetImplemented: preview,
+    // NotYetImplemented: custom_preview,
+
+    pub fn init(handle: *c.RemoteObject) RemoteObject {
+        return .{
+            .handle = handle,
+            .type = RemoteObject.getType(handle),
+            .subtype = RemoteObject.getSubtype(handle),
+            .class_name = RemoteObject.getClassName(handle),
+            .description = RemoteObject.getDescription(handle),
+            .object_id = RemoteObject.getObjectId(handle),
+        };
+    }
 
     pub fn deinit(self: RemoteObject) void {
         c.v8_inspector__RemoteObject__DELETE(self.handle);
+        std.c.free(self.type);
+        if (self.subtype) |subtype| {
+            std.c.free(subtype);
+        }
+        if (self.class_name) |class_name| {
+            std.c.free(class_name);
+        }
+        if (self.description) |description| {
+            std.c.free(description);
+        }
+        if (self.object_id) |object_id| {
+            std.c.free(object_id);
+        }
     }
 
-    // Type
-    pub fn getType(self: RemoteObject) []const u8 {
-        const type_ = c.v8_inspector__RemoteObject__getType(self.handle);
+    fn getType(handle: *c.RemoteObject) []const u8 {
+        const type_ = c.v8_inspector__RemoteObject__getType(handle);
         const idx = std.mem.indexOfSentinel(u8, 0, type_);
         return type_[0..idx];
     }
-    pub fn setType(self: RemoteObject, type_: []const u8) void {
-        c.v8_inspector__RemoteObject__setType(self.handle, type_.ptr, type_.len);
-    }
-
-    // Subtype
-    pub fn hasSubtype(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasSubtype(self.handle);
-    }
-    pub fn getSubtype(self: RemoteObject) ?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasSubtype(self.handle)) {
+    fn getSubtype(handle: *c.RemoteObject) ?[]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasSubtype(handle)) {
             return null;
         }
 
-        const subtype = c.v8_inspector__RemoteObject__getSubtype(self.handle);
+        const subtype = c.v8_inspector__RemoteObject__getSubtype(handle);
         const idx = std.mem.indexOfSentinel(u8, 0, subtype);
         return subtype[0..idx];
     }
-    pub fn setSubtype(self: RemoteObject, subtype: []const u8) void {
-        c.v8_inspector__RemoteObject__setSubtype(self.handle, subtype.ptr, subtype.len);
-    }
-
-    // ClassName
-    pub fn hasClassName(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasClassName(self.handle);
-    }
-    pub fn getClassName(self: RemoteObject) ?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasClassName(self.handle)) {
+    fn getClassName(handle: *c.RemoteObject) ?[]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasClassName(handle)) {
             return null;
         }
 
-        const class_name = c.v8_inspector__RemoteObject__getClassName(self.handle);
+        const class_name = c.v8_inspector__RemoteObject__getClassName(handle);
         const idx = std.mem.indexOfSentinel(u8, 0, class_name);
         return class_name[0..idx];
     }
-
-    // Value
-    pub fn hasValue(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasValue(self.handle);
-    }
-    // TODO GET / SET
-
-    // UnserializableValue
-    pub fn hasUnserializableValue(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasUnserializableValue(self.handle);
-    }
-    // TODO GET / SET
-
-    // Description
-    pub fn hasDescription(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasDescription(self.handle);
-    }
-    pub fn getDescription(self: RemoteObject) ?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasDescription(self.handle)) {
+    fn getDescription(handle: *c.RemoteObject) ?[]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasDescription(handle)) {
             return null;
         }
 
-        const description = c.v8_inspector__RemoteObject__getDescription(self.handle);
+        const description = c.v8_inspector__RemoteObject__getDescription(handle);
         const idx = std.mem.indexOfSentinel(u8, 0, description);
         return description[0..idx];
     }
-    pub fn setDescription(self: RemoteObject, description: []const u8) void {
-        c.v8_inspector__RemoteObject__setDescription(self.handle, description.ptr, description.len);
-    }
-
-    // WebDriverValue
-    pub fn hasWebDriverValue(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasWebDriverValue(self.handle);
-    }
-    // TODO GET / SET
-
-    // ObjectId
-    pub fn hasObjectId(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasObjectId(self.handle);
-    }
-    pub fn getObjectId(self: RemoteObject) ?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasObjectId(self.handle)) {
+    fn getObjectId(handle: *c.RemoteObject) ?[]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasObjectId(handle)) {
             return null;
         }
 
-        const object_id = c.v8_inspector__RemoteObject__getObjectId(self.handle);
+        const object_id = c.v8_inspector__RemoteObject__getObjectId(handle);
         const idx = std.mem.indexOfSentinel(u8, 0, object_id);
         return object_id[0..idx];
     }
-
-    pub fn setObjectId(self: RemoteObject, object_id: []const u8) void {
-        c.v8_inspector__RemoteObject__setObjectId(self.handle, object_id.ptr, object_id.len);
-    }
-
-    // Preview
-    pub fn hasPreview(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasPreview(self.handle);
-    }
-    // TODO GET / SET
-
-    // CustomPreview
-    pub fn hasCustomPreview(self: RemoteObject) bool {
-        return c.v8_inspector__RemoteObject__hasCustomPreview(self.handle);
-    }
-    // TODO GET / SET
 };
