@@ -1569,6 +1569,13 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
   return *result;
 }
 
+const char* toHeapCharPtr(const v8_inspector::String16& str) {
+    std::string utf8_str = str.utf8(); // Note that this may hold the string on the stack as an SSO
+    char* heap_str = new char[utf8_str.length() + 1];
+    strcpy(heap_str, utf8_str.c_str());
+    return heap_str;
+  }
+
 // Inspector
 
 v8_inspector::V8Inspector *v8_inspector__Inspector__Create(
@@ -1629,19 +1636,139 @@ void v8_inspector__Session__dispatchProtocolMessage(
   session->dispatchProtocolMessage(str_view);
 }
 
-v8_inspector::protocol::Runtime::API::RemoteObject* v8_inspector__Session__wrapObject(
+v8_inspector::protocol::Runtime::RemoteObject* v8_inspector__Session__wrapObject(
     v8_inspector::V8InspectorSession *session, v8::Isolate *isolate,
     const v8::Context* ctx, const v8::Value* val,
     const char *grpname, int grpname_len, bool generatepreview) {
   auto sv_grpname = toStringView(grpname, grpname_len);
   auto remote_object = session->wrapObject(ptr_to_local(ctx), ptr_to_local(val), sv_grpname, generatepreview);
-  return remote_object.release();
+  assert(remote_object != nullptr);
+  auto* not_api = static_cast<v8_inspector::protocol::Runtime::RemoteObject*>(remote_object.release());
+  assert(not_api != nullptr);
+  return not_api;
 }
 
 // RemoteObject
 
-void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::API::RemoteObject* self) {
+// To prevent extra allocations on every call a single default value value is reused everytime.
+// It is expected that the precense of a value is checked before calling get* methods.
+const v8_inspector::String16 DEFAULT_STRING = {"default"};
+
+void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::RemoteObject* self) {
   delete self;
+}
+
+// RemoteObject - Type
+const char* v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  auto str = self->getType();
+  return toHeapCharPtr(str);
+}
+void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::RemoteObject* self, const char* type, int type_len) {
+  self->setType(v8_inspector::String16::fromUTF8(type, type_len));
+}
+
+// RemoteObject - Subtype
+bool v8_inspector__RemoteObject__hasSubtype(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasSubtype();
+}
+const char* v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  auto str = self->getSubtype(DEFAULT_STRING);
+  return toHeapCharPtr(str);
+}
+void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const char* subtype, int subtype_len) {
+  self->setSubtype(v8_inspector::String16::fromUTF8(subtype, subtype_len));
+}
+
+// RemoteObject - ClassName
+bool v8_inspector__RemoteObject__hasClassName(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasClassName();
+}
+const char* v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  auto str = self->getClassName(DEFAULT_STRING);
+  return toHeapCharPtr(str);
+}
+void v8_inspector__RemoteObject__setClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const char* className, int className_len) {
+  self->setClassName(v8_inspector::String16::fromUTF8(className, className_len));
+}
+
+// RemoteObject - Value
+bool v8_inspector__RemoteObject__hasValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasValue();
+}
+v8_inspector::protocol::Value* v8_inspector__RemoteObject__getValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->getValue(nullptr);
+}
+void v8_inspector__RemoteObject__setValue(v8_inspector::protocol::Runtime::RemoteObject* self, v8_inspector::protocol::Value* value) {
+  self->setValue(std::unique_ptr<v8_inspector::protocol::Value>(value));
+}
+
+//RemoteObject - UnserializableValue
+bool v8_inspector__RemoteObject__hasUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasUnserializableValue();
+}
+const char* v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  auto str = self->getUnserializableValue(DEFAULT_STRING);
+  return toHeapCharPtr(str);
+}
+void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const char* unserializableValue, int unserializableValue_len) {
+  self->setUnserializableValue(v8_inspector::String16::fromUTF8(unserializableValue, unserializableValue_len));
+}
+
+// RemoteObject - Description
+bool v8_inspector__RemoteObject__hasDescription(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasDescription();
+}
+const char* v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  auto str = self->getDescription(DEFAULT_STRING);
+  return toHeapCharPtr(str);
+}
+void v8_inspector__RemoteObject__setDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const char* description, int description_len) {
+  self->setDescription(v8_inspector::String16::fromUTF8(description, description_len));
+}
+
+// RemoteObject - WebDriverValue
+bool v8_inspector__RemoteObject__hasWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasWebDriverValue();
+}
+v8_inspector::protocol::Runtime::WebDriverValue* v8_inspector__RemoteObject__getWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->getWebDriverValue(nullptr);
+}
+void v8_inspector__RemoteObject__setWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self, v8_inspector::protocol::Runtime::WebDriverValue* webDriverValue) {
+  self->setWebDriverValue(std::unique_ptr<v8_inspector::protocol::Runtime::WebDriverValue>(webDriverValue));
+}
+
+// RemoteObject - ObjectId
+bool v8_inspector__RemoteObject__hasObjectId(v8_inspector::protocol::Runtime::RemoteObject* self) {
+    return self->hasObjectId();
+  }
+  const char* v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self) {
+      auto str = self->getObjectId(DEFAULT_STRING);
+      return toHeapCharPtr(str);
+  }
+  void v8_inspector__RemoteObject__setObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const char* objectId, int objectId_len) {
+    self->setObjectId(v8_inspector::String16::fromUTF8(objectId, objectId_len));
+  }
+
+// RemoteObject - Preview
+bool v8_inspector__RemoteObject__hasPreview(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasPreview();
+}
+const v8_inspector::protocol::Runtime::ObjectPreview* v8_inspector__RemoteObject__getPreview(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->getPreview(nullptr);
+}
+void v8_inspector__RemoteObject__setPreview(v8_inspector::protocol::Runtime::RemoteObject* self, v8_inspector::protocol::Runtime::ObjectPreview* preview) {
+  self->setPreview(std::unique_ptr<v8_inspector::protocol::Runtime::ObjectPreview>(preview));
+}
+
+// RemoteObject - CustomPreview
+bool v8_inspector__RemoteObject__hasCustomPreview(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->hasCustomPreview();
+}
+const v8_inspector::protocol::Runtime::CustomPreview* v8_inspector__RemoteObject__getCustomPreview(v8_inspector::protocol::Runtime::RemoteObject* self) {
+  return self->getCustomPreview(nullptr);
+}
+void v8_inspector__RemoteObject__setCustomPreview(v8_inspector::protocol::Runtime::RemoteObject* self, v8_inspector::protocol::Runtime::CustomPreview* customPreview) {
+  self->setCustomPreview(std::unique_ptr<v8_inspector::protocol::Runtime::CustomPreview>(customPreview));
 }
 
 // InspectorChannel
