@@ -190,6 +190,10 @@ pub fn deinitV8Platform() void {
     c.v8__V8__DisposePlatform();
 }
 
+pub fn idleNotificaiton(hint: c_int) void {
+    c.v8__V8__IdleNoticiation(hint);
+}
+
 pub fn initCreateParams() c.CreateParams {
     var params: c.CreateParams = undefined;
     c.v8__Isolate__CreateParams__CONSTRUCT(&params);
