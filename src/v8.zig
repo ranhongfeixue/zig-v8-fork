@@ -89,6 +89,24 @@ pub const IndexedPropertyHandlerConfiguration = struct {
     flags: c.PropertyHandlerFlags = PropertyHandlerFlags.None,
 };
 
+pub const NamedPropertyGetterCallback = c.NamedPropertyGetterCallback;
+pub const NamedPropertySetterCallback = c.NamedPropertySetterCallback;
+pub const NamedPropertyQueryCallback = c.NamedPropertyQueryCallback;
+pub const NamedPropertyDeleterCallback = c.NamedPropertyDeleterCallback;
+pub const NamedPropertyEnumeratorCallback = c.NamedPropertyEnumeratorCallback;
+pub const NamedPropertyDefinerCallback = c.NamedPropertyDefinerCallback;
+pub const NamedPropertyDescriptorCallback = c.NamedPropertyDescriptorCallback;
+pub const NamedPropertyHandlerConfiguration = struct {
+    getter: ?NamedPropertyGetterCallback = null,
+    setter: ?NamedPropertySetterCallback = null,
+    query: ?NamedPropertyQueryCallback = null,
+    deleter: ?NamedPropertyDeleterCallback = null,
+    enumerator: ?NamedPropertyEnumeratorCallback = null,
+    definer: ?NamedPropertyDefinerCallback = null,
+    descriptor: ?NamedPropertyDescriptorCallback = null,
+    flags: c.PropertyHandlerFlags = PropertyHandlerFlags.None,
+};
+
 pub const CreateParams = c.CreateParams;
 
 pub const SharedPtr = c.SharedPtr;
@@ -970,7 +988,7 @@ pub const ObjectTemplate = struct {
     }
 
     pub fn setIndexedProperty(self: Self, configuration: IndexedPropertyHandlerConfiguration, data_val: anytype) void {
-        c.v8__ObjectTemplate__SetIndexedHandler(self.handle, c.IndexedPropertyHandlerConfiguration{
+        const conf = c.IndexedPropertyHandlerConfiguration{
             .getter = configuration.getter orelse null,
             .setter = configuration.setter orelse null,
             .query = configuration.query orelse null,
@@ -980,7 +998,23 @@ pub const ObjectTemplate = struct {
             .descriptor = configuration.descriptor orelse null,
             .data = getDataHandle(data_val),
             .flags = configuration.flags,
-        });
+        };
+        c.v8__ObjectTemplate__SetIndexedHandler(self.handle, &conf);
+    }
+
+    pub fn setNamedProperty(self: Self, configuration: NamedPropertyHandlerConfiguration, data_val: anytype) void {
+        const conf = c.NamedPropertyHandlerConfiguration{
+            .getter = configuration.getter orelse null,
+            .setter = configuration.setter orelse null,
+            .query = configuration.query orelse null,
+            .deleter = configuration.deleter orelse null,
+            .enumerator = configuration.enumerator orelse null,
+            .definer = configuration.definer orelse null,
+            .descriptor = configuration.descriptor orelse null,
+            .data = getDataHandle(data_val),
+            .flags = configuration.flags,
+        };
+        c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
     }
 
     pub fn toValue(self: Self) Value {
