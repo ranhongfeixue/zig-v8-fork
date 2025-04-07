@@ -1550,6 +1550,13 @@ void v8__base__SetDcheckFunction(void (*func)(const char*, int, const char*)) {
 
 // Utils
 
+/// Header for Zig
+/// Allocates `bytes` bytes of memory using the allocator.
+/// @param allocator: A Zig std.mem.Allocator
+/// @param bytes: The number of bytes to allocate
+/// @returns A pointer to the allocated memory, null if allocation failed
+char* zigAlloc(void* allocator, uint64_t bytes);
+
 static inline v8_inspector::StringView toStringView(const char *str, size_t length) {
     auto* stringView = reinterpret_cast<const uint8_t*>(str);
     return { stringView, length };
@@ -1569,12 +1576,20 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
   return *result;
 }
 
-const char* toHeapCharPtr(const v8_inspector::String16& str) {
-    std::string utf8_str = str.utf8(); // Note that this may hold the string on the stack as an SSO
-    char* heap_str = new char[utf8_str.length() + 1];
+/// Allocates a string as utf8 on the heap, such that it can be returned to Zig.
+/// @param str: The string to return
+/// @param allocator: A Zig std.mem.Allocator
+/// @returns string pointer with null terminator, null if allocation failed
+const char* toHeapCharPtr(const v8_inspector::String16& str, void* allocator) {
+    std::string utf8_str = str.utf8(); // Note the data*'s lifetime is tied to utf8_str and this may hold the string data on the stack as an SSO, so we need to copy it onto the heap.
+    char* heap_str = zigAlloc(allocator, utf8_str.length() + 1); // +1 for null terminator, needed to communicate the length to Zig
+    if (heap_str == nullptr) {
+      return nullptr;
+    }
     strcpy(heap_str, utf8_str.c_str());
-    return heap_str;
-  }
+    return heap_str;   
+}
+
 
 // Inspector
 
@@ -1642,15 +1657,12 @@ v8_inspector::protocol::Runtime::RemoteObject* v8_inspector__Session__wrapObject
     const char *grpname, int grpname_len, bool generatepreview) {
   auto sv_grpname = toStringView(grpname, grpname_len);
   auto remote_object = session->wrapObject(ptr_to_local(ctx), ptr_to_local(val), sv_grpname, generatepreview);
-  assert(remote_object != nullptr);
-  auto* not_api = static_cast<v8_inspector::protocol::Runtime::RemoteObject*>(remote_object.release());
-  assert(not_api != nullptr);
-  return not_api;
+  return static_cast<v8_inspector::protocol::Runtime::RemoteObject*>(remote_object.release());
 }
 
 // RemoteObject
 
-// To prevent extra allocations on every call a single default value value is reused everytime.
+// To prevent extra allocations on every call a single default value is reused everytime.
 // It is expected that the precense of a value is checked before calling get* methods.
 const v8_inspector::String16 DEFAULT_STRING = {"default"};
 
@@ -1659,9 +1671,9 @@ void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::RemoteO
 }
 
 // RemoteObject - Type
-const char* v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self) {
+const char* v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
   auto str = self->getType();
-  return toHeapCharPtr(str);
+  return toHeapCharPtr(str, allocator);
 }
 void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::RemoteObject* self, const char* type, int type_len) {
   self->setType(v8_inspector::String16::fromUTF8(type, type_len));
@@ -1671,9 +1683,9 @@ void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::Remote
 bool v8_inspector__RemoteObject__hasSubtype(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasSubtype();
 }
-const char* v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self) {
+const char* v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
   auto str = self->getSubtype(DEFAULT_STRING);
-  return toHeapCharPtr(str);
+  return toHeapCharPtr(str, allocator);
 }
 void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const char* subtype, int subtype_len) {
   self->setSubtype(v8_inspector::String16::fromUTF8(subtype, subtype_len));
@@ -1683,9 +1695,9 @@ void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::Rem
 bool v8_inspector__RemoteObject__hasClassName(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasClassName();
 }
-const char* v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self) {
+const char* v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
   auto str = self->getClassName(DEFAULT_STRING);
-  return toHeapCharPtr(str);
+  return toHeapCharPtr(str, allocator);
 }
 void v8_inspector__RemoteObject__setClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const char* className, int className_len) {
   self->setClassName(v8_inspector::String16::fromUTF8(className, className_len));
@@ -1706,9 +1718,9 @@ void v8_inspector__RemoteObject__setValue(v8_inspector::protocol::Runtime::Remot
 bool v8_inspector__RemoteObject__hasUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasUnserializableValue();
 }
-const char* v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
+const char* v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
   auto str = self->getUnserializableValue(DEFAULT_STRING);
-  return toHeapCharPtr(str);
+  return toHeapCharPtr(str, allocator);
 }
 void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const char* unserializableValue, int unserializableValue_len) {
   self->setUnserializableValue(v8_inspector::String16::fromUTF8(unserializableValue, unserializableValue_len));
@@ -1718,9 +1730,9 @@ void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::
 bool v8_inspector__RemoteObject__hasDescription(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasDescription();
 }
-const char* v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self) {
+const char* v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
   auto str = self->getDescription(DEFAULT_STRING);
-  return toHeapCharPtr(str);
+  return toHeapCharPtr(str, allocator);
 }
 void v8_inspector__RemoteObject__setDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const char* description, int description_len) {
   self->setDescription(v8_inspector::String16::fromUTF8(description, description_len));
@@ -1739,15 +1751,16 @@ void v8_inspector__RemoteObject__setWebDriverValue(v8_inspector::protocol::Runti
 
 // RemoteObject - ObjectId
 bool v8_inspector__RemoteObject__hasObjectId(v8_inspector::protocol::Runtime::RemoteObject* self) {
-    return self->hasObjectId();
-  }
-  const char* v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self) {
-      auto str = self->getObjectId(DEFAULT_STRING);
-      return toHeapCharPtr(str);
-  }
+  return self->hasObjectId();
+}
+
+const char* v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, void* allocator) {
+  auto str = self->getObjectId(DEFAULT_STRING);
+  return toHeapCharPtr(str, allocator);
+}
   void v8_inspector__RemoteObject__setObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const char* objectId, int objectId_len) {
-    self->setObjectId(v8_inspector::String16::fromUTF8(objectId, objectId_len));
-  }
+  self->setObjectId(v8_inspector::String16::fromUTF8(objectId, objectId_len));
+}
 
 // RemoteObject - Preview
 bool v8_inspector__RemoteObject__hasPreview(v8_inspector::protocol::Runtime::RemoteObject* self) {
