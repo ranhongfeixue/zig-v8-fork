@@ -1018,6 +1018,9 @@ char* v8_inspector__Client__IMPL__descriptionForValueSubtype(
 
 // RemoteObject
 typedef struct RemoteObject RemoteObject;
+typedef struct WebDriverValue WebDriverValue;
+typedef struct ObjectPreview ObjectPreview;
+typedef struct CustomPreview CustomPreview;
 
 // InspectorSession
 
@@ -1027,7 +1030,7 @@ void v8_inspector__Session__dispatchProtocolMessage(InspectorSession *session, I
 RemoteObject* v8_inspector__Session__wrapObject(
     InspectorSession *session, Isolate *isolate,
     const Context* ctx, const Value* val,
-    const char *grpname, int grpname_len, bool generatepreview);
+    const char *grpname, usize grpname_len, bool generatepreview);
 
 // Inspector
 typedef struct Inspector Inspector;
@@ -1044,3 +1047,56 @@ void v8_inspector__Inspector__ContextCreated(Inspector *self, const char *name,
                                              const char *auxData, const usize auxData_len,
                                              int contextGroupId,
     const Context* context);
+
+// RemoteObject
+void v8_inspector__RemoteObject__DELETE(RemoteObject *self);
+
+// RemoteObject - Type
+const char* v8_inspector__RemoteObject__getType(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setType(RemoteObject* self, const char* type, int type_len);
+
+// RemoteObject - Subtype
+bool v8_inspector__RemoteObject__hasSubtype(RemoteObject* self);
+const char* v8_inspector__RemoteObject__getSubtype(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setSubtype(RemoteObject* self, const char* subtype, int subtype_len);
+
+// RemoteObject - ClassName
+bool v8_inspector__RemoteObject__hasClassName(RemoteObject* self);
+const char* v8_inspector__RemoteObject__getClassName(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setClassName(RemoteObject* self, const char* className, int className_len);
+
+// RemoteObject - Value
+bool v8_inspector__RemoteObject__hasValue(RemoteObject* self);
+// Commented as these for now as the type should likely be the existing Value TBD
+// v8_inspector::protocol::Value* v8_inspector__RemoteObject__getValue(Rem;eObject* self);
+// void v8_inspector__RemoteObject__setValue(RemoteObject* self, v8_inspector::protocol::Value* value);
+
+//RemoteObject - UnserializableValue
+bool v8_inspector__RemoteObject__hasUnserializableValue(RemoteObject* self);
+const char* v8_inspector__RemoteObject__getUnserializableValue(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setUnserializableValue(RemoteObject* self, const char* unserializableValue, int unserializableValue_len);
+
+// RemoteObject - Description
+bool v8_inspector__RemoteObject__hasDescription(RemoteObject* self);
+const char* v8_inspector__RemoteObject__getDescription(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setDescription(RemoteObject* self, const char* description, int description_len);
+
+// RemoteObject - WebDriverValue
+bool v8_inspector__RemoteObject__hasWebDriverValue(RemoteObject* self);
+WebDriverValue* v8_inspector__RemoteObject__getWebDriverValue(RemoteObject* self);
+void v8_inspector__RemoteObject__setWebDriverValue(RemoteObject* self, WebDriverValue* webDriverValue);
+
+// RemoteObject - ObjectId
+bool v8_inspector__RemoteObject__hasObjectId(RemoteObject* self);
+const char* v8_inspector__RemoteObject__getObjectId(RemoteObject* self, const void* allocator);
+void v8_inspector__RemoteObject__setObjectId(RemoteObject* self, const char* objectId, int objectId_len);
+
+// RemoteObject - Preview
+bool v8_inspector__RemoteObject__hasPreview(RemoteObject* self);
+const ObjectPreview* v8_inspector__RemoteObject__getPreview(RemoteObject* self);
+void v8_inspector__RemoteObject__setPreview(RemoteObject* self, ObjectPreview* preview);
+
+// RemoteObject - CustomPreview
+bool v8_inspector__RemoteObject__hasCustomPreview(RemoteObject* self);
+const CustomPreview* v8_inspector__RemoteObject__getCustomPreview(RemoteObject* self);
+void v8_inspector__RemoteObject__setCustomPreview(RemoteObject* self, CustomPreview* customPreview);

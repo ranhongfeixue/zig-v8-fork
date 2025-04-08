@@ -2704,7 +2704,7 @@ pub const InspectorSession = struct {
     }
 
     pub fn wrapObject(self: InspectorSession, isolate: Isolate, ctx: Context, val: Value, grpname: []const u8, generatepreview: bool) !RemoteObject {
-        const remote_obj = c.v8_inspector__Session__wrapObject(
+        const remote_object = c.v8_inspector__Session__wrapObject(
             self.handle,
             isolate.handle,
             ctx.handle,
@@ -2712,17 +2712,83 @@ pub const InspectorSession = struct {
             grpname.ptr,
             grpname.len,
             generatepreview,
-        );
-        if (remote_obj) {
-            return RemoteObject{ .handle = remote_obj };
-        } else return error.JsException;
+        ).?;
+        return RemoteObject{ .handle = remote_object };
     }
 };
 
+/// Note: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
+/// The getters short-circuit if the default values is not available as converting the defaults to V8 causes unnecessary overhead.
+///
+/// https://chromedevtools.github.io/devtools-protocol/tot/Runtime/#type-RemoteObject
 pub const RemoteObject = struct {
     handle: *c.RemoteObject,
 
-    pub fn deinit(self: *RemoteObject) void {
+    pub fn deinit(self: RemoteObject) void {
         c.v8_inspector__RemoteObject__DELETE(self.handle);
     }
+
+    pub fn getType(self: RemoteObject, allocator: std.mem.Allocator) ![:0]const u8 {
+        const type_ = c.v8_inspector__RemoteObject__getType(self.handle, &allocator);
+        if (type_ == null) {
+            return error.V8AllocFailed;
+        }
+        const idx = std.mem.indexOfSentinel(u8, 0, type_);
+        return type_[0..idx :0];
+    }
+    pub fn getSubtype(self: RemoteObject, allocator: std.mem.Allocator) !?[:0]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasSubtype(self.handle)) {
+            return null;
+        }
+
+        const subtype = c.v8_inspector__RemoteObject__getSubtype(self.handle, &allocator);
+        if (subtype == null) {
+            return error.V8AllocFailed;
+        }
+        const idx = std.mem.indexOfSentinel(u8, 0, subtype);
+        return subtype[0..idx :0];
+    }
+    pub fn getClassName(self: RemoteObject, allocator: std.mem.Allocator) !?[:0]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasClassName(self.handle)) {
+            return null;
+        }
+
+        const class_name = c.v8_inspector__RemoteObject__getClassName(self.handle, &allocator);
+        if (class_name == null) {
+            return error.V8AllocFailed;
+        }
+        const idx = std.mem.indexOfSentinel(u8, 0, class_name);
+        return class_name[0..idx :0];
+    }
+    pub fn getDescription(self: RemoteObject, allocator: std.mem.Allocator) !?[:0]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasDescription(self.handle)) {
+            return null;
+        }
+
+        const description = c.v8_inspector__RemoteObject__getDescription(self.handle, &allocator);
+        if (description == null) {
+            return error.V8AllocFailed;
+        }
+        const idx = std.mem.indexOfSentinel(u8, 0, description);
+        return description[0..idx :0];
+    }
+    pub fn getObjectId(self: RemoteObject, allocator: std.mem.Allocator) !?[:0]const u8 {
+        if (!c.v8_inspector__RemoteObject__hasObjectId(self.handle)) {
+            return null;
+        }
+
+        const object_id = c.v8_inspector__RemoteObject__getObjectId(self.handle, &allocator);
+        if (object_id == null) {
+            return error.V8AllocFailed;
+        }
+        const idx = std.mem.indexOfSentinel(u8, 0, object_id);
+        return object_id[0..idx :0];
+    }
 };
+
+/// Enables C to allocate using the given Zig allocator
+pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.C) ?[*]u8 {
+    const allocator: *std.mem.Allocator = @ptrCast(@alignCast(self));
+    const allocated_bytes = allocator.alloc(u8, bytes) catch return null;
+    return allocated_bytes.ptr;
+}
