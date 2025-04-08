@@ -889,6 +889,12 @@ void v8__ObjectTemplate__SetIndexedHandler(
     ptr_to_local(&self)->SetHandler(configuration);
 }
 
+void v8__ObjectTemplate__SetNamedHandler(
+        const v8::ObjectTemplate& self,
+        const v8::NamedPropertyHandlerConfiguration& configuration) {
+    ptr_to_local(&self)->SetHandler(configuration);
+}
+
 // Array
 
 const v8::Array* v8__Array__New(

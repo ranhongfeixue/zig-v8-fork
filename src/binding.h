@@ -808,7 +808,29 @@ typedef struct IndexedPropertyHandlerConfiguration {
 } IndexedPropertyHandlerConfiguration;
 void v8__ObjectTemplate__SetIndexedHandler(
     const ObjectTemplate* self,
-    IndexedPropertyHandlerConfiguration configuration);
+    const IndexedPropertyHandlerConfiguration* configuration);
+
+typedef void (*NamedPropertyGetterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef void (*NamedPropertySetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
+typedef void (*NamedPropertyQueryCallback)(const Name*, const PropertyCallbackInfo*);
+typedef void (*NamedPropertyDeleterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef void (*NamedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef void (*NamedPropertyDefinerCallback)(const Name*, PropertyDescriptor* desc, const PropertyCallbackInfo*);
+typedef void (*NamedPropertyDescriptorCallback)(const Name*, const PropertyCallbackInfo*);
+typedef struct NamedPropertyHandlerConfiguration {
+    NamedPropertyGetterCallback getter;
+    NamedPropertySetterCallback setter;
+    NamedPropertyQueryCallback query;
+    NamedPropertyDeleterCallback deleter;
+    NamedPropertyEnumeratorCallback enumerator;
+    NamedPropertyDefinerCallback definer;
+    NamedPropertyDescriptorCallback descriptor;
+    const Value* data;
+    PropertyHandlerFlags flags;
+} NamedPropertyHandlerConfiguration;
+void v8__ObjectTemplate__SetNamedHandler(
+    const ObjectTemplate* self,
+    const NamedPropertyHandlerConfiguration* configuration);
 
 // ScriptOrigin
 typedef struct ScriptOriginOptions {
