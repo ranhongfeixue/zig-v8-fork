@@ -1032,6 +1032,19 @@ RemoteObject* v8_inspector__Session__wrapObject(
     const Context* ctx, const Value* val,
     const char *grpname, usize grpname_len, bool generatepreview);
 
+bool v8_inspector__Session__unwrapObject(
+    InspectorSession *session,
+    const void* allocator,
+    const char* out_error,
+    uint64_t* out_error_len,
+    const char *in_objectId,
+    int in_objectId_len,
+    Value out_value,
+    Context out_context,
+    const char* out_objectGroup,
+    uint64_t* out_objectGroup_len
+);
+
 // Inspector
 typedef struct Inspector Inspector;
 Inspector* v8_inspector__Inspector__Create(Isolate* isolate, InspectorClientImpl* client);

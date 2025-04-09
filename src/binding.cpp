@@ -6,6 +6,7 @@
 #include "include/v8.h"
 #include "src/api/api.h"
 #include "src/inspector/protocol/Runtime.h"
+#include "src/inspector/v8-string-conversions.h"
 
 #include "inspector.h"
 
@@ -1567,6 +1568,12 @@ static inline v8_inspector::StringView toStringView(const char *str, size_t leng
     auto* stringView = reinterpret_cast<const uint8_t*>(str);
     return { stringView, length };
 }
+/// Overload for safety in case the function is called with a string literal
+static inline v8_inspector::StringView toStringView(const char *str) {
+    size_t length = strlen(str);
+    auto* stringView = reinterpret_cast<const uint8_t*>(str);
+    return { stringView, length };
+}
 static inline v8_inspector::StringView toStringView(const std::string &str) {
     return toStringView(str.c_str(), str.length());
 }
@@ -1586,7 +1593,7 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
 /// @param str: The string to return
 /// @param allocator: A Zig std.mem.Allocator
 /// @returns string pointer with null terminator, null if allocation failed
-const char* toHeapCharPtr(const v8_inspector::String16& str, const void* allocator) {
+const char* allocStringWith0(const v8_inspector::String16& str, const void* allocator) {
     std::string utf8_str = str.utf8(); // Note the data*'s lifetime is tied to utf8_str and this may hold the string data on the stack as an SSO, so we need to copy it onto the heap.
     char* heap_str = zigAlloc(allocator, utf8_str.length() + 1); // +1 for null terminator, needed to communicate the length to Zig
     if (heap_str == nullptr) {
@@ -1594,6 +1601,37 @@ const char* toHeapCharPtr(const v8_inspector::String16& str, const void* allocat
     }
     strcpy(heap_str, utf8_str.c_str());
     return heap_str;   
+}
+
+/// Allocates a string as utf8 on the allocator without \0 terminator, for use in Zig.
+/// The strings pointer and length should therefore be returned together
+/// @param str: The string contents to allocate
+/// @param allocator: A Zig std.mem.Allocator
+/// @param out_str: Points to the now allocated string on the heap (without sentinel \0)
+/// @param out_len: The corresponding length of the string
+void allocString(const v8_inspector::StringView& str, const void* allocator, const char*& out_str, size_t& out_len) {
+    std::string utf8_str; // Harmless if not used by 8bit string
+    if (str.is8Bit()) {
+        out_len = str.length();
+    } else {
+        utf8_str = v8_inspector::UTF16ToUTF8(str.characters16(), str.length());
+        out_len = utf8_str.length();
+    }
+
+    char* heap_str = zigAlloc(allocator, out_len);
+    if (heap_str == nullptr) {
+        out_str = nullptr;
+        out_len = 0;
+        return;
+    }
+    
+    if (str.is8Bit()) {
+        memcpy(heap_str, str.characters8(), out_len);
+    } else {
+        memcpy(heap_str, utf8_str.c_str(), out_len);
+    }
+    out_str = heap_str;
+    return;
 }
 
 
@@ -1666,6 +1704,36 @@ v8_inspector::protocol::Runtime::RemoteObject* v8_inspector__Session__wrapObject
   return static_cast<v8_inspector::protocol::Runtime::RemoteObject*>(remote_object.release());
 }
 
+bool v8_inspector__Session__unwrapObject(
+    v8_inspector::V8InspectorSession *session,
+    const void* allocator,
+    const char* out_error,
+    uint64_t& out_error_len,
+    const char *in_objectId,
+    int in_objectId_len,
+    v8::Local<v8::Value> out_value,
+    v8::Local<v8::Context> out_context,
+    const char* out_objectGroup,
+    uint64_t& out_objectGroup_len
+) {
+  auto objectId = toStringView(in_objectId, in_objectId_len);
+  auto error = v8_inspector::StringBuffer::create({});
+  auto objectGroup = v8_inspector::StringBuffer::create({});  
+        
+  // [out optional ] std::unique_ptr<StringBuffer>* error,
+  // [in  required ] StringView                     objectId,
+  // [out required ] v8::Local<v8::Value>         * value
+  // [out required ] v8::Local<v8::Context>       * context
+  // [out optional ] std::unique_ptr<StringBuffer>* objectGroup
+  bool result = session->unwrapObject(&error, objectId, &out_value, &out_context, &objectGroup);
+  if (!result) {
+    allocString(error->string(), allocator, out_error, out_error_len);
+    return false;
+  }
+  allocString(objectGroup->string(), allocator, out_objectGroup, out_objectGroup_len);
+  return result;
+}
+
 // RemoteObject
 
 // To prevent extra allocations on every call a single default value is reused everytime.
@@ -1679,7 +1747,7 @@ void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::RemoteO
 // RemoteObject - Type
 const char* v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getType();
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
 void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::RemoteObject* self, const char* type, int type_len) {
   self->setType(v8_inspector::String16::fromUTF8(type, type_len));
@@ -1691,7 +1759,7 @@ bool v8_inspector__RemoteObject__hasSubtype(v8_inspector::protocol::Runtime::Rem
 }
 const char* v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getSubtype(DEFAULT_STRING);
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
 void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const char* subtype, int subtype_len) {
   self->setSubtype(v8_inspector::String16::fromUTF8(subtype, subtype_len));
@@ -1703,7 +1771,7 @@ bool v8_inspector__RemoteObject__hasClassName(v8_inspector::protocol::Runtime::R
 }
 const char* v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getClassName(DEFAULT_STRING);
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
 void v8_inspector__RemoteObject__setClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const char* className, int className_len) {
   self->setClassName(v8_inspector::String16::fromUTF8(className, className_len));
@@ -1726,7 +1794,7 @@ bool v8_inspector__RemoteObject__hasUnserializableValue(v8_inspector::protocol::
 }
 const char* v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getUnserializableValue(DEFAULT_STRING);
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
 void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const char* unserializableValue, int unserializableValue_len) {
   self->setUnserializableValue(v8_inspector::String16::fromUTF8(unserializableValue, unserializableValue_len));
@@ -1738,7 +1806,7 @@ bool v8_inspector__RemoteObject__hasDescription(v8_inspector::protocol::Runtime:
 }
 const char* v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getDescription(DEFAULT_STRING);
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
 void v8_inspector__RemoteObject__setDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const char* description, int description_len) {
   self->setDescription(v8_inspector::String16::fromUTF8(description, description_len));
@@ -1762,7 +1830,7 @@ bool v8_inspector__RemoteObject__hasObjectId(v8_inspector::protocol::Runtime::Re
 
 const char* v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getObjectId(DEFAULT_STRING);
-  return toHeapCharPtr(str, allocator);
+  return allocStringWith0(str, allocator);
 }
   void v8_inspector__RemoteObject__setObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const char* objectId, int objectId_len) {
   self->setObjectId(v8_inspector::String16::fromUTF8(objectId, objectId_len));
