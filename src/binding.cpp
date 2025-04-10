@@ -1607,9 +1607,16 @@ const char* allocStringWith0(const v8_inspector::String16& str, const void* allo
 /// The strings pointer and length should therefore be returned together
 /// @param str: The string contents to allocate
 /// @param allocator: A Zig std.mem.Allocator
-/// @param out_str: Points to the now allocated string on the heap (without sentinel \0)
+/// @param out_str: Points to the now allocated string on the heap (without sentinel \0),null if view was null or allocation failed
 /// @param out_len: The corresponding length of the string
-void allocString(const v8_inspector::StringView& str, const void* allocator, const char*& out_str, size_t& out_len) {
+/// @returns false if allocation errored
+bool allocString(const v8_inspector::StringView& str, const void* allocator, const char*& out_str, size_t& out_len) {
+    if (str.characters8() == nullptr) {
+        out_str = nullptr;
+        out_len = 0;
+        return true;
+    }
+
     std::string utf8_str; // Harmless if not used by 8bit string
     if (str.is8Bit()) {
         out_len = str.length();
@@ -1622,7 +1629,7 @@ void allocString(const v8_inspector::StringView& str, const void* allocator, con
     if (heap_str == nullptr) {
         out_str = nullptr;
         out_len = 0;
-        return;
+        return false;
     }
     
     if (str.is8Bit()) {
@@ -1631,7 +1638,7 @@ void allocString(const v8_inspector::StringView& str, const void* allocator, con
         memcpy(heap_str, utf8_str.c_str(), out_len);
     }
     out_str = heap_str;
-    return;
+    return true;
 }
 
 
@@ -1706,15 +1713,15 @@ v8_inspector::protocol::Runtime::RemoteObject* v8_inspector__Session__wrapObject
 
 bool v8_inspector__Session__unwrapObject(
     v8_inspector::V8InspectorSession *session,
-    const void* allocator,
-    const char* out_error,
-    uint64_t& out_error_len,
+    const void *allocator,
+    const char *&out_error,
+    uint64_t &out_error_len,
     const char *in_objectId,
     int in_objectId_len,
-    v8::Local<v8::Value> out_value,
-    v8::Local<v8::Context> out_context,
-    const char* out_objectGroup,
-    uint64_t& out_objectGroup_len
+    v8::Local<v8::Value> &out_value,
+    v8::Local<v8::Context> &out_context,
+    const char *&out_objectGroup,
+    uint64_t &out_objectGroup_len
 ) {
   auto objectId = toStringView(in_objectId, in_objectId_len);
   auto error = v8_inspector::StringBuffer::create({});
@@ -1730,8 +1737,7 @@ bool v8_inspector__Session__unwrapObject(
     allocString(error->string(), allocator, out_error, out_error_len);
     return false;
   }
-  allocString(objectGroup->string(), allocator, out_objectGroup, out_objectGroup_len);
-  return result;
+  return allocString(objectGroup->string(), allocator, out_objectGroup, out_objectGroup_len);
 }
 
 // RemoteObject

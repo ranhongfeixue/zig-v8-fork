@@ -2722,13 +2722,13 @@ pub const InspectorSession = struct {
 
     pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, objectId: []const u8) !UnwrapResult {
         var out_error: [*c]const u8 = null;
-        var out_error_len: i64 = 0;
+        var out_error_len: u64 = 0;
 
         var out_value_handle: ?*c.Value = null;
         var out_context_handle: ?*c.Context = null;
 
         var out_objectGroup: [*c]const u8 = null;
-        var out_objectGroup_len: i64 = 0;
+        var out_objectGroup_len: u64 = 0;
 
         const result = c.v8_inspector__Session__unwrapObject(
             self.handle,
@@ -2739,17 +2739,18 @@ pub const InspectorSession = struct {
             objectId.len,
             &out_value_handle,
             &out_context_handle,
-            &out_objectGroup.ptr,
+            &out_objectGroup,
             &out_objectGroup_len,
         );
         if (!result) {
-            return .{ .err = out_error.?[0..out_error_len] };
+            return .{ .err = if (out_error != null) out_error[0..out_error_len] else null };
         }
+
         return .{
             .ok = .{
                 .value = Value{ .handle = out_value_handle.? },
                 .context = Context{ .handle = out_context_handle.? },
-                .objectGroup = out_objectGroup.?[0..out_objectGroup_len], // TODO can this be null?
+                .objectGroup = if (out_objectGroup != null) out_objectGroup[0..out_objectGroup_len] else null,
             },
         };
     }
@@ -2758,12 +2759,12 @@ pub const InspectorSession = struct {
 pub const UnwrappedObject = struct {
     value: Value,
     context: Context,
-    objectGroup: []const u8,
+    objectGroup: ?[]const u8,
 };
 pub const UnwrapResultEnum = enum { ok, err };
 pub const UnwrapResult = union(UnwrapResultEnum) {
     ok: UnwrappedObject,
-    err: []const u8,
+    err: ?[]const u8,
 };
 
 /// Note: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
