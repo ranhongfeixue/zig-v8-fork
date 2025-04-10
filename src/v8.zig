@@ -2778,55 +2778,37 @@ pub const RemoteObject = struct {
     }
 
     pub fn getType(self: RemoteObject, allocator: std.mem.Allocator) ![]const u8 {
-        const ctype_ = c.v8_inspector__RemoteObject__getType(self.handle, &allocator);
-        if (CZigStringToString(ctype_)) |type_| {
-            return type_;
-        }
-        return error.V8AllocFailed;
+        var ctype_: c.CZigString = .{ .ptr = null, .len = 0 };
+        if (!c.v8_inspector__RemoteObject__getType(self.handle, &allocator, &ctype_)) return error.V8AllocFailed;
+        return CZigStringToString(ctype_) orelse return error.InvalidType;
     }
     pub fn getSubtype(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasSubtype(self.handle)) {
-            return null;
-        }
+        if (!c.v8_inspector__RemoteObject__hasSubtype(self.handle)) return null;
 
-        const csubtype = c.v8_inspector__RemoteObject__getSubtype(self.handle, &allocator);
-        if (CZigStringToString(csubtype)) |subtype| {
-            return subtype;
-        }
-        return error.V8AllocFailed;
+        var csubtype: c.CZigString = .{ .ptr = null, .len = 0 };
+        if (!c.v8_inspector__RemoteObject__getSubtype(self.handle, &allocator, &csubtype)) return error.V8AllocFailed;
+        return CZigStringToString(csubtype);
     }
     pub fn getClassName(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasClassName(self.handle)) {
-            return null;
-        }
+        if (!c.v8_inspector__RemoteObject__hasClassName(self.handle)) return null;
 
-        const cclass_name = c.v8_inspector__RemoteObject__getClassName(self.handle, &allocator);
-        if (CZigStringToString(cclass_name)) |class_name| {
-            return class_name;
-        }
-        return error.V8AllocFailed;
+        var cclass_name: c.CZigString = .{ .ptr = null, .len = 0 };
+        if (!c.v8_inspector__RemoteObject__getClassName(self.handle, &allocator, &cclass_name)) return error.V8AllocFailed;
+        return CZigStringToString(cclass_name);
     }
     pub fn getDescription(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasDescription(self.handle)) {
-            return null;
-        }
+        if (!c.v8_inspector__RemoteObject__hasDescription(self.handle)) return null;
 
-        const cdescription = c.v8_inspector__RemoteObject__getDescription(self.handle, &allocator);
-        if (CZigStringToString(cdescription)) |description| {
-            return description;
-        }
-        return error.V8AllocFailed;
+        var description: c.CZigString = .{ .ptr = null, .len = 0 };
+        if (!c.v8_inspector__RemoteObject__getDescription(self.handle, &allocator, &description)) return error.V8AllocFailed;
+        return CZigStringToString(description);
     }
     pub fn getObjectId(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
-        if (!c.v8_inspector__RemoteObject__hasObjectId(self.handle)) {
-            return null;
-        }
+        if (!c.v8_inspector__RemoteObject__hasObjectId(self.handle)) return null;
 
-        const cobject_id = c.v8_inspector__RemoteObject__getObjectId(self.handle, &allocator);
-        if (CZigStringToString(cobject_id)) |object_id| {
-            return object_id;
-        }
-        return error.V8AllocFailed;
+        var cobject_id: c.CZigString = .{ .ptr = null, .len = 0 };
+        if (!c.v8_inspector__RemoteObject__getObjectId(self.handle, &allocator, &cobject_id)) return error.V8AllocFailed;
+        return CZigStringToString(cobject_id);
     }
 };
 

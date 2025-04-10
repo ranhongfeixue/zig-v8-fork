@@ -1068,17 +1068,17 @@ void v8_inspector__Inspector__ContextCreated(Inspector *self, const char *name,
 void v8_inspector__RemoteObject__DELETE(RemoteObject *self);
 
 // RemoteObject - Type
-CZigString v8_inspector__RemoteObject__getType(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getType(RemoteObject* self, const void* allocator, CZigString* out_type);
 void v8_inspector__RemoteObject__setType(RemoteObject* self, CZigString type);
 
 // RemoteObject - Subtype
 bool v8_inspector__RemoteObject__hasSubtype(RemoteObject* self);
-CZigString v8_inspector__RemoteObject__getSubtype(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getSubtype(RemoteObject* self, const void* allocator, CZigString* out_subtype);
 void v8_inspector__RemoteObject__setSubtype(RemoteObject* self, CZigString subtype);
 
 // RemoteObject - ClassName
 bool v8_inspector__RemoteObject__hasClassName(RemoteObject* self);
-CZigString v8_inspector__RemoteObject__getClassName(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getClassName(RemoteObject* self, const void* allocator, CZigString* out_className);
 void v8_inspector__RemoteObject__setClassName(RemoteObject* self, CZigString className);
 
 // RemoteObject - Value
@@ -1089,12 +1089,12 @@ bool v8_inspector__RemoteObject__hasValue(RemoteObject* self);
 
 //RemoteObject - UnserializableValue
 bool v8_inspector__RemoteObject__hasUnserializableValue(RemoteObject* self);
-CZigString v8_inspector__RemoteObject__getUnserializableValue(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getUnserializableValue(RemoteObject* self, const void* allocator, CZigString* out_unserializableValue);
 void v8_inspector__RemoteObject__setUnserializableValue(RemoteObject* self, CZigString unserializableValue);
 
 // RemoteObject - Description
 bool v8_inspector__RemoteObject__hasDescription(RemoteObject* self);
-CZigString v8_inspector__RemoteObject__getDescription(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getDescription(RemoteObject* self, const void* allocator, CZigString* out_description);
 void v8_inspector__RemoteObject__setDescription(RemoteObject* self, CZigString description);
 
 // RemoteObject - WebDriverValue
@@ -1104,7 +1104,7 @@ void v8_inspector__RemoteObject__setWebDriverValue(RemoteObject* self, WebDriver
 
 // RemoteObject - ObjectId
 bool v8_inspector__RemoteObject__hasObjectId(RemoteObject* self);
-CZigString v8_inspector__RemoteObject__getObjectId(RemoteObject* self, const void* allocator);
+bool v8_inspector__RemoteObject__getObjectId(RemoteObject* self, const void* allocator, CZigString* out_objectId);
 void v8_inspector__RemoteObject__setObjectId(RemoteObject* self, CZigString objectId);
 
 // RemoteObject - Preview
