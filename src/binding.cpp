@@ -1557,6 +1557,11 @@ void v8__base__SetDcheckFunction(void (*func)(const char*, int, const char*)) {
 
 // Utils
 
+struct CZigString {
+    const char *ptr = nullptr;
+    uint64_t len = 0;
+};
+
 /// Header for Zig
 /// Allocates `bytes` bytes of memory using the allocator.
 /// @param allocator: A Zig std.mem.Allocator
@@ -1607,37 +1612,34 @@ const char* allocStringWith0(const v8_inspector::String16& str, const void* allo
 /// The strings pointer and length should therefore be returned together
 /// @param str: The string contents to allocate
 /// @param allocator: A Zig std.mem.Allocator
-/// @param out_str: Points to the now allocated string on the heap (without sentinel \0),null if view was null or allocation failed
-/// @param out_len: The corresponding length of the string
+/// @param out: Points to the now allocated string on the heap (without sentinel \0), NULL if view was null, invalid if allocation failed
 /// @returns false if allocation errored
-bool allocString(const v8_inspector::StringView& str, const void* allocator, const char*& out_str, size_t& out_len) {
-    if (str.characters8() == nullptr) {
-        out_str = nullptr;
-        out_len = 0;
+bool allocString(const v8_inspector::StringView& input, const void* allocator, CZigString& output) {
+    if (input.characters8() == nullptr) {
+        output.ptr = nullptr;
+        output.len = 0;
         return true;
     }
 
     std::string utf8_str; // Harmless if not used by 8bit string
-    if (str.is8Bit()) {
-        out_len = str.length();
+    if (input.is8Bit()) {
+        output.len = input.length();
     } else {
-        utf8_str = v8_inspector::UTF16ToUTF8(str.characters16(), str.length());
-        out_len = utf8_str.length();
+        utf8_str = v8_inspector::UTF16ToUTF8(input.characters16(), input.length());
+        output.len = utf8_str.length();
     }
 
-    char* heap_str = zigAlloc(allocator, out_len);
+    char* heap_str = zigAlloc(allocator, output.len);
     if (heap_str == nullptr) {
-        out_str = nullptr;
-        out_len = 0;
         return false;
     }
     
-    if (str.is8Bit()) {
-        memcpy(heap_str, str.characters8(), out_len);
+    if (input.is8Bit()) {
+        memcpy(heap_str, input.characters8(), output.len);
     } else {
-        memcpy(heap_str, utf8_str.c_str(), out_len);
+        memcpy(heap_str, utf8_str.c_str(), output.len);
     }
-    out_str = heap_str;
+    output.ptr = heap_str;
     return true;
 }
 
@@ -1714,16 +1716,13 @@ v8_inspector::protocol::Runtime::RemoteObject* v8_inspector__Session__wrapObject
 bool v8_inspector__Session__unwrapObject(
     v8_inspector::V8InspectorSession *session,
     const void *allocator,
-    const char *&out_error,
-    uint64_t &out_error_len,
-    const char *in_objectId,
-    int in_objectId_len,
+    CZigString &out_error,
+    CZigString in_objectId,
     v8::Local<v8::Value> &out_value,
     v8::Local<v8::Context> &out_context,
-    const char *&out_objectGroup,
-    uint64_t &out_objectGroup_len
+    CZigString &out_objectGroup
 ) {
-  auto objectId = toStringView(in_objectId, in_objectId_len);
+  auto objectId = toStringView(in_objectId.ptr, in_objectId.len);
   auto error = v8_inspector::StringBuffer::create({});
   auto objectGroup = v8_inspector::StringBuffer::create({});  
         
@@ -1734,10 +1733,10 @@ bool v8_inspector__Session__unwrapObject(
   // [out optional ] std::unique_ptr<StringBuffer>* objectGroup
   bool result = session->unwrapObject(&error, objectId, &out_value, &out_context, &objectGroup);
   if (!result) {
-    allocString(error->string(), allocator, out_error, out_error_len);
+    allocString(error->string(), allocator, out_error);
     return false;
   }
-  return allocString(objectGroup->string(), allocator, out_objectGroup, out_objectGroup_len);
+  return allocString(objectGroup->string(), allocator, out_objectGroup);
 }
 
 // RemoteObject

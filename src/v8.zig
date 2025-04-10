@@ -2721,40 +2721,41 @@ pub const InspectorSession = struct {
     }
 
     pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, objectId: []const u8) !UnwrapResult {
-        var out_error: [*c]const u8 = null;
-        var out_error_len: u64 = 0;
-
+        const in_objectId = c.CZigString{
+            .ptr = objectId.ptr,
+            .len = objectId.len,
+        };
+        var out_error: c.CZigString = .{ .ptr = null, .len = 0 };
         var out_value_handle: ?*c.Value = null;
         var out_context_handle: ?*c.Context = null;
-
-        var out_objectGroup: [*c]const u8 = null;
-        var out_objectGroup_len: u64 = 0;
+        var out_objectGroup: c.CZigString = .{ .ptr = null, .len = 0 };
 
         const result = c.v8_inspector__Session__unwrapObject(
             self.handle,
             &allocator,
             &out_error,
-            &out_error_len,
-            objectId.ptr,
-            objectId.len,
+            in_objectId,
             &out_value_handle,
             &out_context_handle,
             &out_objectGroup,
-            &out_objectGroup_len,
         );
         if (!result) {
-            return .{ .err = if (out_error != null) out_error[0..out_error_len] else null };
+            return .{ .err = CZigStringToString(out_error) };
         }
 
         return .{
             .ok = .{
                 .value = Value{ .handle = out_value_handle.? },
                 .context = Context{ .handle = out_context_handle.? },
-                .objectGroup = if (out_objectGroup != null) out_objectGroup[0..out_objectGroup_len] else null,
+                .objectGroup = CZigStringToString(out_objectGroup),
             },
         };
     }
 };
+
+pub fn CZigStringToString(slice: c.CZigString) ?[]const u8 {
+    return if (slice.ptr == null) null else slice.ptr[0..slice.len];
+}
 
 pub const UnwrappedObject = struct {
     value: Value,
