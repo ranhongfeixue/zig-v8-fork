@@ -2720,27 +2720,27 @@ pub const InspectorSession = struct {
         return RemoteObject{ .handle = remote_object };
     }
 
-    pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, objectId: []const u8) !UnwrappedObject {
-        const in_objectId = c.CZigString{
-            .ptr = objectId.ptr,
-            .len = objectId.len,
+    pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, object_id: []const u8) !UnwrappedObject {
+        const in_object_id = c.CZigString{
+            .ptr = object_id.ptr,
+            .len = object_id.len,
         };
         var out_error: c.CZigString = .{ .ptr = null, .len = 0 };
         var out_value_handle: ?*c.Value = null;
         var out_context_handle: ?*c.Context = null;
-        var out_objectGroup: c.CZigString = .{ .ptr = null, .len = 0 };
+        var out_object_group: c.CZigString = .{ .ptr = null, .len = 0 };
 
         const result = c.v8_inspector__Session__unwrapObject(
             self.handle,
             &allocator,
             &out_error,
-            in_objectId,
+            in_object_id,
             &out_value_handle,
             &out_context_handle,
-            &out_objectGroup,
+            &out_object_group,
         );
         if (!result) {
-            if (CZigStringToString(out_error)) |err| {
+            if (cZigStringToString(out_error)) |err| {
                 if (std.mem.eql(u8, err, "Invalid remote object id")) return error.InvalidRemoteObjectId;
                 if (std.mem.eql(u8, err, "Cannot find context with specified id")) return error.CannotFindContextWithSpecifiedId;
                 if (std.mem.eql(u8, err, "Could not find object with given id")) return error.CouldNotFindObjectWithGivenId;
@@ -2751,19 +2751,19 @@ pub const InspectorSession = struct {
         return .{
             .value = Value{ .handle = out_value_handle.? },
             .context = Context{ .handle = out_context_handle.? },
-            .objectGroup = CZigStringToString(out_objectGroup),
+            .object_group = cZigStringToString(out_object_group),
         };
     }
 };
 
-pub fn CZigStringToString(slice: c.CZigString) ?[]const u8 {
+pub fn cZigStringToString(slice: c.CZigString) ?[]const u8 {
     return if (slice.ptr == null) null else slice.ptr[0..slice.len];
 }
 
 pub const UnwrappedObject = struct {
     value: Value,
     context: Context,
-    objectGroup: ?[]const u8,
+    object_group: ?[]const u8,
 };
 
 /// Note: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
@@ -2780,35 +2780,35 @@ pub const RemoteObject = struct {
     pub fn getType(self: RemoteObject, allocator: std.mem.Allocator) ![]const u8 {
         var ctype_: c.CZigString = .{ .ptr = null, .len = 0 };
         if (!c.v8_inspector__RemoteObject__getType(self.handle, &allocator, &ctype_)) return error.V8AllocFailed;
-        return CZigStringToString(ctype_) orelse return error.InvalidType;
+        return cZigStringToString(ctype_) orelse return error.InvalidType;
     }
     pub fn getSubtype(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
         if (!c.v8_inspector__RemoteObject__hasSubtype(self.handle)) return null;
 
         var csubtype: c.CZigString = .{ .ptr = null, .len = 0 };
         if (!c.v8_inspector__RemoteObject__getSubtype(self.handle, &allocator, &csubtype)) return error.V8AllocFailed;
-        return CZigStringToString(csubtype);
+        return cZigStringToString(csubtype);
     }
     pub fn getClassName(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
         if (!c.v8_inspector__RemoteObject__hasClassName(self.handle)) return null;
 
         var cclass_name: c.CZigString = .{ .ptr = null, .len = 0 };
         if (!c.v8_inspector__RemoteObject__getClassName(self.handle, &allocator, &cclass_name)) return error.V8AllocFailed;
-        return CZigStringToString(cclass_name);
+        return cZigStringToString(cclass_name);
     }
     pub fn getDescription(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
         if (!c.v8_inspector__RemoteObject__hasDescription(self.handle)) return null;
 
         var description: c.CZigString = .{ .ptr = null, .len = 0 };
         if (!c.v8_inspector__RemoteObject__getDescription(self.handle, &allocator, &description)) return error.V8AllocFailed;
-        return CZigStringToString(description);
+        return cZigStringToString(description);
     }
     pub fn getObjectId(self: RemoteObject, allocator: std.mem.Allocator) !?[]const u8 {
         if (!c.v8_inspector__RemoteObject__hasObjectId(self.handle)) return null;
 
         var cobject_id: c.CZigString = .{ .ptr = null, .len = 0 };
         if (!c.v8_inspector__RemoteObject__getObjectId(self.handle, &allocator, &cobject_id)) return error.V8AllocFailed;
-        return CZigStringToString(cobject_id);
+        return cZigStringToString(cobject_id);
     }
 };
 
