@@ -2720,7 +2720,7 @@ pub const InspectorSession = struct {
         return RemoteObject{ .handle = remote_object };
     }
 
-    pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, objectId: []const u8) !UnwrapResult {
+    pub fn unwrapObject(self: InspectorSession, allocator: std.mem.Allocator, objectId: []const u8) !UnwrappedObject {
         const in_objectId = c.CZigString{
             .ptr = objectId.ptr,
             .len = objectId.len,
@@ -2740,15 +2740,18 @@ pub const InspectorSession = struct {
             &out_objectGroup,
         );
         if (!result) {
-            return .{ .err = CZigStringToString(out_error) };
+            if (CZigStringToString(out_error)) |err| {
+                if (std.mem.eql(u8, err, "Invalid remote object id")) return error.InvalidRemoteObjectId;
+                if (std.mem.eql(u8, err, "Cannot find context with specified id")) return error.CannotFindContextWithSpecifiedId;
+                if (std.mem.eql(u8, err, "Could not find object with given id")) return error.CouldNotFindObjectWithGivenId;
+                return error.NewUnwrapErrorPleaseReport;
+            }
+            return error.V8AllocFailed;
         }
-
         return .{
-            .ok = .{
-                .value = Value{ .handle = out_value_handle.? },
-                .context = Context{ .handle = out_context_handle.? },
-                .objectGroup = CZigStringToString(out_objectGroup),
-            },
+            .value = Value{ .handle = out_value_handle.? },
+            .context = Context{ .handle = out_context_handle.? },
+            .objectGroup = CZigStringToString(out_objectGroup),
         };
     }
 };
@@ -2761,11 +2764,6 @@ pub const UnwrappedObject = struct {
     value: Value,
     context: Context,
     objectGroup: ?[]const u8,
-};
-pub const UnwrapResultEnum = enum { ok, err };
-pub const UnwrapResult = union(UnwrapResultEnum) {
-    ok: UnwrappedObject,
-    err: ?[]const u8,
 };
 
 /// Note: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
