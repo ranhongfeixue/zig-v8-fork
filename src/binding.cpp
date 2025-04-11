@@ -1601,9 +1601,9 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
 /// @param output: Points to the now allocated string on the heap (without sentinel \0), NULL if view was null, invalid if allocation failed
 /// @returns false if allocation errored
 bool allocString(const v8_inspector::StringView& input, const void* allocator, CZigString& output) {
+    output.ptr = nullptr;
+    output.len = 0;
     if (input.characters8() == nullptr) {
-        output.ptr = nullptr;
-        output.len = 0;
         return true;
     }
 
@@ -1736,9 +1736,11 @@ void v8_inspector__RemoteObject__DELETE(v8_inspector::protocol::Runtime::RemoteO
 }
 
 // RemoteObject - Type
-bool v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_type) {
+CZigString v8_inspector__RemoteObject__getType(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getType();
-  return allocString(toStringView(str), allocator, out_type);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
 void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString type) {
   self->setType(v8_inspector::String16::fromUTF8(type.ptr, type.len));
@@ -1748,9 +1750,11 @@ void v8_inspector__RemoteObject__setType(v8_inspector::protocol::Runtime::Remote
 bool v8_inspector__RemoteObject__hasSubtype(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasSubtype();
 }
-bool v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_subtype) {
+CZigString v8_inspector__RemoteObject__getSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getSubtype(DEFAULT_STRING);
-  return allocString(toStringView(str), allocator, out_subtype);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
 void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString subtype) {
   self->setSubtype(v8_inspector::String16::fromUTF8(subtype.ptr, subtype.len));
@@ -1760,9 +1764,11 @@ void v8_inspector__RemoteObject__setSubtype(v8_inspector::protocol::Runtime::Rem
 bool v8_inspector__RemoteObject__hasClassName(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasClassName();
 }
-bool v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_className) {
+CZigString v8_inspector__RemoteObject__getClassName(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getClassName(DEFAULT_STRING);
-  return allocString(toStringView(str), allocator, out_className);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
 void v8_inspector__RemoteObject__setClassName(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString className) {
   self->setClassName(v8_inspector::String16::fromUTF8(className.ptr, className.len));
@@ -1783,9 +1789,11 @@ void v8_inspector__RemoteObject__setValue(v8_inspector::protocol::Runtime::Remot
 bool v8_inspector__RemoteObject__hasUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasUnserializableValue();
 }
-bool v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_unserializableValue) {
+CZigString v8_inspector__RemoteObject__getUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getUnserializableValue(DEFAULT_STRING);
-  return allocString(toStringView(str), allocator, out_unserializableValue);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
 void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString unserializableValue) {
   self->setUnserializableValue(v8_inspector::String16::fromUTF8(unserializableValue.ptr, unserializableValue.len));
@@ -1795,9 +1803,11 @@ void v8_inspector__RemoteObject__setUnserializableValue(v8_inspector::protocol::
 bool v8_inspector__RemoteObject__hasDescription(v8_inspector::protocol::Runtime::RemoteObject* self) {
   return self->hasDescription();
 }
-bool v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_description) {
+CZigString v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getDescription(DEFAULT_STRING);
-  return allocString(toStringView(str), allocator, out_description);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
 void v8_inspector__RemoteObject__setDescription(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString description) {
   self->setDescription(v8_inspector::String16::fromUTF8(description.ptr, description.len));
@@ -1819,11 +1829,13 @@ bool v8_inspector__RemoteObject__hasObjectId(v8_inspector::protocol::Runtime::Re
   return self->hasObjectId();
 }
 
-bool v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator, CZigString& out_objectId) {
+CZigString v8_inspector__RemoteObject__getObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, const void* allocator) {
   auto str = self->getObjectId(DEFAULT_STRING);
-  return allocString(toStringView(str), allocator, out_objectId);
+  CZigString result;
+  allocString(toStringView(str), allocator, result);
+  return result;
 }
-void v8_inspector__RemoteObject__setObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString objectId) {
+  void v8_inspector__RemoteObject__setObjectId(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString objectId) {
   self->setObjectId(v8_inspector::String16::fromUTF8(objectId.ptr, objectId.len));
 }
 
