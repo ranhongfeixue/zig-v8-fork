@@ -7,7 +7,7 @@ import("//build/config/c++/c++.gni")
 static_library("c_v8") {
   complete_static_lib = true
 
-  sources = [ "../../src/binding.cpp" ]
+  sources = [ "../../binding.cpp" ]
   deps = [
     "//build/config:shared_library_deps",
     "//:v8",
@@ -88,42 +88,5 @@ template("zig_toolchain") {
       }
       is_clang = true
     }
-  }
-}
-
-# Used to compile the v8 library.
-zig_toolchain("main_zig_toolchain") {
-  cc = zig_cc
-  cxx = zig_cxx
-  # ld commands in v8 use cxx with -fuse-ld
-  ld = cxx
-  #ar = "${prefix}/llvm-ar"
-  ar = "zig ar"
-
-  extra_cppflags = "-Wno-unused-but-set-variable"
-
-  toolchain_args = {
-    current_cpu = target_cpu
-    current_os = target_os
-  }
-}
-
-# Used to compile v8 snapshots/generators to run locally.
-# v8_current_cpu indicates that we are still targeting a different arch but must compile tools to run on host machine.
-# See gni/snapshot_toolchain.gni
-zig_toolchain("v8_zig_toolchain") {
-  cc = host_zig_cc
-  cxx = host_zig_cxx
-  # ld commands in v8 use cxx with -fuse-ld
-  ld = cxx
-  #ar = "${prefix}/llvm-ar"
-  ar = "zig ar"
-
-  extra_cppflags = "-Wno-unused-but-set-variable"
-
-  toolchain_args = {
-    current_os = host_os
-    current_cpu = host_cpu
-    v8_current_cpu = target_cpu
   }
 }

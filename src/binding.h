@@ -14,7 +14,6 @@ typedef struct FixedArray FixedArray;
 typedef struct Module Module;
 typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
-typedef struct Name Name;
 typedef struct Context Context;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
@@ -34,6 +33,7 @@ typedef Value External;
 typedef Value Symbol;
 typedef Value Boolean;
 typedef Value Promise;
+typedef Value Name;
 typedef Value PromiseResolver;
 typedef enum CompileOptions {
     kNoCompileOptions = 0,

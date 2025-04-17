@@ -190,6 +190,10 @@ pub fn deinitV8Platform() void {
     c.v8__V8__DisposePlatform();
 }
 
+pub fn idleNotificaiton(hint: c_int) void {
+    c.v8__V8__IdleNoticiation(hint);
+}
+
 pub fn initCreateParams() c.CreateParams {
     var params: c.CreateParams = undefined;
     c.v8__Isolate__CreateParams__CONSTRUCT(&params);
@@ -987,7 +991,7 @@ pub const ObjectTemplate = struct {
         c.v8__ObjectTemplate__SetInternalFieldCount(self.handle, @as(c_int, @intCast(count)));
     }
 
-    pub fn setIndexedProperty(self: Self, configuration: IndexedPropertyHandlerConfiguration, data_val: anytype) void {
+    pub fn setIndexedProperty(self: Self, configuration: IndexedPropertyHandlerConfiguration, data: anytype) void {
         const conf = c.IndexedPropertyHandlerConfiguration{
             .getter = configuration.getter orelse null,
             .setter = configuration.setter orelse null,
@@ -996,13 +1000,13 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = getDataHandle(data_val),
+            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetIndexedHandler(self.handle, &conf);
     }
 
-    pub fn setNamedProperty(self: Self, configuration: NamedPropertyHandlerConfiguration, data_val: anytype) void {
+    pub fn setNamedProperty(self: Self, configuration: NamedPropertyHandlerConfiguration, data: anytype) void {
         const conf = c.NamedPropertyHandlerConfiguration{
             .getter = configuration.getter orelse null,
             .setter = configuration.setter orelse null,
@@ -1011,7 +1015,7 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = getDataHandle(data_val),
+            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
