@@ -72,7 +72,6 @@ pub fn build(b: *std.Build) !void {
     }
 }
 
-
 // V8's build process is complex and porting it to zig could take quite awhile.
 // It would be nice if there was a way to import .gn files into the zig build system.
 // For now we just use gn/ninja like rusty_v8 does: https://github.com/denoland/rusty_v8/blob/main/build.rs
@@ -307,8 +306,7 @@ fn createV8_Build(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.bui
     // We can't see our own config because gn desc doesn't accept a --root-target.
     // One idea is to append our BUILD.gn to the v8 BUILD.gn instead of putting it in a subdirectory.
 
-
-    const root_path = std.Build.LazyPath{.cwd_relative = "."};
+    const root_path = std.Build.LazyPath{ .cwd_relative = "." };
     var copy_gn = b.addSystemCommand(&.{ "cp", "-R", b.pathFromRoot(".gn"), "v8/" });
     copy_gn.setCwd(root_path);
     copy_gn.step.dependOn(&cp.step);
@@ -387,7 +385,7 @@ fn createGetTools(b: *std.Build) *std.Build.Step {
 
     const root_path = std.Build.LazyPath{ .cwd_relative = "." };
 
-    var mkdir_step = b.addSystemCommand(&.{ "mkdir", "-p", "v8"});
+    var mkdir_step = b.addSystemCommand(&.{ "mkdir", "-p", "v8" });
     mkdir_step.setCwd(root_path);
 
     var cp_step = b.addSystemCommand(&.{ "cp", "-R", b.pathFromRoot("tools"), "v8/tools" });
@@ -497,7 +495,7 @@ const CopyFileStep = struct {
         var dst = self.dst_path;
         if (std.fs.path.isAbsolute(dst) == false) {
             const allocator = step.owner.allocator;
-            dst = try std.fs.path.join(allocator, &.{try std.fs.cwd().realpathAlloc(allocator, "."), dst});
+            dst = try std.fs.path.join(allocator, &.{ try std.fs.cwd().realpathAlloc(allocator, "."), dst });
         }
         try std.fs.copyFileAbsolute(self.src_path, dst, .{});
     }
@@ -691,6 +689,9 @@ pub const GetV8SourceStep = struct {
             .allocator = step.owner.allocator,
             .argv = argv,
         }) catch |err| return step.fail("unable to spawn {s}: {s}", .{ argv[0], @errorName(err) });
+        if (result.term != .Exited or result.term.Exited != 0) {
+            return step.fail("failed to get DEPS. Error:\n{s}\n Most likely `zig build` was called before running `zig build get-v8`. Delete the v8 dir and try again.\n", .{result.stderr});
+        }
 
         var parsed = try json.parseFromSlice(json.Value, step.owner.allocator, result.stdout, .{});
         defer parsed.deinit();
@@ -795,7 +796,6 @@ const PathStat = enum {
 };
 
 fn statPathFromRoot(path_rel: []const u8) !PathStat {
-
     const file = std.fs.cwd().openFile(path_rel, .{ .mode = .read_only }) catch |err| {
         if (err == error.FileNotFound) {
             return .NotExist;
