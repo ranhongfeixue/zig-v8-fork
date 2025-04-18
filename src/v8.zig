@@ -1004,7 +1004,7 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
+            .data = if (@typeInfo(@TypeOf(data)) == .null) null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetIndexedHandler(self.handle, &conf);
@@ -1019,7 +1019,7 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
+            .data = if (@typeInfo(@TypeOf(data)) == .null) null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
@@ -2478,12 +2478,13 @@ pub const Inspector = struct {
         ctx: Context,
         name: []const u8,
         origin: []const u8,
-        auxData: ?[]const u8,
+        aux_data: ?[]const u8,
+        is_default: bool,
     ) void {
         std.log.debug("Inspector contextCreated called", .{});
         var auxData_ptr: [*c]const u8 = undefined;
         var auxData_len: usize = undefined;
-        if (auxData) |data| {
+        if (aux_data) |data| {
             auxData_ptr = data.ptr;
             auxData_len = data.len;
         } else {
@@ -2501,7 +2502,7 @@ pub const Inspector = struct {
             contextGroupId,
             ctx.handle,
         );
-        self.ctx_handle = ctx.handle;
+        if (is_default) self.ctx_handle = ctx.handle;
     }
 };
 
