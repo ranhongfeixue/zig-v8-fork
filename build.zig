@@ -231,7 +231,6 @@ fn createV8_Build(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.bui
         try host_zig_cxx.append("-Wno-error=builtin-assume-aligned-alignment");
 
         try gn_args.append("use_zig_tc=true");
-        try gn_args.append("cxx_use_ld=\"zig ld.lld\"");
 
         // Build zig cc strings.
         var arg = b.fmt("zig_cc=\"{s}\"", .{try std.mem.join(b.allocator, " ", zig_cc.items)});
@@ -243,9 +242,6 @@ fn createV8_Build(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.bui
         arg = b.fmt("host_zig_cxx=\"{s}\"", .{try std.mem.join(b.allocator, " ", host_zig_cxx.items)});
         try gn_args.append(arg);
     } else {
-        if (builtin.os.tag != .windows) {
-            try gn_args.append("cxx_use_ld=\"lld\"");
-        }
         if (target.result.os.tag == .linux and target.result.cpu.arch == .aarch64) {
             // On linux aarch64, we can not use the clang version provided in v8 sources
             // as it's built for x86_64 (TODO: using Rosetta2 for Linux VM on Apple Silicon?)
