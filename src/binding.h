@@ -958,6 +958,13 @@ const String* v8__JSON__Stringify(
 // Misc.
 void v8__base__SetDcheckFunction(void (*func)(const char*, int, const char*));
 
+// Utils
+
+typedef struct {
+    const char *ptr;
+    uint64_t len;
+} CZigString;
+
 // Inspector
 // ---------
 
@@ -1015,7 +1022,6 @@ char* v8_inspector__Client__IMPL__valueSubtype(
 char* v8_inspector__Client__IMPL__descriptionForValueSubtype(
     InspectorClientImpl* self, Context context, Value value);
 
-
 // RemoteObject
 typedef struct RemoteObject RemoteObject;
 typedef struct WebDriverValue WebDriverValue;
@@ -1031,6 +1037,16 @@ RemoteObject* v8_inspector__Session__wrapObject(
     InspectorSession *session, Isolate *isolate,
     const Context* ctx, const Value* val,
     const char *grpname, usize grpname_len, bool generatepreview);
+
+bool v8_inspector__Session__unwrapObject(
+    InspectorSession *session,
+    const void* allocator,
+    CZigString* out_error,
+    CZigString in_objectId,
+    Value** out_value,
+    Context** out_context,
+    CZigString* out_objectGroup
+);
 
 // Inspector
 typedef struct Inspector Inspector;
