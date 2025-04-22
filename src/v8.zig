@@ -1109,6 +1109,14 @@ pub const Object = struct {
         return out.has_value;
     }
 
+    // Returns true on success, false on fail.
+    pub fn deleteValue(self: Self, ctx: Context, key: anytype) bool {
+        var out: c.MaybeBool = undefined;
+        c.v8__Object__Delete(self.handle, ctx.handle, getValueHandle(key), &out);
+        // Set only returns empty for an error or true.
+        return out.has_value;
+    }
+
     pub fn setValueAtIndex(self: Self, ctx: Context, idx: u32, value: anytype) bool {
         var out: c.MaybeBool = undefined;
         c.v8__Object__SetAtIndex(self.handle, ctx.handle, idx, getValueHandle(value), &out);
