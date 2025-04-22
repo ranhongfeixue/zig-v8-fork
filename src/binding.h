@@ -499,6 +499,11 @@ void v8__Object__Set(
     const Value* key,
     const Value* value,
     MaybeBool* out);
+void v8__Object__Delete(
+    const Object* self,
+    const Context* ctx,
+    const Value* key,
+    MaybeBool* out);
 void v8__Object__SetAtIndex(
     const Object* self,
     const Context* ctx,

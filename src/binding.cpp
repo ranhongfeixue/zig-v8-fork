@@ -981,6 +981,17 @@ void v8__Object__Set(
     );
 }
 
+void v8__Object__Delete(
+        const v8::Object& self,
+        const v8::Context& ctx,
+        const v8::Value& key,
+        v8::Maybe<bool>* out) {
+    *out = ptr_to_local(&self)->Delete(
+        ptr_to_local(&ctx),
+        ptr_to_local(&key)
+    );
+}
+
 void v8__Object__SetAtIndex(
         const v8::Object& self,
         const v8::Context& ctx,

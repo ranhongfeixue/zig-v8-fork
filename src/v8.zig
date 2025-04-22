@@ -1004,7 +1004,7 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
+            .data = if (@typeInfo(@TypeOf(data)) == .null) null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetIndexedHandler(self.handle, &conf);
@@ -1019,7 +1019,7 @@ pub const ObjectTemplate = struct {
             .enumerator = configuration.enumerator orelse null,
             .definer = configuration.definer orelse null,
             .descriptor = configuration.descriptor orelse null,
-            .data = if (@typeInfo(@TypeOf(data)) == .@"null") null else getDataHandle(data),
+            .data = if (@typeInfo(@TypeOf(data)) == .null) null else getDataHandle(data),
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
@@ -1105,6 +1105,14 @@ pub const Object = struct {
     pub fn setValue(self: Self, ctx: Context, key: anytype, value: anytype) bool {
         var out: c.MaybeBool = undefined;
         c.v8__Object__Set(self.handle, ctx.handle, getValueHandle(key), getValueHandle(value), &out);
+        // Set only returns empty for an error or true.
+        return out.has_value;
+    }
+
+    // Returns true on success, false on fail.
+    pub fn deleteValue(self: Self, ctx: Context, key: anytype) bool {
+        var out: c.MaybeBool = undefined;
+        c.v8__Object__Delete(self.handle, ctx.handle, getValueHandle(key), &out);
         // Set only returns empty for an error or true.
         return out.has_value;
     }
