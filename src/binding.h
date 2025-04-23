@@ -410,6 +410,8 @@ bool v8__Value__IsUint16Array(const Value* self);
 bool v8__Value__IsInt16Array(const Value* self);
 bool v8__Value__IsUint32Array(const Value* self);
 bool v8__Value__IsInt32Array(const Value* self);
+bool v8__Value__IsBigInt64Array(const Value* self);
+bool v8__Value__IsBigUint64Array(const Value* self);
 bool v8__Value__IsFloat32Array(const Value* self);
 bool v8__Value__IsFloat64Array(const Value* self);
 bool v8__Value__IsArrayBuffer(const Value* self);
