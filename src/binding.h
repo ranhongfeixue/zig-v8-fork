@@ -128,6 +128,7 @@ const Uint8Array* v8__Uint8Array__New(
 // V8
 void v8__V8__InitializePlatform(Platform* platform);
 void v8__V8__Initialize();
+bool v8__V8__InitializeICU();
 int v8__V8__Dispose();
 void v8__V8__DisposePlatform();
 const char* v8__V8__GetVersion();

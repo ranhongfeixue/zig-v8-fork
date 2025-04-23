@@ -162,6 +162,8 @@ void v8__V8__InitializePlatform(v8::Platform* platform) {
 
 void v8__V8__Initialize() { v8::V8::Initialize(); }
 
+bool v8__V8__InitializeICU() { return v8::V8::InitializeICU(); }
+
 int v8__V8__Dispose() { return v8::V8::Dispose(); }
 
 void v8__V8__DisposePlatform() { v8::V8::DisposePlatform(); }
