@@ -2057,6 +2057,14 @@ pub const Value = struct {
         return c.v8__Value__IsInt32Array(self.handle);
     }
 
+    pub fn isBigInt64Array(self: Self) bool {
+        return c.v8__Value__IsBigInt64Array(self.handle);
+    }
+
+    pub fn isBigUint64Array(self: Self) bool {
+        return c.v8__Value__IsBigUint64Array (self.handle);
+    }
+
     pub fn isFloat32Array(self: Self) bool {
         return c.v8__Value__IsFloat32Array(self.handle);
     }

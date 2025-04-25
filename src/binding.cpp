@@ -777,6 +777,10 @@ bool v8__Value__IsUint32Array(const v8::Value& self) { return self.IsUint32Array
 
 bool v8__Value__IsInt32Array(const v8::Value& self) { return self.IsInt32Array(); }
 
+bool v8__Value__IsBigInt64Array(const v8::Value& self) { return self.IsBigInt64Array(); }
+
+bool v8__Value__IsBigUint64Array(const v8::Value& self) { return self.IsBigUint64Array(); }
+
 bool v8__Value__IsFloat32Array(const v8::Value& self) { return self.IsFloat32Array(); }
 
 bool v8__Value__IsFloat64Array(const v8::Value& self) { return self.IsFloat64Array(); }
