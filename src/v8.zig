@@ -951,6 +951,15 @@ pub fn Persistent(comptime T: type) type {
             };
         }
 
+        /// recoverCast is not meant to create a new Persistent, but instead to recover one for which we know that it is a Persistent.
+        /// This can be used on an object that has previously been `castTo___`. This allows the user to store and operate on the
+        /// underlying type without needing to extract it from the Persistent. Casting it back to Persistent allows us to reset it.
+        pub fn recoverCast(data: T) Self {
+            return .{
+                .handle = @as(handleT, @ptrCast(data.handle)),
+            };
+        }
+
         pub fn toValue(self: Self) Value {
             return .{
                 .handle = self.handle,
