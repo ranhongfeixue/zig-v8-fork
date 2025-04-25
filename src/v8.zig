@@ -934,6 +934,23 @@ pub fn Persistent(comptime T: type) type {
             };
         }
 
+        pub fn castToFunctionTemplate(self: Self) FunctionTemplate {
+            return .{
+                .handle = @as(*const c.FunctionTemplate, @ptrCast(self.handle)),
+            };
+        }
+        pub fn castToObjectTemplate(self: Self) ObjectTemplate {
+            return .{
+                .handle = @as(*const c.ObjectTemplate, @ptrCast(self.handle)),
+            };
+        }
+
+        pub fn castToContext(self: Self) Context {
+            return .{
+                .handle = @as(*const c.Context, @ptrCast(self.handle)),
+            };
+        }
+
         pub fn toValue(self: Self) Value {
             return .{
                 .handle = self.handle,
@@ -2068,7 +2085,7 @@ pub const Value = struct {
     }
 
     pub fn isBigUint64Array(self: Self) bool {
-        return c.v8__Value__IsBigUint64Array (self.handle);
+        return c.v8__Value__IsBigUint64Array(self.handle);
     }
 
     pub fn isFloat32Array(self: Self) bool {
