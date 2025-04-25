@@ -172,6 +172,12 @@ pub fn initV8() void {
 }
 
 /// [v8]
+/// Initializes the ICU bundled with v8.
+pub fn initV8ICU() bool {
+    return c.v8__V8__InitializeICU();
+}
+
+/// [v8]
 /// Releases any resources used by v8 and stops any utility thread
 /// that may be running.  Note that disposing v8 is permanent, it
 /// cannot be reinitialized.

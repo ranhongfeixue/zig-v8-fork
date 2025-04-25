@@ -133,6 +133,8 @@ fn createV8_Build(b: *std.Build, target: std.Build.ResolvedTarget, mode: std.bui
     if (!icu) {
         // Don't add i18n for now. It has a large dependency on third_party/icu.
         try gn_args.append("v8_enable_i18n_support=false");
+    } else {
+        try gn_args.append("icu_use_data_file=false");
     }
 
     if (mode != .Debug) {
