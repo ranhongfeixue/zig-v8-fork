@@ -9,12 +9,12 @@ struct v8_inspector__Channel__IMPL
   using v8_inspector::V8Inspector::Channel::Channel;
 
 public:
-  v8::Isolate *isolate;  
+  v8::Isolate *isolate;
   void *data;
 
-private:  
+private:
   void sendResponse(int callId,
-		    std::unique_ptr<v8_inspector::StringBuffer> message) override;
+        std::unique_ptr<v8_inspector::StringBuffer> message) override;
   void sendNotification(std::unique_ptr<v8_inspector::StringBuffer> message) override;
   void flushProtocolNotifications() override;
 };

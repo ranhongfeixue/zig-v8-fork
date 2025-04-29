@@ -288,6 +288,7 @@ typedef struct CreateParams {
     int embedder_wrapper_object_index;
     void* fatal_error_callback;
     void* oom_error_callback;
+    void* heap;
 } CreateParams;
 usize v8__Isolate__CreateParams__SIZEOF();
 void v8__Isolate__CreateParams__CONSTRUCT(CreateParams* buf);
@@ -437,7 +438,7 @@ typedef enum WriteOptions {
     REPLACE_INVALID_UTF8 = 8
 } WriteOptions;
 String* v8__String__NewFromUtf8(Isolate* isolate, const char* data, NewStringType type, int length);
-int v8__String__WriteUtf8(const String* str, Isolate* isolate, const char* buf, int len, int* nchars, WriteOptions options);
+size_t v8__String__WriteUtf8(const String* str, Isolate* isolate, const char* buf, size_t len, WriteOptions options);
 int v8__String__Utf8Length(const String* str, Isolate* isolate);
 
 // Value
@@ -553,7 +554,7 @@ const Object* v8__Object__New(Isolate* isolate);
 const String* v8__Object__GetConstructorName(const Object* self);
 int v8__Object__InternalFieldCount(
     const Object* self);
-const Value* v8__Object__GetInternalField(
+const Data* v8__Object__GetInternalField(
     const Object* self,
     int index);
 void v8__Object__SetInternalField(
@@ -673,6 +674,22 @@ void v8__Template__SetAccessorProperty__DEFAULT(
     const Name* key,
     const FunctionTemplate* getter);
 
+typedef struct PropertyCallbackInfo PropertyCallbackInfo;
+typedef void (*AccessorNameGetterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef void (*AccessorNameSetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
+void v8__Template__SetNativeDataProperty__DEFAULT(
+    const Template* self,
+    const Name* key,
+    const AccessorNameGetterCallback* getter);
+void v8__Template__SetNativeDataProperty__DEFAULT2(
+    const Template* self,
+    const Name* key,
+    const AccessorNameGetterCallback* getter,
+    const AccessorNameSetterCallback* setter);
+
+typedef void (*AccessorNameGetterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef void (*AccessorNameSetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
+
 // FunctionCallbackInfo
 typedef struct FunctionCallbackInfo FunctionCallbackInfo;
 typedef struct ReturnValue {
@@ -693,7 +710,6 @@ const Value* v8__FunctionCallbackInfo__Data(
     const FunctionCallbackInfo* self);
 
 // PropertyCallbackInfo
-typedef struct PropertyCallbackInfo PropertyCallbackInfo;
 Isolate* v8__PropertyCallbackInfo__GetIsolate(
     const PropertyCallbackInfo* self);
 void v8__PropertyCallbackInfo__GetReturnValue(
@@ -839,28 +855,24 @@ Object* v8__ObjectTemplate__NewInstance(
 void v8__ObjectTemplate__SetInternalFieldCount(
     const ObjectTemplate* self,
     int value);
-typedef void (*AccessorNameGetterCallback)(const Name*, const PropertyCallbackInfo*);
-typedef void (*AccessorNameSetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
-void v8__ObjectTemplate__SetAccessor__DEFAULT(
+void v8__ObjectTemplate__SetAccessorProperty__DEFAULT(
+    const ObjectTemplate* self,
+    const Name* key,
+    const FunctionTemplate* getter);
+void v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(
+    const ObjectTemplate* self,
+    const Name* key,
+    const FunctionTemplate* getter,
+    const FunctionTemplate* setter);
+void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(
     const ObjectTemplate* self,
     const Name* key,
     AccessorNameGetterCallback getter);
-void v8__ObjectTemplate__SetAccessor__DEFAULT2(
-    const ObjectTemplate* self,
-    const Name* key,
-    AccessorNameGetterCallback getter,
-    const Value* data);
-void v8__ObjectTemplate__SetAccessor__DEFAULT3(
+void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(
     const ObjectTemplate* self,
     const Name* key,
     AccessorNameGetterCallback getter,
     AccessorNameSetterCallback setter);
-void v8__ObjectTemplate__SetAccessor__DEFAULT4(
-    const ObjectTemplate* self,
-    const Name* key,
-    AccessorNameGetterCallback getter,
-    AccessorNameSetterCallback setter,
-    const Value* data);
 
 typedef enum PropertyHandlerFlags {
        kAllCanRead = 1,
@@ -918,7 +930,6 @@ typedef struct ScriptOriginOptions {
     const int flags_;
 } ScriptOriginOptions;
 typedef struct ScriptOrigin {
-    Isolate* isolate_;
     Value* resource_name_;
     int resource_line_offset_;
     int resource_column_offset_;
@@ -927,10 +938,9 @@ typedef struct ScriptOrigin {
     Value* source_map_url_;
     void* host_defined_options_;
 } ScriptOrigin;
-void v8__ScriptOrigin__CONSTRUCT(ScriptOrigin* buf, Isolate* isolate, const Value* resource_name);
+void v8__ScriptOrigin__CONSTRUCT(ScriptOrigin* buf, const Value* resource_name);
 void v8__ScriptOrigin__CONSTRUCT2(
     ScriptOrigin* buf,
-    Isolate* isolate,
     const Value* resource_name,
     int resource_line_offset,
     int resource_column_offset,
@@ -942,6 +952,15 @@ void v8__ScriptOrigin__CONSTRUCT2(
     bool is_module,
     const Data* host_defined_options
 );
+
+typedef struct CompilationDetails {
+    //  this is an enum, but should get padded to an int64_t
+    int64_t in_memory_cache_result;
+    int64_t foreground_time_in_microseconds;
+    int64_t background_time_in_microseconds;
+} CompilationDetails;
+
+typedef bool (*CompileHintCallback)(int, void*);
 
 // ScriptCompiler
 typedef struct ScriptCompilerSource {
@@ -960,6 +979,11 @@ typedef struct ScriptCompilerSource {
     // set when calling a compile method.
     UniquePtr cached_data;
     UniquePtr consume_cache_task;
+
+    CompileHintCallback compile_hint_callback;
+    void* compile_hint_callback_data;
+    CompilationDetails compilation_details
+
 } ScriptCompilerSource;
 typedef enum BufferPolicy {
     BufferNotOwned,
