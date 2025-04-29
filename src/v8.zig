@@ -934,6 +934,32 @@ pub fn Persistent(comptime T: type) type {
             };
         }
 
+        pub fn castToFunctionTemplate(self: Self) FunctionTemplate {
+            return .{
+                .handle = @as(*const c.FunctionTemplate, @ptrCast(self.handle)),
+            };
+        }
+        pub fn castToObjectTemplate(self: Self) ObjectTemplate {
+            return .{
+                .handle = @as(*const c.ObjectTemplate, @ptrCast(self.handle)),
+            };
+        }
+
+        pub fn castToContext(self: Self) Context {
+            return .{
+                .handle = @as(*const c.Context, @ptrCast(self.handle)),
+            };
+        }
+
+        /// recoverCast is not meant to create a new Persistent, but instead to recover one for which we know that it is a Persistent.
+        /// This can be used on an object that has previously been `castTo___`. This allows the user to store and operate on the
+        /// underlying type without needing to extract it from the Persistent. Casting it back to Persistent allows us to reset it.
+        pub fn recoverCast(data: T) Self {
+            return .{
+                .handle = @as(handleT, @ptrCast(data.handle)),
+            };
+        }
+
         pub fn toValue(self: Self) Value {
             return .{
                 .handle = self.handle,
@@ -2068,7 +2094,7 @@ pub const Value = struct {
     }
 
     pub fn isBigUint64Array(self: Self) bool {
-        return c.v8__Value__IsBigUint64Array (self.handle);
+        return c.v8__Value__IsBigUint64Array(self.handle);
     }
 
     pub fn isFloat32Array(self: Self) bool {
