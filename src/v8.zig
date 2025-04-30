@@ -2037,6 +2037,30 @@ pub const Value = struct {
         } else return error.JsException;
     }
 
+    pub fn isBoolean(self: Self) bool {
+        return c.v8__Value__IsBoolean(self.handle);
+    }
+
+    pub fn isBooleanObject(self: Self) bool {
+        return c.v8__Value__IsBooleanObject(self.handle);
+    }
+
+    pub fn isNumber(self: Self) bool {
+        return c.v8__Value__IsNumber(self.handle);
+    }
+
+    pub fn isNumberObject(self: Self) bool {
+        return c.v8__Value__IsNumberObject(self.handle);
+    }
+
+    pub fn isInt32(self: Self) bool {
+        return c.v8__Value__IsInt32(self.handle);
+    }
+
+    pub fn isUint32(self: Self) bool {
+        return c.v8__Value__IsUint32(self.handle);
+    }
+
     pub fn isObject(self: Self) bool {
         return c.v8__Value__IsObject(self.handle);
     }
