@@ -757,6 +757,18 @@ bool v8__Value__IsFunction(const v8::Value& self) { return self.IsFunction(); }
 
 bool v8__Value__IsAsyncFunction(const v8::Value& self) { return self.IsAsyncFunction(); }
 
+bool v8__Value__IsBoolean(const v8::Value& self) { return self.IsBoolean(); }
+
+bool v8__Value__IsBooleanObject(const v8::Value& self) { return self.IsBooleanObject(); }
+
+bool v8__Value__IsInt32(const v8::Value& self) { return self.IsInt32(); }
+
+bool v8__Value__IsUint32(const v8::Value& self) { return self.IsUint32(); }
+
+bool v8__Value__IsNumber(const v8::Value& self) { return self.IsNumber(); }
+
+bool v8__Value__IsNumberObject(const v8::Value& self) { return self.IsNumberObject(); }
+
 bool v8__Value__IsObject(const v8::Value& self) { return self.IsObject(); }
 
 bool v8__Value__IsString(const v8::Value& self) { return self.IsString(); }
