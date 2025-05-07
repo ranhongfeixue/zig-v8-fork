@@ -7,6 +7,7 @@ V8 is the JS/WASM runtime that powers Google Chrome and Microsoft Edge.
 ## System Requirements
 - Zig compiler (0.14.0). Clone and build https://github.com/ziglang/zig.
 - Python 3 (2.7 seems to work as well)
+- unzip (`apt install unzip`)
 - For native macOS builds:
   - XCode (You won't need this when using zig's c++ toolchain!)<br/>
 if you come across this error:<br />
