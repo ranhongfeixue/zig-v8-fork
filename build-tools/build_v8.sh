@@ -11,6 +11,10 @@ cp ${SRC_ROOT}/binding.cpp src/
 cp ${SRC_ROOT}/inspector.h src/
 
 ARCH=$(uname -m);
+case "$ARCH" in
+  x86_64) ARCH="x64" ;;
+esac
+
 case "$OSTYPE" in
   darwin*)  OS="mac" ;;
   linux*)   OS="linux" ;;
