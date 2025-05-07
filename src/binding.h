@@ -875,9 +875,9 @@ void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(
     AccessorNameSetterCallback setter);
 
 typedef enum PropertyHandlerFlags {
-       kAllCanRead = 1,
-       kNonMasking = 1 << 1,
-       kOnlyInterceptStrings = 1 << 2,
+       kNonMasking = 1,
+       kOnlyInterceptStrings = 1 << 1,
+       kHasNoSideEffect = 1 << 2,
 } PropertyHandlerFlags;
 
 typedef struct PropertyDescriptor {} PropertyDescriptor;
