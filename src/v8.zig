@@ -5,6 +5,11 @@ pub const c = @cImport({
     @cInclude("binding.h");
 });
 
+pub const Intercepted = struct {
+    pub const No = 0;
+    pub const Yes = 1;
+};
+
 pub const PropertyAttribute = struct {
     pub const None = c.None;
     pub const ReadOnly = c.ReadOnly;
