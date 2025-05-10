@@ -953,6 +953,7 @@ void v8__ScriptOrigin__CONSTRUCT2(
     const Data* host_defined_options
 );
 
+usize v8__ScriptCompiler__CompilationDetails__SIZEOF();
 typedef struct CompilationDetails {
     //  this is an enum, but should get padded to an int64_t
     int64_t in_memory_cache_result;

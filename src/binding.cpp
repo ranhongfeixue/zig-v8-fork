@@ -580,6 +580,9 @@ const v8::Module* v8__ScriptCompiler__CompileModule(
     return maybe_local_to_ptr(maybe_local);
 }
 
+size_t v8__ScriptCompiler__CompilationDetails__SIZEOF() {
+    return sizeof(v8::ScriptCompiler::CompilationDetails);
+}
 // Module
 
 v8::Module::Status v8__Module__GetStatus(const v8::Module& self) {
@@ -1714,8 +1717,8 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
   int length = static_cast<int>(stringView.length());
   v8::Local<v8::String> message = (
         stringView.is8Bit()
-          ? v8::String::NewFromOneByte(isolate, reinterpret_cast<const uint8_t*>(stringView.characters8()), v8::NewStringType::kNormal, length)
-          : v8::String::NewFromTwoByte(isolate, reinterpret_cast<const uint16_t*>(stringView.characters16()), v8::NewStringType::kNormal, length)
+          ? v8::String::NewFromOneByte(isolate, stringView.characters8(), v8::NewStringType::kNormal, length)
+          : v8::String::NewFromTwoByte(isolate, stringView.characters16(), v8::NewStringType::kNormal, length)
       ).ToLocalChecked();
   v8::String::Utf8Value result(isolate, message);
   return *result;

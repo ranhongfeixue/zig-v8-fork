@@ -1043,6 +1043,12 @@ pub const ObjectTemplate = struct {
         c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
     }
 
+    // JS has two types of properties: data and accessors. The data property, what
+    // v8 calls a NativeData property is like a field, obj.x. An access properties
+    // is one or both of a get and set function.
+    // They seem to mostly differ in subtle ways relating to meta programming
+    // and how they're resolve in the prototype chain.
+    // https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-object-type
     pub fn setNativeGetter(self: Self, key: Name, getter: c.AccessorNameGetterCallback) void {
         c.v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(self.handle, key.handle, getter);
     }
@@ -2656,6 +2662,7 @@ test "Internals." {
     try eq(c.v8__PromiseRejectMessage__SIZEOF(), @sizeOf(c.PromiseRejectMessage));
     try eq(c.v8__ScriptCompiler__Source__SIZEOF(), @sizeOf(c.ScriptCompilerSource));
     try eq(c.v8__ScriptCompiler__CachedData__SIZEOF(), @sizeOf(c.ScriptCompilerCachedData));
+    try eq(c.v8__ScriptCompiler__CompilationDetails__SIZEOF(), @sizeOf(c.CompilationDetails));
     try eq(c.v8__HeapStatistics__SIZEOF(), @sizeOf(c.HeapStatistics));
 }
 
