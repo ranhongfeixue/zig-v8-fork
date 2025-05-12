@@ -36,7 +36,7 @@ typedef Value Uint32Array;
 typedef Value Int32Array;
 typedef Value BigUint64Array;
 typedef Value BigInt64Array;
-// typedef Value Float16Array;
+typedef Value Float16Array;
 typedef Value Float32Array;
 typedef Value Float64Array;
 typedef Value ArrayBufferView;
@@ -166,10 +166,10 @@ const Int32Array* v8__Int32Array__New(
     size_t byte_offset,
     size_t length);
 
-// const Float16Array* v8__Float16Array__New(
-//     const ArrayBuffer* buf,
-//     size_t byte_offset,
-//     size_t length);
+const Float16Array* v8__Float16Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
 
 const Float32Array* v8__Float32Array__New(
     const ArrayBuffer* buf,

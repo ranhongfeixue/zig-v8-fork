@@ -206,14 +206,14 @@ const v8::Int32Array* v8__Int32Array__New(
     );
 }
 
-// const v8::Float16Array* v8__Float16Array__New(
-//         const v8::ArrayBuffer& buf,
-//         size_t byte_offset,
-//         size_t length) {
-//     return local_to_ptr(
-//         v8::Float16Array::New(ptr_to_local(&buf), byte_offset, length)
-//     );
-// }
+const v8::Float16Array* v8__Float16Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Float16Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
 
 const v8::Float32Array* v8__Float32Array__New(
         const v8::ArrayBuffer& buf,
