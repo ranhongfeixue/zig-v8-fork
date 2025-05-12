@@ -27,7 +27,18 @@ typedef Value Primitive;
 typedef Value Integer;
 typedef Value BigInt;
 typedef Value Array;
+typedef Value Uint8ClampedArray;
 typedef Value Uint8Array;
+typedef Value Int8Array;
+typedef Value Uint16Array;
+typedef Value Int16Array;
+typedef Value Uint32Array;
+typedef Value Int32Array;
+typedef Value BigUint64Array;
+typedef Value BigInt64Array;
+// typedef Value Float16Array;
+typedef Value Float32Array;
+typedef Value Float64Array;
 typedef Value ArrayBufferView;
 typedef Value External;
 typedef Value Symbol;
@@ -120,7 +131,62 @@ const Primitive* v8__Undefined(Isolate* isolate);
 const Primitive* v8__Null(Isolate* isolate);
 const Boolean* v8__True(Isolate* isolate);
 const Boolean* v8__False(Isolate* isolate);
+const Uint8ClampedArray* v8__Uint8ClampedArray__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
 const Uint8Array* v8__Uint8Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Int8Array* v8__Int8Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Uint16Array* v8__Uint16Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Int16Array* v8__Int16Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Uint32Array* v8__Uint32Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Int32Array* v8__Int32Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+// const Float16Array* v8__Float16Array__New(
+//     const ArrayBuffer* buf,
+//     size_t byte_offset,
+//     size_t length);
+
+const Float32Array* v8__Float32Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const Float64Array* v8__Float64Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const BigUint64Array* v8__BigUint64Array__New(
+    const ArrayBuffer* buf,
+    size_t byte_offset,
+    size_t length);
+
+const BigInt64Array* v8__BigInt64Array__New(
     const ArrayBuffer* buf,
     size_t byte_offset,
     size_t length);

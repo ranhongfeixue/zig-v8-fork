@@ -143,6 +143,15 @@ const v8::Boolean* v8__False(v8::Isolate* isolate) {
     return local_to_ptr(v8::False(isolate));
 }
 
+const v8::Uint8ClampedArray* v8__Uint8ClampedArray__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Uint8ClampedArray::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
 const v8::Uint8Array* v8__Uint8Array__New(
         const v8::ArrayBuffer& buf,
         size_t byte_offset,
@@ -152,6 +161,95 @@ const v8::Uint8Array* v8__Uint8Array__New(
     );
 }
 
+const v8::Int8Array* v8__Int8Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Int8Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::Uint16Array* v8__Uint16Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Uint16Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::Int16Array* v8__Int16Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Int16Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::Uint32Array* v8__Uint32Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Uint32Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::Int32Array* v8__Int32Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Int32Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+// const v8::Float16Array* v8__Float16Array__New(
+//         const v8::ArrayBuffer& buf,
+//         size_t byte_offset,
+//         size_t length) {
+//     return local_to_ptr(
+//         v8::Float16Array::New(ptr_to_local(&buf), byte_offset, length)
+//     );
+// }
+
+const v8::Float32Array* v8__Float32Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Float32Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::Float64Array* v8__Float64Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Float64Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::BigUint64Array* v8__BigUint64Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::BigUint64Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
+
+const v8::BigInt64Array* v8__BigInt64Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::BigInt64Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
 // V8
 
 const char* v8__V8__GetVersion() { return v8::V8::GetVersion(); }

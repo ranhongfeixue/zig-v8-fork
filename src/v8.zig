@@ -2432,6 +2432,22 @@ pub const FixedArray = struct {
     }
 };
 
+pub const Uint8ClampedArray = struct {
+    const Self = @This();
+
+    handle: *const c.Uint8ClampedArray,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Uint8ClampedArray__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
 pub const Uint8Array = struct {
     const Self = @This();
 
@@ -2441,6 +2457,170 @@ pub const Uint8Array = struct {
         return .{
             .handle = c.v8__Uint8Array__New(buf.handle, offset, len).?,
         };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Int8Array = struct {
+    const Self = @This();
+
+    handle: *const c.Int8Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Int8Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Uint16Array = struct {
+    const Self = @This();
+
+    handle: *const c.Uint16Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Uint16Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Int16Array = struct {
+    const Self = @This();
+
+    handle: *const c.Int16Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Int16Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Uint32Array = struct {
+    const Self = @This();
+
+    handle: *const c.Uint32Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Uint32Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Int32Array = struct {
+    const Self = @This();
+
+    handle: *const c.Int32Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Int32Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Float16Array = struct {
+    const Self = @This();
+
+    handle: *const c.Float16Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Float16Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Float32Array = struct {
+    const Self = @This();
+
+    handle: *const c.Float32Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Float32Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const Float64Array = struct {
+    const Self = @This();
+
+    handle: *const c.Float64Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__Float64Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const BigInt64Array = struct {
+    const Self = @This();
+
+    handle: *const c.BigInt64Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__BigInt64Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
+    }
+};
+
+pub const BigUint64Array = struct {
+    const Self = @This();
+
+    handle: *const c.BigUint64Array,
+
+    pub fn init(buf: ArrayBuffer, offset: usize, len: usize) Self {
+        return .{
+            .handle = c.v8__BigUint64Array__New(buf.handle, offset, len).?,
+        };
+    }
+
+    pub fn toValue(self: Self) Value {
+        return .{ .handle = self.handle };
     }
 };
 
