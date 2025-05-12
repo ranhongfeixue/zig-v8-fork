@@ -68,9 +68,6 @@ pub fn build(b: *std.Build) !void {
 
         get_v8.step.dependOn(&run_v8_source.step);
 
-        // as an installation step
-        b.installArtifact(get_v8);
-
         // as a command
         const run_cmd = b.addRunArtifact(get_v8);
 
