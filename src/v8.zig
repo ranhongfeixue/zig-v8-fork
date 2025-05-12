@@ -5,6 +5,11 @@ pub const c = @cImport({
     @cInclude("binding.h");
 });
 
+pub const Intercepted = struct {
+    pub const No = 0;
+    pub const Yes = 1;
+};
+
 pub const PropertyAttribute = struct {
     pub const None = c.None;
     pub const ReadOnly = c.ReadOnly;
@@ -795,10 +800,6 @@ pub const FunctionTemplate = struct {
         c.v8__Template__Set(getTemplateHandle(self), key.handle, getDataHandle(value), attr);
     }
 
-    pub fn setGetter(self: Self, name: Name, getter: FunctionTemplate) void {
-        c.v8__Template__SetAccessorProperty__DEFAULT(getTemplateHandle(self), name.handle, getter.handle);
-    }
-
     pub fn setClassName(self: Self, name: String) void {
         c.v8__FunctionTemplate__SetClassName(self.handle, name.handle);
     }
@@ -939,6 +940,7 @@ pub fn Persistent(comptime T: type) type {
                 .handle = @as(*const c.FunctionTemplate, @ptrCast(self.handle)),
             };
         }
+
         pub fn castToObjectTemplate(self: Self) ObjectTemplate {
             return .{
                 .handle = @as(*const c.ObjectTemplate, @ptrCast(self.handle)),
@@ -1003,22 +1005,6 @@ pub const ObjectTemplate = struct {
         };
     }
 
-    pub fn setGetter(self: Self, name: Name, getter: c.AccessorNameGetterCallback) void {
-        c.v8__ObjectTemplate__SetAccessor__DEFAULT(self.handle, name.handle, getter);
-    }
-
-    pub fn setGetterData(self: Self, name: Name, getter: c.AccessorNameGetterCallback, data_val: anytype) void {
-        c.v8__ObjectTemplate__SetAccessor__DEFAULT2(self.handle, name.handle, getter, getDataHandle(data_val));
-    }
-
-    pub fn setGetterAndSetter(self: Self, name: Name, getter: c.AccessorNameGetterCallback, setter: c.AccessorNameSetterCallback) void {
-        c.v8__ObjectTemplate__SetAccessor__DEFAULT3(self.handle, name.handle, getter, setter);
-    }
-
-    pub fn setGetterAndSetterData(self: Self, name: Name, getter: c.AccessorNameGetterCallback, setter: c.AccessorNameSetterCallback, data_val: anytype) void {
-        c.v8__ObjectTemplate__SetAccessor__DEFAULT4(self.handle, name.handle, getter, setter, getDataHandle(data_val));
-    }
-
     pub fn set(self: Self, key: Name, value: anytype, attr: c.PropertyAttribute) void {
         c.v8__Template__Set(getTemplateHandle(self), key.handle, getDataHandle(value), attr);
     }
@@ -1055,6 +1041,28 @@ pub const ObjectTemplate = struct {
             .flags = configuration.flags,
         };
         c.v8__ObjectTemplate__SetNamedHandler(self.handle, &conf);
+    }
+
+    // JS has two types of properties: data and accessors. The data property, what
+    // v8 calls a NativeData property is like a field, obj.x. An access properties
+    // is one or both of a get and set function.
+    // They seem to mostly differ in subtle ways relating to meta programming
+    // and how they're resolve in the prototype chain.
+    // https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-object-type
+    pub fn setNativeGetter(self: Self, key: Name, getter: c.AccessorNameGetterCallback) void {
+        c.v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(self.handle, key.handle, getter);
+    }
+
+    pub fn setNativeGetterAndSetter(self: Self, key: Name, getter: c.AccessorNameGetterCallback, setter: c.AccessorNameSetterCallback) void {
+        c.v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(self.handle, key.handle, getter, setter);
+    }
+
+    pub fn setAccessorGetter(self: Self, name: Name, getter: FunctionTemplate) void {
+        c.v8__ObjectTemplate__SetAccessorProperty__DEFAULT(self.handle, name.handle, getter.handle);
+    }
+
+    pub fn setAccessorGetterAndSetter(self: Self, name: Name, getter: FunctionTemplate, setter: FunctionTemplate) void {
+        c.v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(self.handle, name.handle, getter.handle, setter.handle);
     }
 
     pub fn toValue(self: Self) Value {
@@ -1655,16 +1663,15 @@ pub const ScriptOrigin = struct {
 
     inner: c.ScriptOrigin,
 
-    pub fn initDefault(isolate: Isolate, resource_name: Value) Self {
+    pub fn initDefault(resource_name: Value) Self {
         var inner: c.ScriptOrigin = undefined;
-        c.v8__ScriptOrigin__CONSTRUCT(&inner, isolate.handle, resource_name.handle);
+        c.v8__ScriptOrigin__CONSTRUCT(&inner, resource_name.handle);
         return .{
             .inner = inner,
         };
     }
 
     pub fn init(
-        isolate: Isolate,
         resource_name: Value,
         resource_line_offset: i32,
         resource_column_offset: i32,
@@ -1679,7 +1686,6 @@ pub const ScriptOrigin = struct {
         var inner: c.ScriptOrigin = undefined;
         c.v8__ScriptOrigin__CONSTRUCT2(
             &inner,
-            isolate.handle,
             resource_name.handle,
             resource_line_offset,
             resource_column_offset,
@@ -1724,12 +1730,9 @@ pub const String = struct {
         return @as(u32, @intCast(c.v8__String__Utf8Length(self.handle, isolate.handle)));
     }
 
-    pub fn writeUtf8(self: String, isolate: Isolate, buf: []const u8) u32 {
+    pub fn writeUtf8(self: String, isolate: Isolate, buf: []const u8) usize {
         const options = c.NO_NULL_TERMINATION | c.REPLACE_INVALID_UTF8;
-        // num chars is how many utf8 characters are actually written and the function returns how many bytes were written.
-        var nchars: c_int = 0;
-        // TODO: Return num chars
-        return @as(u32, @intCast(c.v8__String__WriteUtf8(self.handle, isolate.handle, buf.ptr, @as(c_int, @intCast(buf.len)), &nchars, options)));
+        return c.v8__String__WriteUtf8(self.handle, isolate.handle, buf.ptr, buf.len, options);
     }
 
     pub fn toValue(self: Self) Value {
@@ -2659,6 +2662,7 @@ test "Internals." {
     try eq(c.v8__PromiseRejectMessage__SIZEOF(), @sizeOf(c.PromiseRejectMessage));
     try eq(c.v8__ScriptCompiler__Source__SIZEOF(), @sizeOf(c.ScriptCompilerSource));
     try eq(c.v8__ScriptCompiler__CachedData__SIZEOF(), @sizeOf(c.ScriptCompilerCachedData));
+    try eq(c.v8__ScriptCompiler__CompilationDetails__SIZEOF(), @sizeOf(c.CompilationDetails));
     try eq(c.v8__HeapStatistics__SIZEOF(), @sizeOf(c.HeapStatistics));
 }
 

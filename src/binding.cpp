@@ -79,7 +79,7 @@ struct make_pod {
     // Using a union is a C++ trick to achieve this.
     template <class V>
     union helper {
-        static_assert(std::is_pod<P>::value, "type P must a pod type");
+        static_assert(std::is_trivial<P>::value && std::is_standard_layout<P>::value, "type P must a pod type");
         static_assert(sizeof(V) == sizeof(P), "type P must be same size as type V");
         static_assert(alignof(V) == alignof(P), "alignment of type P must be compatible with that of type V");
 
@@ -206,14 +206,14 @@ const v8::Int32Array* v8__Int32Array__New(
     );
 }
 
-// const v8::Float16Array* v8__Float16Array__New(
-//         const v8::ArrayBuffer& buf,
-//         size_t byte_offset,
-//         size_t length) {
-//     return local_to_ptr(
-//         v8::Float16Array::New(ptr_to_local(&buf), byte_offset, length)
-//     );
-// }
+const v8::Float16Array* v8__Float16Array__New(
+        const v8::ArrayBuffer& buf,
+        size_t byte_offset,
+        size_t length) {
+    return local_to_ptr(
+        v8::Float16Array::New(ptr_to_local(&buf), byte_offset, length)
+    );
+}
 
 const v8::Float32Array* v8__Float32Array__New(
         const v8::ArrayBuffer& buf,
@@ -490,14 +490,12 @@ int v8__Context__DebugContextId(const v8::Context& self) {
 
 void v8__ScriptOrigin__CONSTRUCT(
         v8::ScriptOrigin* buf,
-        v8::Isolate* isolate,
         const v8::Value& resource_name) {
-    new (buf) v8::ScriptOrigin(isolate, ptr_to_local(&resource_name));
+    new (buf) v8::ScriptOrigin(ptr_to_local(&resource_name));
 }
 
 void v8__ScriptOrigin__CONSTRUCT2(
         v8::ScriptOrigin* buf,
-        v8::Isolate* isolate,
         const v8::Value& resource_name,
         int resource_line_offset,
         int resource_column_offset,
@@ -509,7 +507,7 @@ void v8__ScriptOrigin__CONSTRUCT2(
         bool is_module,
         const v8::Data& host_defined_options) {
     new (buf) v8::ScriptOrigin(
-        isolate, ptr_to_local(&resource_name),
+        ptr_to_local(&resource_name),
         resource_line_offset, resource_column_offset, resource_is_shared_cross_origin, script_id,
         ptr_to_local(&source_map_url), resource_is_opaque, is_wasm, is_module, ptr_to_local(&host_defined_options)
     );
@@ -582,6 +580,9 @@ const v8::Module* v8__ScriptCompiler__CompileModule(
     return maybe_local_to_ptr(maybe_local);
 }
 
+size_t v8__ScriptCompiler__CompilationDetails__SIZEOF() {
+    return sizeof(v8::ScriptCompiler::CompilationDetails);
+}
 // Module
 
 v8::Module::Status v8__Module__GetStatus(const v8::Module& self) {
@@ -653,18 +654,17 @@ v8::String* v8__String__NewFromUtf8(
     );
 }
 
-int v8__String__WriteUtf8(
+size_t v8__String__WriteUtf8(
         const v8::String& str,
         v8::Isolate* isolate,
         char* buffer,
-        int length,
-        int* nchars_ref,
+        size_t length,
         int options) {
-    return str.WriteUtf8(isolate, buffer, length, nchars_ref, options);
+    return str.WriteUtf8V2(isolate, buffer, length, options);
 }
 
 int v8__String__Utf8Length(const v8::String& self, v8::Isolate* isolate) {
-    return self.Utf8Length(isolate);
+    return self.Utf8LengthV2(isolate);
 }
 
 // Boolean
@@ -973,38 +973,6 @@ void v8__ObjectTemplate__SetInternalFieldCount(
     ptr_to_local(&self)->SetInternalFieldCount(value);
 }
 
-void v8__ObjectTemplate__SetAccessor__DEFAULT(
-        const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        v8::AccessorNameGetterCallback getter) {
-    ptr_to_local(&self)->SetAccessor(ptr_to_local(&key), getter);
-}
-
-void v8__ObjectTemplate__SetAccessor__DEFAULT2(
-        const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        v8::AccessorNameGetterCallback getter,
-        const v8::Value& data) {
-  ptr_to_local(&self)->SetAccessor(ptr_to_local(&key), getter, nullptr, ptr_to_local(&data));
-}
-
-void v8__ObjectTemplate__SetAccessor__DEFAULT3(
-        const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        v8::AccessorNameGetterCallback getter,
-        v8::AccessorNameSetterCallback setter) {
-    ptr_to_local(&self)->SetAccessor(ptr_to_local(&key), getter, setter);
-}
-
-void v8__ObjectTemplate__SetAccessor__DEFAULT4(
-        const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        v8::AccessorNameGetterCallback getter,
-        v8::AccessorNameSetterCallback setter,
-        const v8::Value& data) {
-  ptr_to_local(&self)->SetAccessor(ptr_to_local(&key), getter, setter, ptr_to_local(&data));
-}
-
 void v8__ObjectTemplate__SetIndexedHandler(
         const v8::ObjectTemplate& self,
         const v8::IndexedPropertyHandlerConfiguration& configuration) {
@@ -1015,6 +983,36 @@ void v8__ObjectTemplate__SetNamedHandler(
         const v8::ObjectTemplate& self,
         const v8::NamedPropertyHandlerConfiguration& configuration) {
     ptr_to_local(&self)->SetHandler(configuration);
+}
+
+void v8__ObjectTemplate__SetAccessorProperty__DEFAULT(
+        const v8::ObjectTemplate& self,
+        const v8::Name& key,
+        const v8::FunctionTemplate& getter) {
+    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), ptr_to_local(&getter));
+}
+
+void v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(
+        const v8::ObjectTemplate& self,
+        const v8::Name& key,
+        const v8::FunctionTemplate& getter,
+        const v8::FunctionTemplate& setter) {
+    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), ptr_to_local(&getter), ptr_to_local(&setter));
+}
+
+void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(
+        const v8::ObjectTemplate& self,
+        const v8::Name& key,
+        const v8::AccessorNameGetterCallback getter) {
+    ptr_to_local(&self)->SetNativeDataProperty(ptr_to_local(&key), getter);
+}
+
+void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(
+        const v8::ObjectTemplate& self,
+        const v8::Name& key,
+        const v8::AccessorNameGetterCallback getter,
+        const v8::AccessorNameSetterCallback setter) {
+    ptr_to_local(&self)->SetNativeDataProperty(ptr_to_local(&key), getter, setter);
 }
 
 // Array
@@ -1055,7 +1053,7 @@ void v8__Object__SetInternalField(
     ptr_to_local(&self)->SetInternalField(index, ptr_to_local(&value));
 }
 
-const v8::Value* v8__Object__GetInternalField(
+const v8::Data* v8__Object__GetInternalField(
         const v8::Object& self,
         int index) {
     return local_to_ptr(ptr_to_local(&self)->GetInternalField(index));
@@ -1719,8 +1717,8 @@ static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspecto
   int length = static_cast<int>(stringView.length());
   v8::Local<v8::String> message = (
         stringView.is8Bit()
-          ? v8::String::NewFromOneByte(isolate, reinterpret_cast<const uint8_t*>(stringView.characters8()), v8::NewStringType::kNormal, length)
-          : v8::String::NewFromTwoByte(isolate, reinterpret_cast<const uint16_t*>(stringView.characters16()), v8::NewStringType::kNormal, length)
+          ? v8::String::NewFromOneByte(isolate, stringView.characters8(), v8::NewStringType::kNormal, length)
+          : v8::String::NewFromTwoByte(isolate, stringView.characters16(), v8::NewStringType::kNormal, length)
       ).ToLocalChecked();
   v8::String::Utf8Value result(isolate, message);
   return *result;
@@ -1743,7 +1741,7 @@ bool allocString(const v8_inspector::StringView& input, const void* allocator, C
     if (input.is8Bit()) {
         output.len = input.length();
     } else {
-        utf8_str = v8_inspector::UTF16ToUTF8(input.characters16(), input.length());
+        utf8_str = v8_inspector::UTF16ToUTF8(reinterpret_cast<const char16_t*>(input.characters16()), input.length());
         output.len = utf8_str.length();
     }
 
@@ -1751,7 +1749,7 @@ bool allocString(const v8_inspector::StringView& input, const void* allocator, C
     if (heap_str == nullptr) {
         return false;
     }
-    
+
     if (input.is8Bit()) {
         memcpy(heap_str, input.characters8(), output.len);
     } else {
@@ -1842,8 +1840,8 @@ bool v8_inspector__Session__unwrapObject(
 ) {
   auto objectId = toStringView(in_objectId.ptr, in_objectId.len);
   auto error = v8_inspector::StringBuffer::create({});
-  auto objectGroup = v8_inspector::StringBuffer::create({});  
-        
+  auto objectGroup = v8_inspector::StringBuffer::create({});
+
   // [out optional ] std::unique_ptr<StringBuffer>* error,
   // [in  required ] StringView                     objectId,
   // [out required ] v8::Local<v8::Value>         * value
@@ -1933,17 +1931,6 @@ bool v8_inspector__RemoteObject__getDescription(v8_inspector::protocol::Runtime:
 }
 void v8_inspector__RemoteObject__setDescription(v8_inspector::protocol::Runtime::RemoteObject* self, CZigString description) {
   self->setDescription(v8_inspector::String16::fromUTF8(description.ptr, description.len));
-}
-
-// RemoteObject - WebDriverValue
-bool v8_inspector__RemoteObject__hasWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
-  return self->hasWebDriverValue();
-}
-v8_inspector::protocol::Runtime::WebDriverValue* v8_inspector__RemoteObject__getWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self) {
-  return self->getWebDriverValue(nullptr);
-}
-void v8_inspector__RemoteObject__setWebDriverValue(v8_inspector::protocol::Runtime::RemoteObject* self, v8_inspector::protocol::Runtime::WebDriverValue* webDriverValue) {
-  self->setWebDriverValue(std::unique_ptr<v8_inspector::protocol::Runtime::WebDriverValue>(webDriverValue));
 }
 
 // RemoteObject - ObjectId
