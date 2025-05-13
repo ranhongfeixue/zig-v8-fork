@@ -26,7 +26,7 @@ cp BUILD.gn src/zig/
 
 EXTRA_ARGS=""
 if [ "${OS}" = "linux" ] && [ "${ARCH}" == "arm64" ]; then
-  EXTRA_ARGS="clang_base_path=\"/usr/lib/llvm-18\" clang_use_chrome_plugins=false"
+  EXTRA_ARGS="clang_base_path=\"/usr/lib/llvm-21\" clang_use_chrome_plugins=false treat_warnings_as_errors=false"
 fi
 
 TARGET_ARCH=${ARCH}

@@ -108,15 +108,11 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -yq libglib2.0-dev lld
-
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 18
-
-          pushd /usr/lib/llvm-18/lib/clang/18/lib/
-            sudo ln -nsf linux/libclang_rt.builtins-aarch64.a linux/libclang_rt.builtins.a
-            sudo ln -nsf linux/ aarch64-unknown-linux-gnu
-          popd
+          sudo ./llvm.sh 21
+          sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins-aarch64.a /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins.a && \
+          sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/ /usr/lib/llvm-21/lib/clang/21/lib/aarch64-unknown-linux-gnu
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
