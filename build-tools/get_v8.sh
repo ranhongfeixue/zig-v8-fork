@@ -2,6 +2,7 @@
 set -o errexit #  exit on errors
 set -o nounset # exit on use of uninitialized variable
 set -o errtrace # inherits trap on ERR in function and subshell
+
 source utils.sh
 
 REVISION=13.6.233.8

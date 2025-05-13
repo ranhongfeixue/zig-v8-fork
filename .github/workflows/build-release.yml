@@ -76,7 +76,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
@@ -107,11 +107,20 @@ jobs:
 
       - run: |
           sudo apt-get update
-          sudo apt-get install -yq libglib2.0-dev
+          sudo apt-get install -yq libglib2.0-dev lld
+
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+
+          pushd /usr/lib/llvm-18/lib/clang/18/lib/
+            sudo ln -nsf linux/libclang_rt.builtins-aarch64.a linux/libclang_rt.builtins.a
+            sudo ln -nsf linux/ aarch64-unknown-linux-gnu
+          popd
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
@@ -146,7 +155,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
