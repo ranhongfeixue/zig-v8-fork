@@ -41,7 +41,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv v8/build/${{ env.ARCH }}-${{ env.OS }}/release/ninja/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
@@ -76,7 +76,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv v8/build/${{ env.ARCH }}-${{ env.OS }}/release/ninja/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
@@ -111,7 +111,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv v8/build/${{ env.ARCH }}-${{ env.OS }}/release/ninja/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
@@ -146,7 +146,7 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe
-      - run: mv v8/build/${{ env.ARCH }}-${{ env.OS }}/release/ninja/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
