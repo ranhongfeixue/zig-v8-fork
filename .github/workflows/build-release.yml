@@ -12,6 +12,7 @@ permissions:
 
 env:
   ZIG_VERSION: 0.14.0
+  V8_REVISION: 13.6.233.8
 
 jobs:
   build-x86_64-linux:
@@ -30,24 +31,19 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Read version
-        id: read-version
-        run: |
-          echo "version=`cat V8_REVISION`" >> "$GITHUB_OUTPUT"
-
       - run: |
           sudo apt-get update
           sudo apt-get install -yq libglib2.0-dev
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
   build-aarch64-macos:
     env:
@@ -69,20 +65,15 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Read version
-        id: read-version
-        run: |
-          echo "version=`cat V8_REVISION`" >> "$GITHUB_OUTPUT"
-
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
   build-arm64-linux:
     env:
@@ -100,11 +91,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Read version
-        id: read-version
-        run: |
-          echo "version=`cat V8_REVISION`" >> "$GITHUB_OUTPUT"
-
       - run: |
           sudo apt-get update
           sudo apt-get install -yq libglib2.0-dev lld
@@ -116,13 +102,13 @@ jobs:
 
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
   build-x86_64-macos:
     env:
@@ -144,17 +130,12 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Read version
-        id: read-version
-        run: |
-          echo "version=`cat V8_REVISION`" >> "$GITHUB_OUTPUT"
-
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+      - run: mv v8/out/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: libc_v8_${{steps.read-version.outputs.version}}_${{ env.OS }}_${{ env.ARCH }}.a
+          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
