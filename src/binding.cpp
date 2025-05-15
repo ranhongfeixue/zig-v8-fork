@@ -1015,6 +1015,17 @@ void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(
     ptr_to_local(&self)->SetNativeDataProperty(ptr_to_local(&key), getter, setter);
 }
 
+void v8__ObjectTemplate__MarkAsUndetectable(
+    const v8::ObjectTemplate& self) {
+    ptr_to_local(&self)->MarkAsUndetectable();
+}
+
+void v8__ObjectTemplate__SetCallAsFunctionHandler(
+    const v8::ObjectTemplate& self,
+    v8::FunctionCallback callback_or_null) {
+    ptr_to_local(&self)->SetCallAsFunctionHandler(callback_or_null);
+}
+
 // Array
 
 const v8::Array* v8__Array__New(

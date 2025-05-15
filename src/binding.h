@@ -873,6 +873,11 @@ void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT2(
     const Name* key,
     AccessorNameGetterCallback getter,
     AccessorNameSetterCallback setter);
+void v8__ObjectTemplate__MarkAsUndetectable(
+    const ObjectTemplate* self);
+void v8__ObjectTemplate__SetCallAsFunctionHandler(
+    const ObjectTemplate* self,
+    FunctionCallback callback_or_null);
 
 typedef enum PropertyHandlerFlags {
        kNonMasking = 1,

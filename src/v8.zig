@@ -1065,6 +1065,14 @@ pub const ObjectTemplate = struct {
         c.v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(self.handle, name.handle, getter.handle, setter.handle);
     }
 
+    pub fn markAsUndetectable(self: Self) void {
+        c.v8__ObjectTemplate__MarkAsUndetectable(self.handle);
+    }
+
+    pub fn setCallAsFunctionHandler(self: Self, callback: FunctionCallback) void {
+        c.v8__ObjectTemplate__SetCallAsFunctionHandler(self.handle, callback);
+    }
+
     pub fn toValue(self: Self) Value {
         return .{
             .handle = self.handle,
