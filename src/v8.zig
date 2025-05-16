@@ -1913,11 +1913,15 @@ pub const Module = struct {
     ///
     /// If IsGraphAsync() is false, the returned Promise is settled.
     pub fn evaluate(self: Self, ctx: Context) !Value {
-        if (c.v8__Module__Evaluate(self.handle, ctx.handle)) |res| {
-            return Value{
-                .handle = res,
-            };
-        } else return error.JsException;
+        const res = c.v8__Module__Evaluate(self.handle, ctx.handle) orelse return error.JsException;
+
+        if (self.getStatus() == .kErrored) {
+            return error.JsException;
+        }
+
+        return Value{
+            .handle = res,
+        };
     }
 
     pub fn getIdentityHash(self: Self) u32 {
