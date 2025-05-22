@@ -17,7 +17,7 @@ RUN zig build
 RUN zig build get-v8
 RUN zig build -Doptimize=ReleaseSafe build-v8
 
-RUN mv v8/out/release/obj/zig/libc_v8.a /src/libc_v8.a
+RUN mv v8/out/linux/release/obj/zig/libc_v8.a /src/libc_v8.a
 
 FROM scratch as artifact
 

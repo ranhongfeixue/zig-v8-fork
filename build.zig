@@ -121,7 +121,13 @@ pub fn build(b: *std.Build) !void {
         step.root_module.addImport("default_exports", build_opts.createModule());
 
         const release_dir = if (mode == .Debug) "debug" else "release";
-        step.addObjectFile(b.path(b.fmt("v8/out/{s}/obj/zig/libc_v8.a", .{ release_dir })));
+        const os = switch (target.result.os.tag) {
+            .linux => "linux",
+            .macos => "macos",
+            else => return error.UnsupportedPlatform,
+        };
+
+        step.addObjectFile(b.path(b.fmt("v8/out/{s}/{s}/obj/zig/libc_v8.a", .{ os, release_dir })));
         step.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {

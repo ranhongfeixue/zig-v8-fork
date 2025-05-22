@@ -22,6 +22,6 @@ zig build get-v8
 zig build build-v8
 ```
 
-Once complete, you can find v8 in: `v8/out/debug/obj/zig/libc_v8.a`
+Once complete, you can find v8 in: `v8/out/LINUX_OR_MAC/debug/obj/zig/libc_v8.a`
 
-If you build with `zig build -Doptimize=ReleaseFast build-v8`, v8 will be in `v8/out/release/obj/zig/libc_v8.a`.
+If you build with `zig build -Doptimize=ReleaseFast build-v8`, v8 will be in `v8/out/LINUX_OR_MAC/release/obj/zig/libc_v8.a`.

@@ -11,7 +11,11 @@ MODE=${2:-"debug"}
 cp ${SRC_ROOT}/binding.cpp src/
 cp ${SRC_ROOT}/inspector.h src/
 
-OUT=out/${MODE}
+OUT_OS_PATH=${OS}
+if [ "${OS}" = "mac" ]; then
+  OUT_OS_PATH="macos"
+fi
+OUT=out/${OUT_OS_PATH}/${MODE}
 
 if [[ ${MODE} == "release" ]]; then
   IS_DEBUG="false"
