@@ -1,5 +1,5 @@
 # This dockerfile is used to build v8.
-ARG ZIG_DOCKER_VERSION=0.14.0
+ARG ZIG_DOCKER_VERSION=0.14.1
 FROM ghcr.io/lightpanda-io/zig:${ZIG_DOCKER_VERSION} as build
 
 ARG OS=linux
