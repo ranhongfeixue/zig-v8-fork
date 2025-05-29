@@ -2749,7 +2749,6 @@ pub const Inspector = struct {
         aux_data: ?[]const u8,
         is_default: bool,
     ) void {
-        std.log.debug("Inspector contextCreated called", .{});
         var auxData_ptr: [*c]const u8 = undefined;
         var auxData_len: usize = undefined;
         if (aux_data) |data| {
@@ -2806,7 +2805,6 @@ pub export fn v8_inspector__Client__IMPL__runMessageLoopOnPause(
     contextGroupId: c_int,
 ) callconv(.C) void {
     _ = contextGroupId;
-    std.log.debug("InspectorClient runMessageLoopOnPause called", .{});
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -2816,7 +2814,6 @@ pub export fn v8_inspector__Client__IMPL__quitMessageLoopOnPause(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
 ) callconv(.C) void {
-    std.log.debug("InspectorClient quitMessageLoopOnPause called", .{});
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -2828,7 +2825,6 @@ pub export fn v8_inspector__Client__IMPL__runIfWaitingForDebugger(
     contextGroupId: c_int,
 ) callconv(.C) void {
     _ = contextGroupId;
-    std.log.debug("InspectorClient runIfWaitingForDebugger called", .{});
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -2847,7 +2843,6 @@ pub export fn v8_inspector__Client__IMPL__consoleAPIMessage(
     _: *c.StackTrace,
 ) callconv(.C) void {
     _ = contextGroupId;
-    std.log.debug("InspectorClient consoleAPIMessage called", .{});
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -2857,7 +2852,6 @@ pub export fn v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
 ) callconv(.C) ?*const C_Context {
-    std.log.debug("InspectorClient ensureDefaultContextInGroup called", .{});
     const inspector = Inspector.fromData(data);
     return inspector.ctx_handle;
 }
@@ -2952,7 +2946,6 @@ pub export fn v8_inspector__Channel__IMPL__flushProtocolNotifications(
     _: *c.InspectorChannelImpl,
     data: *anyopaque,
 ) callconv(.C) void {
-    std.log.debug("InspectorChannel flushProtocolNotifications called", .{});
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
