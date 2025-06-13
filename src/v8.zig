@@ -1572,10 +1572,12 @@ pub const StackFrame = struct {
         return @as(u32, @intCast(c.v8__StackFrame__GetScriptId(self.handle)));
     }
 
-    pub fn getScriptName(self: Self) String {
-        return .{
-            .handle = c.v8__StackFrame__GetScriptName(self.handle).?,
-        };
+    pub fn getScriptName(self: Self) ?String {
+        if (c.v8__StackFrame__GetFunctionName(self.handle)) |ptr| {
+            return .{
+                .handle = ptr,
+            };
+        } else return null;
     }
 
     pub fn getScriptNameOrSourceUrl(self: Self) String {
