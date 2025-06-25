@@ -1054,6 +1054,7 @@ void v8__Module__InstantiateModule(
     MaybeBool* out);
 const Value* v8__Module__Evaluate(const Module* self, const Context* ctx);
 int v8__Module__GetIdentityHash(const Module* self);
+Value* v8__Module__GetModuleNamespace(const Module* self);
 int v8__Module__ScriptId(const Module* self);
 
 // ModuleRequest

@@ -1938,6 +1938,12 @@ pub const Module = struct {
         return @as(u32, @bitCast(c.v8__Module__GetIdentityHash(self.handle)));
     }
 
+    pub fn getModuleNamespace(self: Self) Value {
+        return .{
+            .handle = c.v8__Module__GetModuleNamespace(self.handle).?,
+        };
+    }
+
     pub fn getScriptId(self: Self) u32 {
         return @as(u32, @intCast(c.v8__Module__ScriptId(self.handle)));
     }

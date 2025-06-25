@@ -621,6 +621,10 @@ int v8__Module__GetIdentityHash(const v8::Module& self) {
     return self.GetIdentityHash();
 }
 
+v8::Value* v8__Module__GetModuleNamespace(v8::Module& self) {
+    return local_to_ptr(self.GetModuleNamespace());
+}
+
 int v8__Module__ScriptId(const v8::Module& self) {
     return self.ScriptId();
 }
