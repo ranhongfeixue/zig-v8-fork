@@ -297,6 +297,12 @@ const v8::Value* v8__Isolate__ThrowException(
     return local_to_ptr(isolate->ThrowException(ptr_to_local(&exception)));
 }
 
+void v8__Isolate__SetHostImportModuleDynamicallyCallback(
+        v8::Isolate* isolate,
+        v8::HostImportModuleDynamicallyCallback callback) {
+    isolate->SetHostImportModuleDynamicallyCallback(callback);
+}
+
 void v8__Isolate__SetPromiseRejectCallback(
         v8::Isolate* isolate,
         v8::PromiseRejectCallback callback) {
