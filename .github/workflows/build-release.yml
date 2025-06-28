@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "**"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -15,65 +17,6 @@ env:
   V8_REVISION: 13.6.233.8
 
 jobs:
-  build-x86_64-linux:
-    env:
-      OS: linux
-      ARCH: x86_64
-
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
-
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -yq libglib2.0-dev
-
-      - run: zig build get-v8
-      - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/${{ env.OS }}/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-  build-aarch64-macos:
-    env:
-      OS: macos
-      ARCH: aarch64
-
-    runs-on: macos-latest
-    steps:
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - run: zig build get-v8
-      - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/${{ env.OS }}/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
 
   build-arm64-linux:
     env:
@@ -103,39 +46,3 @@ jobs:
       - run: zig build get-v8
       - run: zig build -Doptimize=ReleaseSafe build-v8
       - run: mv v8/out/${{ env.OS }}/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-  build-x86_64-macos:
-    env:
-      OS: macos
-      ARCH: x86_64
-
-    runs-on: macos-13
-    steps:
-      - uses: mlugg/setup-zig@v2
-        with:
-          version: ${{ env.ZIG_VERSION }}
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - run: zig build get-v8
-      - run: zig build -Doptimize=ReleaseSafe build-v8
-      - run: mv v8/out/${{ env.OS }}/release/obj/zig/libc_v8.a libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
-
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
