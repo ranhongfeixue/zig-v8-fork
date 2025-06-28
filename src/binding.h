@@ -76,6 +76,7 @@ typedef enum PromiseRejectEvent {
 } PromiseRejectEvent;
 typedef struct PromiseRejectMessage PromiseRejectMessage;
 typedef void (*PromiseRejectCallback)(PromiseRejectMessage);
+typedef Promise* (*HostImportModuleDynamicallyCallback)(Context*, Data*, Value*, String*, FixedArray*);
 typedef enum MessageErrorLevel {
     kMessageLog = (1 << 0),
     kMessageDebug = (1 << 1),
@@ -211,6 +212,9 @@ Context* v8__Isolate__GetCurrentContext(Isolate* isolate);
 const Value* v8__Isolate__ThrowException(
     Isolate* isolate,
     const Value* exception);
+void v8__Isolate__SetHostImportModuleDynamicallyCallback(
+    Isolate* isolate,
+    HostImportModuleDynamicallyCallback callback);
 void v8__Isolate__SetPromiseRejectCallback(
     Isolate* isolate,
     PromiseRejectCallback callback);
@@ -1050,6 +1054,7 @@ void v8__Module__InstantiateModule(
     MaybeBool* out);
 const Value* v8__Module__Evaluate(const Module* self, const Context* ctx);
 int v8__Module__GetIdentityHash(const Module* self);
+Value* v8__Module__GetModuleNamespace(const Module* self);
 int v8__Module__ScriptId(const Module* self);
 
 // ModuleRequest

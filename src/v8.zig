@@ -322,6 +322,14 @@ pub const Isolate = struct {
             .handle = c.v8__Isolate__ThrowException(self.handle, getValueHandle(value)).?,
         };
     }
+    /// [V8]
+    /// This specifies the callback called by the upcoming dynamic import() language feature to load modules.
+    pub fn setHostImportModuleDynamicallyCallback(
+        self: Self,
+        callback: c.HostImportModuleDynamicallyCallback,
+    ) void {
+        c.v8__Isolate__SetHostImportModuleDynamicallyCallback(self.handle, callback);
+    }
 
     /// [V8]
     /// Set callback to notify about promise reject with no handler, or
@@ -1928,6 +1936,12 @@ pub const Module = struct {
 
     pub fn getIdentityHash(self: Self) u32 {
         return @as(u32, @bitCast(c.v8__Module__GetIdentityHash(self.handle)));
+    }
+
+    pub fn getModuleNamespace(self: Self) Value {
+        return .{
+            .handle = c.v8__Module__GetModuleNamespace(self.handle).?,
+        };
     }
 
     pub fn getScriptId(self: Self) u32 {
