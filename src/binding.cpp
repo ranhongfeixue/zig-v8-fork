@@ -125,6 +125,13 @@ bool v8__Platform__PumpMessageLoop(
         wait_for_work ? v8::platform::MessageLoopBehavior::kWaitForWork : v8::platform::MessageLoopBehavior::kDoNotWait);
 }
 
+void v8__Platform__RunIdleTasks(
+        v8::Platform* platform,
+        v8::Isolate* isolate,
+        double idle_time_in_seconds) {
+    v8::platform::RunIdleTasks(platform, isolate, idle_time_in_seconds);
+}
+
 // Root
 
 const v8::Primitive* v8__Undefined(v8::Isolate* isolate) {

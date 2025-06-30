@@ -154,6 +154,10 @@ pub const Platform = struct {
     pub fn pumpMessageLoop(self: Self, isolate: Isolate, wait_for_work: bool) bool {
         return c.v8__Platform__PumpMessageLoop(self.handle, isolate.handle, wait_for_work);
     }
+
+    pub fn runIdleTasks(self: Self, isolate: Isolate, idle_time_in_seconds: u32) void {
+        c.v8__Platform__RunIdleTasks(self.handle, isolate.handle, @floatFromInt(idle_time_in_seconds));
+    }
 };
 
 pub fn getVersion() []const u8 {
