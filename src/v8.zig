@@ -2108,6 +2108,10 @@ pub const Value = struct {
         return c.v8__Value__IsAsyncFunction(self.handle);
     }
 
+    pub fn isPromise(self: Self) bool {
+        return c.v8__Value__IsPromise(self.handle);
+    }
+
     pub fn isArray(self: Self) bool {
         return c.v8__Value__IsArray(self.handle);
     }

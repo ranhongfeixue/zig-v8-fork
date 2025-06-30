@@ -472,6 +472,7 @@ void v8__Value__NumberValue(
     MaybeF64* out);
 bool v8__Value__IsFunction(const Value* self);
 bool v8__Value__IsAsyncFunction(const Value* self);
+bool v8__Value__IsPromise(const Value* self);
 bool v8__Value__IsBoolean(const Value* self);
 bool v8__Value__IsBooleanObject(const Value* self);
 bool v8__Value__IsInt32(const Value* self);
