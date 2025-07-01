@@ -77,6 +77,7 @@ typedef enum PromiseRejectEvent {
 typedef struct PromiseRejectMessage PromiseRejectMessage;
 typedef void (*PromiseRejectCallback)(PromiseRejectMessage);
 typedef Promise* (*HostImportModuleDynamicallyCallback)(Context*, Data*, Value*, String*, FixedArray*);
+typedef void (*HostInitializeImportMetaObjectCallback)(Context*, Module*, Data*);
 typedef enum MessageErrorLevel {
     kMessageLog = (1 << 0),
     kMessageDebug = (1 << 1),
@@ -215,6 +216,9 @@ const Value* v8__Isolate__ThrowException(
 void v8__Isolate__SetHostImportModuleDynamicallyCallback(
     Isolate* isolate,
     HostImportModuleDynamicallyCallback callback);
+void v8__Isolate__SetHostInitializeImportMetaObjectCallback(
+    Isolate* isolate,
+    HostInitializeImportMetaObjectCallback callback);
 void v8__Isolate__SetPromiseRejectCallback(
     Isolate* isolate,
     PromiseRejectCallback callback);

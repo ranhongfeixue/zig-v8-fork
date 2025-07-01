@@ -303,6 +303,12 @@ void v8__Isolate__SetHostImportModuleDynamicallyCallback(
     isolate->SetHostImportModuleDynamicallyCallback(callback);
 }
 
+void v8__Isolate__SetHostInitializeImportMetaObjectCallback(
+        v8::Isolate* isolate,
+        v8::HostInitializeImportMetaObjectCallback callback) {
+    isolate->SetHostInitializeImportMetaObjectCallback(callback);
+}
+
 void v8__Isolate__SetPromiseRejectCallback(
         v8::Isolate* isolate,
         v8::PromiseRejectCallback callback) {
