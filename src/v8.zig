@@ -332,6 +332,15 @@ pub const Isolate = struct {
     }
 
     /// [V8]
+    /// Sets callback for the first time import.meta is called on a module
+    pub fn setHostInitializeImportMetaObjectCallback(
+        self: Self,
+        callback: c.HostInitializeImportMetaObjectCallback,
+    ) void {
+        c.v8__Isolate__SetHostInitializeImportMetaObjectCallback(self.handle, callback);
+    }
+
+    /// [V8]
     /// Set callback to notify about promise reject with no handler, or
     /// revocation of such a previous notification once the handler is added.
     pub fn setPromiseRejectCallback(self: Self, callback: c.PromiseRejectCallback) void {
