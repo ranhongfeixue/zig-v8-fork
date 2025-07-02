@@ -485,6 +485,7 @@ bool v8__Value__IsNumber(const Value* self);
 bool v8__Value__IsNumberObject(const Value* self);
 bool v8__Value__IsObject(const Value* self);
 bool v8__Value__IsString(const Value* self);
+bool v8__Value__IsSymbol(const Value* self);
 bool v8__Value__IsArray(const Value* self);
 bool v8__Value__IsTypedArray(const Value* self);
 bool v8__Value__IsUint8ClampedArray(const Value* self);
