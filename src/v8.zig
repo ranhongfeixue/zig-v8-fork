@@ -2113,6 +2113,11 @@ pub const Value = struct {
         return c.v8__Value__IsString(self.handle);
     }
 
+
+    pub fn isSymbol(self: Self) bool {
+        return c.v8__Value__IsSymbol(self.handle);
+    }
+
     pub fn isFunction(self: Self) bool {
         return c.v8__Value__IsFunction(self.handle);
     }
