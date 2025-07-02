@@ -127,6 +127,7 @@ typedef struct Platform Platform;
 Platform* v8__Platform__NewDefaultPlatform(int thread_pool_size, int idle_task_support);
 void v8__Platform__DELETE(Platform* platform);
 bool v8__Platform__PumpMessageLoop(Platform* platform, Isolate* isolate, bool wait_for_work);
+void v8__Platform__RunIdleTasks(Platform* platform, Isolate* isolate, double idle_time_in_seconds);
 
 // Root
 const Primitive* v8__Undefined(Isolate* isolate);
