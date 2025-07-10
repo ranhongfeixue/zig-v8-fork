@@ -949,6 +949,13 @@ pub fn Persistent(comptime T: type) type {
             };
         }
 
+        /// Should only be called if you know the underlying type is a v8.Module.
+        pub fn castToModule(self: Self) Module {
+            return .{
+                .handle = @as(*const c.Module, @ptrCast(self.handle)),
+            };
+        }
+
         /// Should only be called if you know the underlying type is a v8.PromiseResolver.
         pub fn castToPromiseResolver(self: Self) PromiseResolver {
             return .{
@@ -2124,6 +2131,10 @@ pub const Value = struct {
 
     pub fn isAsyncFunction(self: Self) bool {
         return c.v8__Value__IsAsyncFunction(self.handle);
+    }
+
+    pub fn isPromise(self: Self) bool {
+        return c.v8__Value__IsPromise(self.handle);
     }
 
     pub fn isArray(self: Self) bool {

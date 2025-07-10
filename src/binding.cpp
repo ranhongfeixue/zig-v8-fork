@@ -878,6 +878,8 @@ bool v8__Value__IsFunction(const v8::Value& self) { return self.IsFunction(); }
 
 bool v8__Value__IsAsyncFunction(const v8::Value& self) { return self.IsAsyncFunction(); }
 
+bool v8__Value__IsPromise(const v8::Value& self) { return self.IsPromise(); }
+
 bool v8__Value__IsBoolean(const v8::Value& self) { return self.IsBoolean(); }
 
 bool v8__Value__IsBooleanObject(const v8::Value& self) { return self.IsBooleanObject(); }
