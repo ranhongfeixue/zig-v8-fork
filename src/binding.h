@@ -1064,6 +1064,12 @@ int v8__Module__GetIdentityHash(const Module* self);
 Value* v8__Module__GetModuleNamespace(const Module* self);
 int v8__Module__ScriptId(const Module* self);
 
+Script* v8__ScriptCompiler__Compile(
+        const Context* context,
+        ScriptCompilerSource* source,
+        CompileOptions options,
+        NoCacheReason reason);
+
 // ModuleRequest
 typedef Data ModuleRequest;
 const String* v8__ModuleRequest__GetSpecifier(const ModuleRequest* self);
