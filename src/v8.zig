@@ -1862,6 +1862,22 @@ pub const ScriptCompiler = struct {
             };
         } else return error.JsException;
     }
+
+    /// [v8]
+    /// Compiles the specified script (bound to current context).
+    pub fn compile(ctx: Context, src: *ScriptCompilerSource, options: ScriptCompiler.CompileOptions, reason: ScriptCompiler.NoCacheReason) !Script {
+        const mb_res = c.v8__ScriptCompiler__Compile(
+            ctx.handle,
+            &src.inner,
+            @intFromEnum(options),
+            @intFromEnum(reason),
+        );
+        if (mb_res) |res| {
+            return Script{
+                .handle = res,
+            };
+        } else return error.JsException;
+    }
 };
 
 pub const Script = struct {
@@ -2119,7 +2135,6 @@ pub const Value = struct {
     pub fn isString(self: Self) bool {
         return c.v8__Value__IsString(self.handle);
     }
-
 
     pub fn isSymbol(self: Self) bool {
         return c.v8__Value__IsSymbol(self.handle);

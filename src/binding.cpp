@@ -599,6 +599,15 @@ const v8::Module* v8__ScriptCompiler__CompileModule(
     return maybe_local_to_ptr(maybe_local);
 }
 
+const v8::Script* v8__ScriptCompiler__Compile(
+        const v8::Context& context,
+        v8::ScriptCompiler::Source* source,
+        v8::ScriptCompiler::CompileOptions options,
+        v8::ScriptCompiler::NoCacheReason reason) {
+    v8::MaybeLocal<v8::Script> maybe_local = v8::ScriptCompiler::Compile(ptr_to_local(&context), source, options, reason);
+    return maybe_local_to_ptr(maybe_local);
+}
+
 size_t v8__ScriptCompiler__CompilationDetails__SIZEOF() {
     return sizeof(v8::ScriptCompiler::CompilationDetails);
 }
