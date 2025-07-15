@@ -2916,25 +2916,11 @@ pub export fn v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     return inspector.ctx_handle;
 }
 
-usingnamespace if (@import("default_exports").inspector_subtype) struct {
-    pub export fn v8_inspector__Client__IMPL__valueSubtype(
-        _: *c.InspectorClientImpl,
-        value: *const c.Value,
-    ) callconv(.C) [*c]const u8 {
-        _ = value;
-        return null;
+comptime {
+    if (@import("default_exports").inspector_subtype) {
+        _ = @import("inspector_subtypes.zig");
     }
-
-    pub export fn v8_inspector__Client__IMPL__descriptionForValueSubtype(
-        _: *c.InspectorClientImpl,
-        context: *const c.Context,
-        value: *const c.Value,
-    ) callconv(.C) [*c]const u8 {
-        _ = value;
-        _ = context;
-        return null;
-    }
-} else struct {};
+}
 
 // InspectorChannel
 
