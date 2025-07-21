@@ -4,7 +4,6 @@
 
 typedef uintptr_t usize;
 typedef struct Data Data;
-typedef struct ArrayBuffer ArrayBuffer;
 typedef struct ArrayBufferAllocator ArrayBufferAllocator;
 typedef struct CreateParams CreateParams;
 typedef struct Isolate Isolate;
@@ -39,6 +38,7 @@ typedef Value BigInt64Array;
 typedef Value Float16Array;
 typedef Value Float32Array;
 typedef Value Float64Array;
+typedef Value ArrayBuffer;
 typedef Value ArrayBufferView;
 typedef Value External;
 typedef Value Symbol;
