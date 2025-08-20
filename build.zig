@@ -3,8 +3,8 @@ const std = @import("std");
 const LazyPath = std.Build.LazyPath;
 
 pub fn build(b: *std.Build) !void {
-    const mode = b.standardOptimizeOption(.{});
     const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
     var build_opts = b.addOptions();
     build_opts.addOption(
@@ -13,29 +13,35 @@ pub fn build(b: *std.Build) !void {
         b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
     );
 
-    {
-        // the module we export as a library
-        const v8_module = b.addModule("v8", .{
-            .root_source_file = b.path("src/v8.zig"),
-        });
-        v8_module.addIncludePath(b.path("src"));
-        v8_module.addImport("default_exports", build_opts.createModule());
-    }
+    // the module we export as a library
+    const v8_module = b.addModule("v8", .{
+        .root_source_file = b.path("src/v8.zig"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+    v8_module.addIncludePath(b.path("src"));
+    v8_module.addImport("default_exports", build_opts.createModule());
 
     const root_path = LazyPath{ .cwd_relative = "." };
     const build_path = LazyPath{ .cwd_relative = "./v8/" };
+
+    const build_module = b.addModule("v8_build", .{
+        .root_source_file = b.path("src/main_build.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
 
     {
         // Get V8
         const get_v8 = b.addExecutable(.{
             .name = "get-v8",
-            .optimize = mode,
-            .target = target,
-            .root_source_file = b.path("src/main_build.zig"),
+            .root_module = build_module,
         });
 
         const mkdir_v8_dir = blk: {
-            var mkdir_v8_dir = b.addSystemCommand(&.{ "mkdir", "-p"});
+            var mkdir_v8_dir = b.addSystemCommand(&.{ "mkdir", "-p" });
             mkdir_v8_dir.addDirectoryArg(build_path);
             mkdir_v8_dir.setCwd(root_path);
             break :blk mkdir_v8_dir;
@@ -53,14 +59,14 @@ pub fn build(b: *std.Build) !void {
         };
 
         const run_get_tools = blk: {
-            var run_get_tools = b.addSystemCommand(&.{"/bin/bash", "get_tools.sh"});
+            var run_get_tools = b.addSystemCommand(&.{ "/bin/bash", "get_tools.sh" });
             run_get_tools.setCwd(build_path);
             run_get_tools.step.dependOn(&cp_build_files.step);
             break :blk run_get_tools;
         };
 
         const run_v8_source = blk: {
-            var run_v8_source = b.addSystemCommand(&.{"/bin/bash", "get_v8.sh"});
+            var run_v8_source = b.addSystemCommand(&.{ "/bin/bash", "get_v8.sh" });
             run_v8_source.setCwd(build_path);
             run_v8_source.step.dependOn(&run_get_tools.step);
             break :blk run_v8_source;
@@ -83,15 +89,13 @@ pub fn build(b: *std.Build) !void {
         // build V8
         const build_v8 = b.addExecutable(.{
             .name = "build-v8",
-            .optimize = mode,
-            .target = target,
-            .root_source_file = b.path("src/main_build.zig"),
+            .root_module = build_module,
         });
 
         const run_build = blk: {
-            var run_build = b.addSystemCommand(&.{"/bin/bash", "build_v8.sh"});
+            var run_build = b.addSystemCommand(&.{ "/bin/bash", "build_v8.sh" });
             run_build.addDirectoryArg(b.path("src"));
-            run_build.addArg(if (mode == .Debug) "debug" else "release");
+            run_build.addArg(if (optimize == .Debug) "debug" else "release");
             run_build.setCwd(build_path);
             break :blk run_build;
         };
@@ -110,36 +114,41 @@ pub fn build(b: *std.Build) !void {
     }
 
     {
-        // test
-        const step = b.addTest(.{
-            .root_source_file = b.path("./src/test.zig"),
+        const test_module = b.addModule("test_v8", .{
+            .root_source_file = b.path("src/v8.zig"),
             .target = target,
-            .optimize = mode,
+            .optimize = optimize,
             .link_libc = true,
+            .link_libcpp = true,
         });
-        step.linkLibCpp();
-        step.root_module.addImport("default_exports", build_opts.createModule());
 
-        const release_dir = if (mode == .Debug) "debug" else "release";
+        // test
+        const tests = b.addTest(.{
+            .root_module = test_module,
+        });
+        tests.root_module.addImport("default_exports", build_opts.createModule());
+
+        const release_dir = if (optimize == .Debug) "debug" else "release";
         const os = switch (target.result.os.tag) {
             .linux => "linux",
             .macos => "macos",
             else => return error.UnsupportedPlatform,
         };
 
-        step.addObjectFile(b.path(b.fmt("v8/out/{s}/{s}/obj/zig/libc_v8.a", .{ os, release_dir })));
-        step.addIncludePath(b.path("src"));
+        tests.addObjectFile(b.path(b.fmt("v8/out/{s}/{s}/obj/zig/libc_v8.a", .{ os, release_dir })));
+        tests.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {
             .macos => {
                 // v8 has a dependency, abseil-cpp, which, on Mac, uses CoreFoundation
-                step.addSystemFrameworkPath(.{ .cwd_relative = "/System/Library/Frameworks" });
-                step.linkFramework("CoreFoundation");
+                tests.addSystemFrameworkPath(.{ .cwd_relative = "/System/Library/Frameworks" });
+                tests.linkFramework("CoreFoundation");
             },
             else => {},
         }
 
-        const run_test = b.addRunArtifact(step);
-        b.step("test", "Run tests.").dependOn(&run_test.step);
+        const run_tests = b.addRunArtifact(tests);
+        const tests_step = b.step("test", "Run unit tests");
+        tests_step.dependOn(&run_tests.step);
     }
 }
