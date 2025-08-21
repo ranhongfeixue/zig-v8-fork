@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) !void {
     const root_path = LazyPath{ .cwd_relative = "." };
     const build_path = LazyPath{ .cwd_relative = "./v8/" };
 
-    const build_module = b.addModule("v8_build", .{
+    const build_module = b.createModule(.{
         .root_source_file = b.path("src/main_build.zig"),
         .target = target,
         .optimize = optimize,
@@ -114,7 +114,7 @@ pub fn build(b: *std.Build) !void {
     }
 
     {
-        const test_module = b.addModule("test_v8", .{
+        const test_module = b.createModule(.{
             .root_source_file = b.path("src/v8.zig"),
             .target = target,
             .optimize = optimize,
