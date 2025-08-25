@@ -2722,7 +2722,7 @@ inline fn ptrCastAlign(comptime Ptr: type, ptr: anytype) Ptr {
     }
 }
 
-pub fn setDcheckFunction(func: fn (file: [*c]const u8, line: c_int, msg: [*c]const u8) callconv(.C) void) void {
+pub fn setDcheckFunction(func: fn (file: [*c]const u8, line: c_int, msg: [*c]const u8) callconv(.c) void) void {
     c.v8__base__SetDcheckFunction(func);
 }
 
@@ -2854,7 +2854,7 @@ pub const InspectorClient = struct {
 pub export fn v8_inspector__Client__IMPL__generateUniqueId(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
-) callconv(.C) i64 {
+) callconv(.c) i64 {
     const inspector = Inspector.fromData(data);
     return inspector.rnd.random().int(i64);
 }
@@ -2863,7 +2863,7 @@ pub export fn v8_inspector__Client__IMPL__runMessageLoopOnPause(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
     contextGroupId: c_int,
-) callconv(.C) void {
+) callconv(.c) void {
     _ = contextGroupId;
     const inspector = Inspector.fromData(data);
     _ = inspector;
@@ -2873,7 +2873,7 @@ pub export fn v8_inspector__Client__IMPL__runMessageLoopOnPause(
 pub export fn v8_inspector__Client__IMPL__quitMessageLoopOnPause(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
-) callconv(.C) void {
+) callconv(.c) void {
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -2883,7 +2883,7 @@ pub export fn v8_inspector__Client__IMPL__runIfWaitingForDebugger(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
     contextGroupId: c_int,
-) callconv(.C) void {
+) callconv(.c) void {
     _ = contextGroupId;
     const inspector = Inspector.fromData(data);
     _ = inspector;
@@ -2901,7 +2901,7 @@ pub export fn v8_inspector__Client__IMPL__consoleAPIMessage(
     _: c_uint,
     _: c_uint,
     _: *c.StackTrace,
-) callconv(.C) void {
+) callconv(.c) void {
     _ = contextGroupId;
     const inspector = Inspector.fromData(data);
     _ = inspector;
@@ -2911,7 +2911,7 @@ pub export fn v8_inspector__Client__IMPL__consoleAPIMessage(
 pub export fn v8_inspector__Client__IMPL__ensureDefaultContextInGroup(
     _: *c.InspectorClientImpl,
     data: *anyopaque,
-) callconv(.C) ?*const C_Context {
+) callconv(.c) ?*const C_Context {
     const inspector = Inspector.fromData(data);
     return inspector.ctx_handle;
 }
@@ -2973,7 +2973,7 @@ pub export fn v8_inspector__Channel__IMPL__sendResponse(
     call_id: c_int,
     msg: [*c]u8,
     length: usize,
-) callconv(.C) void {
+) callconv(.c) void {
     const inspector = Inspector.fromData(data);
     inspector.channel.resp(@as(u32, @intCast(call_id)), msg[0..length]);
 }
@@ -2983,7 +2983,7 @@ pub export fn v8_inspector__Channel__IMPL__sendNotification(
     data: *anyopaque,
     msg: [*c]u8,
     length: usize,
-) callconv(.C) void {
+) callconv(.c) void {
     const inspector = Inspector.fromData(data);
     inspector.channel.notif(msg[0..length]);
 }
@@ -2991,7 +2991,7 @@ pub export fn v8_inspector__Channel__IMPL__sendNotification(
 pub export fn v8_inspector__Channel__IMPL__flushProtocolNotifications(
     _: *c.InspectorChannelImpl,
     data: *anyopaque,
-) callconv(.C) void {
+) callconv(.c) void {
     const inspector = Inspector.fromData(data);
     _ = inspector;
     // TODO
@@ -3125,7 +3125,7 @@ pub const RemoteObject = struct {
 };
 
 /// Enables C to allocate using the given Zig allocator
-pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.C) ?[*]u8 {
+pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.c) ?[*]u8 {
     const allocator: *std.mem.Allocator = @ptrCast(@alignCast(self));
     const allocated_bytes = allocator.alloc(u8, bytes) catch return null;
     return allocated_bytes.ptr;
