@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 env:
-  ZIG_VERSION: 0.14.1
+  ZIG_VERSION: 0.15.1
   V8_REVISION: 13.6.233.8
 
 jobs:
