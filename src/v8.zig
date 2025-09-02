@@ -684,9 +684,10 @@ pub const PromiseRejectMessage = struct {
         };
     }
 
-    pub fn getValue(self: Self) Value {
+    pub fn getValue(self: Self) ?Value {
+        const v8_value = c.v8__PromiseRejectMessage__GetValue(&self.inner) orelse return null;
         return .{
-            .handle = c.v8__PromiseRejectMessage__GetValue(&self.inner).?,
+            .handle = v8_value,
         };
     }
 };
