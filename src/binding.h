@@ -278,6 +278,7 @@ typedef struct ResourceConstraints {
     usize max_young_generation_size_;
     usize initial_old_generation_size_;
     usize initial_young_generation_size_;
+    uint64_t physical_memory_size_;
     uint32_t* stack_limit_;
 } ResourceConstraints;
 
@@ -297,7 +298,7 @@ typedef struct CreateParams {
     int embedder_wrapper_object_index;
     void* fatal_error_callback;
     void* oom_error_callback;
-    void* heap;
+    void* cpp_heap;
 } CreateParams;
 usize v8__Isolate__CreateParams__SIZEOF();
 void v8__Isolate__CreateParams__CONSTRUCT(CreateParams* buf);

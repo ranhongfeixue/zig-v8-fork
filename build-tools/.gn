@@ -96,4 +96,7 @@ default_args = {
   use_relative_vtables_abi = false
 
   icu_use_data_file = false
+
+  # requires rust toolchain
+  v8_enable_temporal_support = false
 }
