@@ -99,4 +99,7 @@ default_args = {
 
   # requires rust toolchain
   v8_enable_temporal_support = false
+
+  # build fails on some linux systems without this
+  use_llvm_libatomic = false
 }

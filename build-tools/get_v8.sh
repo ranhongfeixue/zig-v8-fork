@@ -7,21 +7,25 @@ source utils.sh
 
 REVISION=14.0.365.4
 
-cloneDep() {
+
+clone() {
   if [ -d "${2}" ]; then
     warn "dependency ${2} already exists, skipping"
   else
-    dep_info=$(python3 deps_get.py deps.json "${1}")
-    IFS=@ read -r dep_path dep_commit <<< "${dep_info}"
-
     say "cloning dependency ${1}"
-    git  clone --depth=1 "${dep_path}" "${2}"
+    git  clone --depth=1 "${1}" "${2}"
     pushd "${2}"
-      git fetch --depth=1 origin ${dep_commit}
-      git -c advice.detachedHead=false checkout ${dep_commit}
-      git branch -D \@{-1} || true
+      git fetch --depth=1 origin $3
+      git -c advice.detachedHead=false checkout $3
+      git branch -D \@{-1} || true  # if you want to tidy up the fetched branch
     popd
   fi
+}
+
+cloneDep() {
+  dep_info=$(python3 deps_get.py deps.json "${1}")
+  IFS=@ read -r dep_path dep_commit <<< "${dep_info}"
+  clone $dep_path $2 $dep_commit
 }
 
 if [ -d "src" ]; then
