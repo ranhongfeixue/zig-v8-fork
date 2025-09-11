@@ -96,4 +96,10 @@ default_args = {
   use_relative_vtables_abi = false
 
   icu_use_data_file = false
+
+  # requires rust toolchain
+  v8_enable_temporal_support = false
+
+  # build fails on some linux systems without this
+  use_llvm_libatomic = false
 }

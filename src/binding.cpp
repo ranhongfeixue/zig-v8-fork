@@ -1229,7 +1229,7 @@ const v8::Array* v8__Object__GetPropertyNames(
 
 const v8::Value* v8__Object__GetPrototype(
        const v8::Object& self) {
-  return local_to_ptr(ptr_to_local(&self)->GetPrototype());
+  return local_to_ptr(ptr_to_local(&self)->GetPrototypeV2());
 }
 
 void v8__Object__SetPrototype(
@@ -1237,7 +1237,7 @@ void v8__Object__SetPrototype(
         const v8::Context& ctx,
         const v8::Object& prototype,
         v8::Maybe<bool>* out) {
-  *out = ptr_to_local(&self)->SetPrototype(ptr_to_local(&ctx), ptr_to_local(&prototype));
+  *out = ptr_to_local(&self)->SetPrototypeV2(ptr_to_local(&ctx), ptr_to_local(&prototype));
 }
 
 void v8__Object__SetAlignedPointerInInternalField(
