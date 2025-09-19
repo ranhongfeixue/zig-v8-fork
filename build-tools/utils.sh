@@ -25,6 +25,7 @@ esac
 
 : "${OS:=unset}"
 case "$OS" in
+  macos)  OS="mac" ;;
   unset)
     case "$OSTYPE" in
       darwin*)  OS="mac" ;;
