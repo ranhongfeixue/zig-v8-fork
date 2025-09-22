@@ -958,6 +958,12 @@ pub fn Persistent(comptime T: type) type {
         }
 
         /// Should only be called if you know the underlying type is a v8.PromiseResolver.
+        pub fn castToPromise(self: Self) Promise {
+            return .{
+                .handle = @as(*const c.Promise, @ptrCast(self.handle)),
+            };
+        }
+
         pub fn castToPromiseResolver(self: Self) PromiseResolver {
             return .{
                 .handle = @as(*const c.PromiseResolver, @ptrCast(self.handle)),
