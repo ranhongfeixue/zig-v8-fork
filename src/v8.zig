@@ -2475,6 +2475,10 @@ pub const ArrayBuffer = struct {
     pub fn getBackingStore(self: Self) SharedPtr {
         return c.v8__ArrayBuffer__GetBackingStore(self.handle);
     }
+
+    pub fn getByteLength(self: Self) usize {
+        return c.v8__ArrayBuffer__ByteLength(self.handle);
+    }
 };
 
 pub const ArrayBufferView = struct {
@@ -2495,6 +2499,14 @@ pub const ArrayBufferView = struct {
             },
             else => unreachable,
         }
+    }
+
+    pub fn getByteLength(self: Self) usize {
+        return c.v8__ArrayBufferView__ByteLength(self.handle);
+    }
+
+    pub fn getByteOffset(self: Self) usize {
+        return c.v8__ArrayBufferView__ByteOffset(self.handle);
     }
 };
 

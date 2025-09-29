@@ -454,6 +454,9 @@ const v8::ArrayBuffer* v8__ArrayBufferView__Buffer(const v8::ArrayBufferView& se
     return local_to_ptr(ptr_to_local(&self)->Buffer());
 }
 
+size_t v8__ArrayBufferView__ByteLength(v8::ArrayBufferView& self) { return self.ByteLength(); }
+size_t v8__ArrayBufferView__ByteOffset(v8::ArrayBufferView& self) { return self.ByteOffset(); }
+
 // HandleScope
 
 void v8__HandleScope__CONSTRUCT(v8::HandleScope* buf, v8::Isolate* isolate) {
