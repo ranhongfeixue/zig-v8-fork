@@ -338,8 +338,8 @@ SharedPtr v8__ArrayBuffer__GetBackingStore(const ArrayBuffer* self);
 
 // ArrayBufferView
 const ArrayBuffer* v8__ArrayBufferView__Buffer(const ArrayBufferView* self);
-size_t v8__ArrayBufferView__ByteLength(ArrayBufferView* self);
-size_t v8__ArrayBufferView__ByteOffset(ArrayBufferView* self);
+size_t v8__ArrayBufferView__ByteLength(const ArrayBufferView* self);
+size_t v8__ArrayBufferView__ByteOffset(const ArrayBufferView* self);
 
 // HandleScope
 typedef struct HandleScope {
