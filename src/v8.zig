@@ -1583,9 +1583,10 @@ pub const StackTrace = struct {
         };
     }
 
-    pub fn getCurrentScriptNameOrSourceUrl(iso: Isolate) String {
+    pub fn getCurrentScriptNameOrSourceUrl(iso: Isolate) ?String {
+        const handle = c.v8__StackTrace__CurrentScriptNameOrSourceURL__STATIC(iso.handle) orelse return null;
         return .{
-            .handle = c.v8__StackTrace__CurrentScriptNameOrSourceURL__STATIC(iso.handle).?,
+            .handle = handle,
         };
     }
 };
