@@ -1744,6 +1744,10 @@ const v8::CpuProfile* v8__CpuProfiler__StopProfiling(v8::CpuProfiler* self, cons
     return self->StopProfiling(ptr_to_local(&title));
 }
 
+void v8__CpuProfiler__UseDetailedSourcePositionsForProfiling(v8::Isolate* isolate) {
+    v8::CpuProfiler::UseDetailedSourcePositionsForProfiling(isolate);
+}
+
 void v8__CpuProfile__Delete(const v8::CpuProfile* self) {
     const_cast<v8::CpuProfile*>(self)->Delete();
 }

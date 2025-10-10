@@ -3117,6 +3117,10 @@ pub const CpuProfiler = struct {
         }
         return null;
     }
+
+    pub fn useDetailedSourcePositionsForProfiling(isolate: Isolate) void {
+        c.v8__CpuProfiler__UseDetailedSourcePositionsForProfiling(isolate.handle);
+    }
 };
 
 pub const CpuProfile = struct {
