@@ -3098,6 +3098,55 @@ pub const UnwrappedObject = struct {
     object_group: ?[]const u8,
 };
 
+pub const CpuProfiler = struct {
+    handle: *c.CpuProfiler,
+
+    pub fn init(isolate: Isolate) CpuProfiler {
+        return .{
+            .handle = c.v8__CpuProfiler__Get(isolate.handle).?,
+        };
+    }
+
+    pub fn startProfiling(self: CpuProfiler, title: String) void {
+        c.v8__CpuProfiler__StartProfiling(self.handle, title.handle);
+    }
+
+    pub fn stopProfiling(self: CpuProfiler, title: String) ?CpuProfile {
+        if (c.v8__CpuProfiler__StopProfiling(self.handle, title.handle)) |handle| {
+            return .{ .handle = handle };
+        }
+        return null;
+    }
+};
+
+pub const CpuProfile = struct {
+    handle: *const c.CpuProfile,
+
+    pub fn deinit(self: CpuProfile) void {
+        c.v8__CpuProfile__Delete(self.handle);
+    }
+
+    pub fn getTopDownRoot(self: CpuProfile) ?CpuProfileNode {
+        if (c.v8__CpuProfile__GetTopDownRoot(self.handle)) |handle| {
+            return .{ .handle = handle };
+        }
+        return null;
+    }
+
+    /// Serializes the profile to JSON format and returns it as a String.
+    pub fn serialize(self: CpuProfile, isolate: Isolate) ?String {
+        if (c.v8__CpuProfile__Serialize(self.handle, isolate.handle)) |handle| {
+            return String{ .handle = handle };
+        }
+        return null;
+    }
+};
+
+/// Represents a node in the CPU profile tree.
+pub const CpuProfileNode = struct {
+    handle: *const c.CpuProfileNode,
+};
+
 /// Note: Some getters return owned memory (strings), while others return memory owned by V8 (objects).
 /// The getters short-circuit if the default values is not available as converting the defaults to V8 causes unnecessary overhead.
 ///

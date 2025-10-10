@@ -3,6 +3,7 @@
 #include <cassert>
 #include "include/libplatform/libplatform.h"
 #include "include/v8-inspector.h"
+#include "include/v8-profiler.h"
 #include "include/v8.h"
 #include "src/api/api.h"
 #include "src/inspector/protocol/Runtime.h"
@@ -1726,6 +1727,57 @@ const v8::String* v8__JSON__Stringify(
 
 void v8__base__SetDcheckFunction(void (*func)(const char*, int, const char*)) {
     v8::base::SetDcheckFunction(func);
+}
+
+// CpuProfiler
+// -----------
+
+v8::CpuProfiler* v8__CpuProfiler__Get(v8::Isolate* isolate) {
+    return v8::CpuProfiler::New(isolate);
+}
+
+void v8__CpuProfiler__StartProfiling(v8::CpuProfiler* self, const v8::String& title) {
+    self->StartProfiling(ptr_to_local(&title), true);
+}
+
+const v8::CpuProfile* v8__CpuProfiler__StopProfiling(v8::CpuProfiler* self, const v8::String& title) {
+    return self->StopProfiling(ptr_to_local(&title));
+}
+
+void v8__CpuProfile__Delete(const v8::CpuProfile* self) {
+    const_cast<v8::CpuProfile*>(self)->Delete();
+}
+
+const v8::CpuProfileNode* v8__CpuProfile__GetTopDownRoot(const v8::CpuProfile* self) {
+    return self->GetTopDownRoot();
+}
+
+// Custom OutputStream that collects output into a string
+class StringOutputStream : public v8::OutputStream {
+public:
+    void EndOfStream() override {}
+
+    int GetChunkSize() override {
+        return 1024 * 1024; // 1MB chunks
+    }
+
+    v8::OutputStream::WriteResult WriteAsciiChunk(char* data, int size) override {
+        buffer_.append(data, size);
+        return v8::OutputStream::kContinue;
+    }
+
+    const std::string& str() const { return buffer_; }
+
+private:
+    std::string buffer_;
+};
+
+const v8::String* v8__CpuProfile__Serialize(const v8::CpuProfile* self, v8::Isolate* isolate) {
+    StringOutputStream stream;
+    self->Serialize(&stream);
+    return maybe_local_to_ptr(
+        v8::String::NewFromUtf8(isolate, stream.str().c_str(), v8::NewStringType::kNormal, stream.str().length())
+    );
 }
 
 // Inspector
