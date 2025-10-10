@@ -144,6 +144,7 @@ jobs:
     env:
       OS: ios
       ARCH: aarch64
+      TARGET_ENVIRONMENT: simulator
 
     runs-on: macos-latest
     steps:
