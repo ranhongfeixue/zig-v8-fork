@@ -1097,6 +1097,21 @@ typedef struct {
     uint64_t len;
 } CZigString;
 
+// CpuProfiler
+// -----------
+
+typedef struct CpuProfiler CpuProfiler;
+typedef struct CpuProfile CpuProfile;
+typedef struct CpuProfileNode CpuProfileNode;
+
+CpuProfiler* v8__CpuProfiler__Get(Isolate* isolate);
+void v8__CpuProfiler__StartProfiling(CpuProfiler* self, const String* title);
+const CpuProfile* v8__CpuProfiler__StopProfiling(CpuProfiler* self, const String* title);
+void v8__CpuProfiler__UseDetailedSourcePositionsForProfiling(Isolate* isolate);
+void v8__CpuProfile__Delete(const CpuProfile* self);
+const CpuProfileNode* v8__CpuProfile__GetTopDownRoot(const CpuProfile* self);
+const String* v8__CpuProfile__Serialize(const CpuProfile* self, Isolate* isolate);
+
 // Inspector
 // ---------
 
