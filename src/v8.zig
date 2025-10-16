@@ -2884,10 +2884,8 @@ pub export fn v8_inspector__Client__IMPL__runMessageLoopOnPause(
     data: *anyopaque,
     contextGroupId: c_int,
 ) callconv(.c) void {
-    _ = contextGroupId;
     const inspector = Inspector.fromData(data);
-    _ = inspector;
-    // TODO
+    inspector.channel.onRunMessageLoopOnPause(inspector.channel.ctx, @intCast(contextGroupId));
 }
 
 pub export fn v8_inspector__Client__IMPL__quitMessageLoopOnPause(
@@ -2895,8 +2893,7 @@ pub export fn v8_inspector__Client__IMPL__quitMessageLoopOnPause(
     data: *anyopaque,
 ) callconv(.c) void {
     const inspector = Inspector.fromData(data);
-    _ = inspector;
-    // TODO
+    inspector.channel.onQuitMessageLoopOnPause(inspector.channel.ctx);
 }
 
 pub export fn v8_inspector__Client__IMPL__runIfWaitingForDebugger(
@@ -2951,14 +2948,20 @@ pub const InspectorChannel = struct {
     ctx: *anyopaque,
     onNotif: onNotifFn = undefined,
     onResp: onRespFn = undefined,
+    onRunMessageLoopOnPause: onRunMessageLoopOnPauseFn = undefined,
+    onQuitMessageLoopOnPause: onQuitMessageLoopOnPauseFn = undefined,
 
     pub const onNotifFn = *const fn (ctx: *anyopaque, msg: []const u8) void;
     pub const onRespFn = *const fn (ctx: *anyopaque, call_id: u32, msg: []const u8) void;
+    pub const onRunMessageLoopOnPauseFn = *const fn (ctx: *anyopaque, context_group_id: u32) void;
+    pub const onQuitMessageLoopOnPauseFn = *const fn (ctx: *anyopaque) void;
 
     pub fn init(
         ctx: *anyopaque,
         onResp: onRespFn,
         onNotif: onNotifFn,
+        onRunMessageLoopOnPause: onRunMessageLoopOnPauseFn,
+        onQuitMessageLoopOnPause: onQuitMessageLoopOnPauseFn,
         isolate: Isolate,
     ) InspectorChannel {
         const handle = c.v8_inspector__Channel__IMPL__CREATE(isolate.handle);
@@ -2967,6 +2970,8 @@ pub const InspectorChannel = struct {
             .ctx = ctx,
             .onResp = onResp,
             .onNotif = onNotif,
+            .onRunMessageLoopOnPause = onRunMessageLoopOnPause,
+            .onQuitMessageLoopOnPause = onQuitMessageLoopOnPause
         };
     }
 
