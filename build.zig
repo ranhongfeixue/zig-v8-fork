@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const V8_VERSION: []const u8 = "14.0.365.4";
+
 const LazyPath = std.Build.LazyPath;
 
 pub fn build(b: *std.Build) !void {
@@ -15,9 +17,10 @@ pub fn build(b: *std.Build) !void {
 
     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
 
-    const prepared_v8 = try prepareV8Sources(b);
-    const update_clang = updateClangSources(b, prepared_v8);
-    const tools_dir = try downloadTools(b, target);
+    // const prepared_v8 = try prepareV8Sources(b);
+    const prepared_v8 = try prepareV8Sources2(b);
+    const bootstrapped_v8 = bootstrapV8(b, prepared_v8);
+    // const update_clang = updateClangSources(b, prepared_v8);
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
         // Use prebuilt_v8 if available.
@@ -26,15 +29,12 @@ pub fn build(b: *std.Build) !void {
         break :blk wf;
     } else blk: {
         // Otherwise, go through build process.
-        break :blk try buildV8(b, prepared_v8, update_clang, tools_dir, target, optimize);
+        break :blk try buildV8(b, prepared_v8, bootstrapped_v8, target, optimize);
     };
 
-    const prepare_step = b.step("prepare-v8", "Prepare V8 source code and dependencies");
+    const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
     prepare_step.dependOn(&prepared_v8.step);
-    prepare_step.dependOn(&update_clang.step);
-
-    const tools_step = b.step("download-tools-v8", "Download V8 Build Tools");
-    tools_step.dependOn(&tools_dir.step);
+    prepare_step.dependOn(&bootstrapped_v8.step);
 
     const build_step = b.step("build-v8", "Build v8");
     build_step.dependOn(&built_v8.step);
@@ -49,7 +49,7 @@ pub fn build(b: *std.Build) !void {
     });
     v8_module.addIncludePath(b.path("src"));
     v8_module.addImport("default_exports", build_opts.createModule());
-    v8_module.addObjectFile(built_v8.getDirectory().path(b, "libc_v8.a"));
+    // v8_module.addObjectFile(built_v8.getDirectory().path(b, "libc_v8.a"));
 
     switch (target.result.os.tag) {
         .macos => {
@@ -101,36 +101,50 @@ pub fn build(b: *std.Build) !void {
 }
 
 fn prepareV8Sources(b: *std.Build) !*std.Build.Step.WriteFile {
+    const depot_tools = b.dependency("depot_tools", .{});
+
+    const v8_wf = b.addWriteFiles();
+
+    // fetches v8 using the fetch command
+    var fetch_v8 = std.Build.Step.Run.create(b, "run fetch v8");
+    fetch_v8.addFileArg(depot_tools.path("fetch"));
+    fetch_v8.addArgs(&.{"v8"});
+    fetch_v8.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
+    fetch_v8.setCwd(v8_wf.getDirectory());
+
+    // checkout our selected version
+    const checkout_version = b.addSystemCommand(&.{
+        "git", "-C", "v8", "checkout", V8_VERSION,
+    });
+    checkout_version.setCwd(v8_wf.getDirectory());
+    checkout_version.step.dependOn(&fetch_v8.step);
+
+    // Sync dependencies for this version
+    var gclient_sync = std.Build.Step.Run.create(b, "run fetch v8");
+    gclient_sync.addFileArg(depot_tools.path("gclient"));
+    gclient_sync.addArgs(&.{ "sync", "-D" });
+    gclient_sync.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
+    gclient_sync.setCwd(v8_wf.getDirectory());
+    gclient_sync.step.dependOn(&checkout_version.step);
+
     const wf = b.addWriteFiles();
+    wf.step.dependOn(&gclient_sync.step);
+    _ = wf.addCopyDirectory(v8_wf.getDirectory().path(b, "v8"), "", .{});
 
-    const v8_dep = b.dependency("v8_src", .{});
-    _ = wf.addCopyDirectory(v8_dep.path(""), ".", .{});
-
-    // Copy all dependencies
-    const deps = [_][]const u8{
-        "build",
-        "buildtools",
-        "third_party/dragonbox/src",
-        "third_party/fp16/src",
-        "third_party/fast_float/src",
-        "third_party/simdutf",
-        "third_party/googletest/src",
-        "third_party/highway/src",
-        "third_party/icu",
-        "third_party/jinja2",
-        "third_party/libc++/src",
-        "third_party/libc++abi/src",
-        "third_party/llvm-libc/src",
-        "third_party/markupsafe",
-        "third_party/zlib",
-        "tools/clang",
-        "third_party/abseil-cpp",
-    };
-
-    for (deps) |dep_name| {
-        const dep = b.dependency(dep_name, .{});
-        _ = wf.addCopyDirectory(dep.path(""), dep_name, .{});
-    }
+    // Create .gclient file for gclient
+    const gclient_content =
+        \\solutions = [
+        \\  {
+        \\    "name": "v8",
+        \\    "url": "https://chromium.googlesource.com/v8/v8.git",
+        \\    "deps_file": "DEPS",
+        \\    "managed": False,
+        \\    "custom_deps": {},
+        \\  },
+        \\]
+        \\
+    ;
+    _ = wf.add(".gclient", gclient_content);
 
     // Copy binding files
     _ = wf.addCopyFile(b.path("src/binding.cpp"), "binding.cpp");
@@ -138,7 +152,6 @@ fn prepareV8Sources(b: *std.Build) !*std.Build.Step.WriteFile {
 
     // Copy build configuration
     _ = wf.addCopyFile(b.path("build-tools/BUILD.gn"), "zig/BUILD.gn");
-    _ = wf.addCopyFile(v8_dep.path("BUILD.gn"), "./BUILD.gn");
 
     // Not sure if it's a Zig bug or intended behavior but, `addCopyFile` won't
     // overwrite the original `.gn`. This means we put it in here and just call it from there.
@@ -153,6 +166,59 @@ fn prepareV8Sources(b: *std.Build) !*std.Build.Step.WriteFile {
     return wf;
 }
 
+fn prepareV8Sources2(b: *std.Build) !*std.Build.Step.WriteFile {
+    const wf = b.addWriteFiles();
+
+    // Create .gclient file for gclient
+    const gclient_content = b.fmt(
+        \\solutions = [
+        \\  {{
+        \\    "name": ".",
+        \\    "url": "https://chromium.googlesource.com/v8/v8.git@{s}",
+        \\    "deps_file": "DEPS",
+        \\    "managed": False,
+        \\    "custom_deps": {{}},
+        \\  }},
+        \\]
+        \\
+    , .{V8_VERSION});
+    _ = wf.add(".gclient", gclient_content);
+
+    // Copy binding files
+    _ = wf.addCopyFile(b.path("src/binding.cpp"), "binding.cpp");
+    _ = wf.addCopyFile(b.path("src/inspector.h"), "inspector.h");
+    // Copy build configuration
+    _ = wf.addCopyFile(b.path("build-tools/BUILD.gn"), "zig/BUILD.gn");
+    // Not sure if it's a Zig bug or intended behavior but, addCopyFile won't
+    // overwrite the original .gn. This means we put it in here and just call it from there.
+    _ = wf.addCopyFile(b.path("build-tools/.gn"), "zig/.gn");
+    // Generate gclient_args.gni
+    _ = wf.add("build/config/gclient_args.gni",
+        \\# Generated by Zig build system
+        \\
+    );
+    return wf;
+}
+
+fn bootstrapV8(b: *std.Build, prepared_v8: *std.Build.Step.WriteFile) *std.Build.Step.Run {
+    const depot_tools = b.dependency("depot_tools", .{});
+    // Sync dependencies for this version
+    var gclient_sync = std.Build.Step.Run.create(b, "run gclient sync");
+    gclient_sync.addFileArg(depot_tools.path("gclient"));
+    gclient_sync.addArgs(&.{"sync"});
+    gclient_sync.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
+    gclient_sync.setCwd(prepared_v8.getDirectory());
+    gclient_sync.step.dependOn(&prepared_v8.step);
+    // Run clang update script after copying
+    const clang_update = b.addSystemCommand(&.{
+        "python3",
+        "tools/clang/scripts/update.py",
+    });
+    clang_update.setCwd(prepared_v8.getDirectory());
+    clang_update.step.dependOn(&gclient_sync.step);
+    return clang_update;
+}
+
 fn updateClangSources(b: *std.Build, prepared_v8: *std.Build.Step.WriteFile) *std.Build.Step.Run {
     // Run clang update script after copying
     const clang_update = b.addSystemCommand(&.{
@@ -160,84 +226,20 @@ fn updateClangSources(b: *std.Build, prepared_v8: *std.Build.Step.WriteFile) *st
         "tools/clang/scripts/update.py",
     });
     clang_update.setCwd(prepared_v8.getDirectory());
+    clang_update.step.dependOn(&prepared_v8.step);
 
     return clang_update;
 }
 
-fn downloadTools(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-) !*std.Build.Step.WriteFile {
-    const tools_wf = b.addWriteFiles();
-
-    const arch = switch (target.result.cpu.arch) {
-        .aarch64 => "arm64",
-        .x86_64 => "amd64",
-        else => return error.UnsupportedArchitecture,
-    };
-
-    const os = switch (target.result.os.tag) {
-        .linux => "linux",
-        .macos, .ios => "mac",
-        else => return error.UnsupportedOperatingSystem,
-    };
-
-    // Download GN
-    const download_gn = b.addSystemCommand(&.{
-        "curl",
-        "-L",
-        b.fmt("https://chrome-infra-packages.appspot.com/dl/gn/gn/{s}-{s}/+/latest", .{ os, arch }),
-        "-o",
-    });
-
-    const gn_zip = download_gn.addOutputFileArg("gn.zip");
-    const unzip_gn = b.addSystemCommand(&.{ "unzip", "-o" });
-    unzip_gn.addFileArg(gn_zip);
-    unzip_gn.addArg("-d");
-    const gn_dir = unzip_gn.addOutputDirectoryArg("gn_extracted");
-
-    _ = tools_wf.addCopyFile(gn_dir.path(b, "gn"), "gn");
-
-    const ninja_archive = blk: {
-        if (target.result.cpu.arch == .aarch64 and target.result.os.tag == .linux) {
-            break :blk "ninja-linux-aarch64.zip";
-        }
-
-        break :blk b.fmt(
-            "ninja-{s}.zip",
-            .{os},
-        );
-    };
-
-    // Download Ninja
-    const download_ninja = b.addSystemCommand(&.{
-        "curl",
-        "-L",
-        b.fmt("https://github.com/ninja-build/ninja/releases/download/v1.12.1/{s}", .{ninja_archive}),
-        "-o",
-    });
-    const ninja_zip = download_ninja.addOutputFileArg("ninja.zip");
-
-    const unzip_ninja = b.addSystemCommand(&.{ "unzip", "-o" });
-    unzip_ninja.addFileArg(ninja_zip);
-    unzip_ninja.addArg("-d");
-    const ninja_dir = unzip_ninja.addOutputDirectoryArg("ninja_extracted");
-
-    _ = tools_wf.addCopyFile(ninja_dir.path(b, "ninja"), "ninja");
-
-    return tools_wf;
-}
-
 fn buildV8(
     b: *std.Build,
-    v8_prepared: *std.Build.Step.WriteFile,
-    update_clang: *std.Build.Step.Run,
-    tools_dir: *std.Build.Step.WriteFile,
+    prepared_v8: *std.Build.Step.WriteFile,
+    bootstrapped_v8: *std.Build.Step.Run,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) !*std.Build.Step.WriteFile {
-    const v8_dir = v8_prepared.getDirectory();
-    const tools = tools_dir.getDirectory();
+    const depot_tools = b.dependency("depot_tools", .{});
+    const v8_dir = prepared_v8.getDirectory();
 
     const allocator = b.allocator;
 
@@ -275,7 +277,7 @@ fn buildV8(
     try gn_args.appendSlice(allocator, "is_official_build=false\n");
 
     var gn_run = std.Build.Step.Run.create(b, "run gn");
-    gn_run.addFileArg(tools.path(b, "gn"));
+    gn_run.addFileArg(depot_tools.path("gn"));
     gn_run.addArgs(&.{
         "--root=.",
         "--root-target=//zig",
@@ -285,12 +287,11 @@ fn buildV8(
         b.fmt("--args={s}", .{gn_args.items}),
     });
     gn_run.setCwd(v8_dir);
-    gn_run.step.dependOn(&v8_prepared.step);
-    gn_run.step.dependOn(&update_clang.step);
-    gn_run.step.dependOn(&tools_dir.step);
+    gn_run.step.dependOn(&prepared_v8.step);
+    gn_run.step.dependOn(&bootstrapped_v8.step);
 
     var ninja_run = std.Build.Step.Run.create(b, "run ninja");
-    ninja_run.addFileArg(tools.path(b, "ninja"));
+    ninja_run.addFileArg(depot_tools.path("ninja"));
     ninja_run.addArgs(&.{ "-C", "out", "c_v8" });
     ninja_run.setCwd(v8_dir);
     ninja_run.step.dependOn(&gn_run.step);
