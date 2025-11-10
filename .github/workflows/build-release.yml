@@ -169,4 +169,4 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.ARCH }}.a
+          artifacts: libc_v8_${{ env.V8_REVISION }}_${{ env.OS }}_${{ env.TARGET_ENVIRONMENT }}_${{ env.ARCH }}.a
