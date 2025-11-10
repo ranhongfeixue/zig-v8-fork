@@ -139,7 +139,7 @@ fn bootstrapV8(b: *std.Build, prepared_v8: *std.Build.Step.WriteFile) *std.Build
     var gclient_sync = std.Build.Step.Run.create(b, "run gclient sync");
     gclient_sync.addFileArg(depot_tools.path("gclient"));
     gclient_sync.addArgs(&.{"sync"});
-    gclient_sync.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
+    // gclient_sync.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
     gclient_sync.setCwd(prepared_v8.getDirectory());
     gclient_sync.step.dependOn(&prepared_v8.step);
 
