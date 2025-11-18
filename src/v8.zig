@@ -504,6 +504,10 @@ pub const Isolate = struct {
     pub fn enqueueMicrotask(self: Self, callback: c.MicrotaskCallback, data: ?*anyopaque) void {
         c.v8__Isolate__EnqueueMicrotask(self.handle, callback, data);
     }
+
+    pub fn enqueueMicrotaskFunc(self: Self, function: Function) void {
+        c.v8__Isolate__EnqueueMicrotaskFunc(self.handle, function.handle);
+    }
 };
 
 pub const HandleScope = struct {

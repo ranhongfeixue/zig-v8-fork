@@ -268,6 +268,7 @@ void* v8__Isolate__GetData(Isolate* self, int idx);
 void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 typedef void (*MicrotaskCallback)(void* data);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);
+void v8__Isolate__EnqueueMicrotaskFunc(Isolate* self, const Function* function);
 
 typedef struct StartupData {
     const char* data;
