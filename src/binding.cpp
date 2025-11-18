@@ -388,6 +388,14 @@ void v8__Isolate__SetData(v8::Isolate* self, int idx, void* val) {
     self->SetData(idx, val);
 }
 
+void v8__Isolate__EnqueueMicrotask(v8::Isolate* self, v8::MicrotaskCallback callback, void* data) {
+    self->EnqueueMicrotask(callback, data);
+}
+
+void v8__Isolate__EnqueueMicrotaskFunc(v8::Isolate* self, const v8::Function* function) {
+    self->EnqueueMicrotask(ptr_to_local(function));
+}
+
 size_t v8__HeapStatistics__SIZEOF() {
     return sizeof(v8::HeapStatistics);
 }
