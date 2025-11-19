@@ -17,8 +17,10 @@ pub fn build(b: *std.Build) !void {
 
     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
 
-    const prepared_v8 = try prepareV8Sources(b);
-    const bootstrapped_v8 = bootstrapV8(b, prepared_v8);
+    const cache_root = b.cache_root.path orelse ".zig-cache";
+    const v8_dir = b.fmt("{s}/v8-{s}", .{ cache_root, V8_VERSION });
+
+    const bootstrapped_v8 = try bootstrapV8(b, v8_dir);
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
         // Use prebuilt_v8 if available.
@@ -27,11 +29,10 @@ pub fn build(b: *std.Build) !void {
         break :blk wf;
     } else blk: {
         // Otherwise, go through build process.
-        break :blk try buildV8(b, prepared_v8, bootstrapped_v8, target, optimize);
+        break :blk try buildV8(b, v8_dir, bootstrapped_v8, target, optimize);
     };
 
     const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
-    prepare_step.dependOn(&prepared_v8.step);
     prepare_step.dependOn(&bootstrapped_v8.step);
 
     const build_step = b.step("build-v8", "Build v8");
@@ -98,10 +99,96 @@ pub fn build(b: *std.Build) !void {
     }
 }
 
-fn prepareV8Sources(b: *std.Build) !*std.Build.Step.WriteFile {
-    const wf = b.addWriteFiles();
+fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
+    const depot_tools = b.dependency("depot_tools", .{});
+    const marker_file = b.fmt("{s}/.bootstrap-complete", .{v8_dir});
 
-    // Create .gclient file for gclient
+    // Check if already bootstrapped
+    const needs_full_bootstrap = blk: {
+        std.fs.cwd().access(marker_file, .{}) catch break :blk true;
+        break :blk false;
+    };
+
+    if (!needs_full_bootstrap) {
+        const needs_source_update = blk: {
+            if (needs_full_bootstrap) break :blk false;
+
+            // Check if marker exists
+            const marker_stat = std.fs.cwd().statFile(marker_file) catch break :blk true;
+            const marker_mtime = marker_stat.mtime;
+
+            const source_dirs = [_][]const u8{ "src", "build-tools" };
+
+            for (source_dirs) |dir_path| {
+                var dir = try std.fs.cwd().openDir(dir_path, .{ .iterate = true });
+                defer dir.close();
+
+                var walker = try dir.walk(b.allocator);
+                while (try walker.next()) |entry| {
+                    switch (entry.kind) {
+                        .file => {
+                            const file = try entry.dir.openFile(entry.path, .{});
+                            defer file.close();
+                            const stat = try file.stat();
+                            const mtime = stat.mtime;
+
+                            if (mtime > marker_mtime) {
+                                std.debug.print("Source file {s} changed, updating bootstrap\n", .{entry.path});
+                                break :blk true;
+                            }
+                        },
+                        // Doesn't currently search into subfolders.
+                        else => {},
+                    }
+                }
+            }
+
+            break :blk false;
+        };
+
+        if (needs_source_update) {
+            // Just needs the bindings to be updated, will reuse cached dir.
+            std.debug.print("Updating source files in V8 bootstrap\n", .{});
+
+            // Just copy the updated files
+            const copy_binding = b.addSystemCommand(&.{"cp"});
+            copy_binding.addFileArg(b.path("src/binding.cpp"));
+            copy_binding.addArg(b.fmt("{s}/binding.cpp", .{v8_dir}));
+
+            const copy_inspector = b.addSystemCommand(&.{"cp"});
+            copy_inspector.addFileArg(b.path("src/inspector.h"));
+            copy_inspector.addArg(b.fmt("{s}/inspector.h", .{v8_dir}));
+            copy_inspector.step.dependOn(&copy_binding.step);
+
+            const copy_build_gn = b.addSystemCommand(&.{"cp"});
+            copy_build_gn.addFileArg(b.path("build-tools/BUILD.gn"));
+            copy_build_gn.addArg(b.fmt("{s}/zig/BUILD.gn", .{v8_dir}));
+            copy_build_gn.step.dependOn(&copy_inspector.step);
+
+            const copy_gn = b.addSystemCommand(&.{"cp"});
+            copy_gn.addFileArg(b.path("build-tools/.gn"));
+            copy_gn.addArg(b.fmt("{s}/zig/.gn", .{v8_dir}));
+            copy_gn.step.dependOn(&copy_build_gn.step);
+
+            // Touch marker to update timestamp
+            const update_marker = b.addSystemCommand(&.{ "touch", marker_file });
+            update_marker.step.dependOn(&copy_gn.step);
+
+            return update_marker;
+        } else {
+            // Cached V8 is still valid.
+            std.debug.print("Using cached V8 bootstrap from {s}\n", .{v8_dir});
+            const noop = b.addSystemCommand(&.{"true"});
+            return noop;
+        }
+    }
+
+    std.debug.print("Bootstrapping V8 {s} in {s} (this will take a while)...\n", .{ V8_VERSION, v8_dir });
+
+    // Create cache directory
+    const mkdir = b.addSystemCommand(&.{ "mkdir", "-p", v8_dir });
+
+    // Write .gclient file
     const gclient_content = b.fmt(
         \\solutions = [
         \\  {{
@@ -114,54 +201,72 @@ fn prepareV8Sources(b: *std.Build) !*std.Build.Step.WriteFile {
         \\]
         \\
     , .{V8_VERSION});
-    _ = wf.add(".gclient", gclient_content);
+
+    const write_gclient = b.addSystemCommand(&.{ "sh", "-c" });
+    write_gclient.addArg(b.fmt("echo '{s}' > {s}/.gclient", .{ gclient_content, v8_dir }));
+    write_gclient.step.dependOn(&mkdir.step);
 
     // Copy binding files
-    _ = wf.addCopyFile(b.path("src/binding.cpp"), "binding.cpp");
-    _ = wf.addCopyFile(b.path("src/inspector.h"), "inspector.h");
-    // Copy build configuration
-    _ = wf.addCopyFile(b.path("build-tools/BUILD.gn"), "zig/BUILD.gn");
-    // Not sure if it's a Zig bug or intended behavior but, addCopyFile won't
-    // overwrite the original .gn. This means we put it in here and just call it from there.
-    _ = wf.addCopyFile(b.path("build-tools/.gn"), "zig/.gn");
-    // Generate gclient_args.gni
-    _ = wf.add("build/config/gclient_args.gni",
-        \\# Generated by Zig build system
-        \\
-    );
-    return wf;
-}
+    const copy_binding = b.addSystemCommand(&.{"cp"});
+    copy_binding.addFileArg(b.path("src/binding.cpp"));
+    copy_binding.addArg(b.fmt("{s}/binding.cpp", .{v8_dir}));
+    copy_binding.step.dependOn(&write_gclient.step);
 
-fn bootstrapV8(b: *std.Build, prepared_v8: *std.Build.Step.WriteFile) *std.Build.Step.Run {
-    const depot_tools = b.dependency("depot_tools", .{});
+    const copy_inspector = b.addSystemCommand(&.{"cp"});
+    copy_inspector.addFileArg(b.path("src/inspector.h"));
+    copy_inspector.addArg(b.fmt("{s}/inspector.h", .{v8_dir}));
+    copy_inspector.step.dependOn(&copy_binding.step);
 
-    // Sync dependencies for this version
+    // Create zig directory and copy build files
+    const mkdir_zig = b.addSystemCommand(&.{ "mkdir", "-p", b.fmt("{s}/zig", .{v8_dir}) });
+    mkdir_zig.step.dependOn(&copy_inspector.step);
+
+    const copy_build_gn = b.addSystemCommand(&.{"cp"});
+    copy_build_gn.addFileArg(b.path("build-tools/BUILD.gn"));
+    copy_build_gn.addArg(b.fmt("{s}/zig/BUILD.gn", .{v8_dir}));
+    copy_build_gn.step.dependOn(&mkdir_zig.step);
+
+    const copy_gn = b.addSystemCommand(&.{"cp"});
+    copy_gn.addFileArg(b.path("build-tools/.gn"));
+    copy_gn.addArg(b.fmt("{s}/zig/.gn", .{v8_dir}));
+    copy_gn.step.dependOn(&copy_build_gn.step);
+
+    // Create gclient_args.gni
+    const mkdir_build_config = b.addSystemCommand(&.{ "mkdir", "-p", b.fmt("{s}/build/config", .{v8_dir}) });
+    mkdir_build_config.step.dependOn(&copy_gn.step);
+
+    const write_gclient_args = b.addSystemCommand(&.{ "sh", "-c" });
+    write_gclient_args.addArg(b.fmt("echo '# Generated by Zig build system' > {s}/build/config/gclient_args.gni", .{v8_dir}));
+    write_gclient_args.step.dependOn(&mkdir_build_config.step);
+
+    // Run gclient sync
     var gclient_sync = std.Build.Step.Run.create(b, "run gclient sync");
     gclient_sync.addFileArg(depot_tools.path("gclient"));
     gclient_sync.addArgs(&.{"sync"});
-    // gclient_sync.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
-    gclient_sync.setCwd(prepared_v8.getDirectory());
-    gclient_sync.step.dependOn(&prepared_v8.step);
+    gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
+    gclient_sync.step.dependOn(&write_gclient_args.step);
 
-    // Run clang update script after copying
-    const clang_update = b.addSystemCommand(&.{
-        "python3",
-        "tools/clang/scripts/update.py",
-    });
-    clang_update.setCwd(prepared_v8.getDirectory());
+    // Run clang update
+    const clang_update = b.addSystemCommand(&.{ "python3", "tools/clang/scripts/update.py" });
+    clang_update.setCwd(.{ .cwd_relative = v8_dir });
     clang_update.step.dependOn(&gclient_sync.step);
-    return clang_update;
+
+    // Create marker file
+    const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
+    create_marker.step.dependOn(&clang_update.step);
+
+    return create_marker;
 }
 
 fn buildV8(
     b: *std.Build,
-    prepared_v8: *std.Build.Step.WriteFile,
+    v8_cache: []const u8,
     bootstrapped_v8: *std.Build.Step.Run,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) !*std.Build.Step.WriteFile {
     const depot_tools = b.dependency("depot_tools", .{});
-    const v8_dir = prepared_v8.getDirectory();
+    const v8_dir: LazyPath = .{ .cwd_relative = v8_cache };
 
     const allocator = b.allocator;
 
@@ -199,6 +304,8 @@ fn buildV8(
         else => {},
     }
 
+    const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(tag), if (is_debug) "debug" else "release" });
+
     var gn_run = std.Build.Step.Run.create(b, "run gn");
     gn_run.addFileArg(depot_tools.path("gn"));
     gn_run.addArgs(&.{
@@ -206,22 +313,22 @@ fn buildV8(
         "--root-target=//zig",
         "--dotfile=zig/.gn",
         "gen",
-        "out",
+        out_dir,
         b.fmt("--args={s}", .{gn_args.items}),
     });
     gn_run.setCwd(v8_dir);
-    gn_run.step.dependOn(&prepared_v8.step);
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
     var ninja_run = std.Build.Step.Run.create(b, "run ninja");
     ninja_run.addFileArg(depot_tools.path("ninja"));
-    ninja_run.addArgs(&.{ "-C", "out", "c_v8" });
+    ninja_run.addArgs(&.{ "-C", out_dir, "c_v8" });
     ninja_run.setCwd(v8_dir);
     ninja_run.step.dependOn(&gn_run.step);
 
     const wf = b.addWriteFiles();
     wf.step.dependOn(&ninja_run.step);
-    _ = wf.addCopyFile(v8_dir.path(b, "out/obj/zig/libc_v8.a"), "libc_v8.a");
+    const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
+    _ = wf.addCopyFile(v8_dir.path(b, libc_v8_path), "libc_v8.a");
 
     return wf;
 }
