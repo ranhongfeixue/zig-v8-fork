@@ -117,7 +117,10 @@ fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
             const marker_stat = std.fs.cwd().statFile(marker_file) catch break :blk true;
             const marker_mtime = marker_stat.mtime;
 
-            const source_dirs = [_][]const u8{ "src", "build-tools" };
+            const source_dirs = [_][]const u8{
+                b.pathFromRoot("src"),
+                b.pathFromRoot("build-tools"),
+            };
 
             for (source_dirs) |dir_path| {
                 var dir = try std.fs.cwd().openDir(dir_path, .{ .iterate = true });
