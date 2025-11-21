@@ -902,21 +902,12 @@ pub const Function = struct {
 };
 
 pub fn Persistent(comptime T: type) type {
-    comptime var handleT: type = undefined;
-    comptime {
-        for (@typeInfo(T).@"struct".fields) |field| {
-            if (!std.mem.eql(u8, field.name, "handle")) {
-                continue;
-            }
-            handleT = field.type;
-            break;
-        }
-    }
+    const HandleType = @FieldType(T, "handle");
 
     return struct {
         const Self = @This();
 
-        handle: handleT,
+        handle: HandleType,
 
         /// A new value is created that references the original value.
         /// A Persistent handle is a pointer just like any other value handles,
@@ -1001,7 +992,7 @@ pub fn Persistent(comptime T: type) type {
         /// underlying type without needing to extract it from the Persistent. Casting it back to Persistent allows us to reset it.
         pub fn recoverCast(data: T) Self {
             return .{
-                .handle = @as(handleT, @ptrCast(data.handle)),
+                .handle = @as(HandleType, @ptrCast(data.handle)),
             };
         }
 
@@ -2979,7 +2970,7 @@ pub const InspectorChannel = struct {
             .onResp = onResp,
             .onNotif = onNotif,
             .onRunMessageLoopOnPause = onRunMessageLoopOnPause,
-            .onQuitMessageLoopOnPause = onQuitMessageLoopOnPause
+            .onQuitMessageLoopOnPause = onQuitMessageLoopOnPause,
         };
     }
 
