@@ -837,6 +837,10 @@ pub const FunctionTemplate = struct {
     pub fn setReadOnlyPrototype(self: Self) void {
         c.v8__FunctionTemplate__ReadOnlyPrototype(self.handle);
     }
+
+    pub fn setAccessorGetter(self: Self, name: Name, getter: FunctionTemplate) void {
+        c.v8__Template__SetAccessorProperty__DEFAULT(@ptrCast(self.handle), name.handle, getter.handle);
+    }
 };
 
 pub const Function = struct {
