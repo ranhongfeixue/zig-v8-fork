@@ -39,6 +39,8 @@ pub fn build(b: *std.Build) !void {
     const build_step = b.step("build-v8", "Build v8");
     build_step.dependOn(&built_v8.step);
 
+    b.getInstallStep().dependOn(build_step);
+
     // the module we export as a library
     const v8_module = b.addModule("v8", .{
         .root_source_file = b.path("src/v8.zig"),
