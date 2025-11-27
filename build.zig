@@ -15,25 +15,26 @@ pub fn build(b: *std.Build) !void {
         b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
     );
 
+    const cache_root = b.option([]const u8, "v8_cache_root", "Root directory for V8 cache") orelse
+        (b.cache_root.path orelse ".zig-cache");
     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
 
-    const cache_root = b.cache_root.path orelse ".zig-cache";
     const v8_dir = b.fmt("{s}/v8-{s}", .{ cache_root, V8_VERSION });
-
-    const bootstrapped_v8 = try bootstrapV8(b, v8_dir);
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
         // Use prebuilt_v8 if available.
         const wf = b.addWriteFiles();
-        _ = wf.addCopyFile(b.path(path), "libc_v8.a");
+        _ = wf.addCopyFile(.{ .cwd_relative = path }, "libc_v8.a");
         break :blk wf;
     } else blk: {
+        const bootstrapped_v8 = try bootstrapV8(b, v8_dir);
+
+        const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
+        prepare_step.dependOn(&bootstrapped_v8.step);
+
         // Otherwise, go through build process.
         break :blk try buildV8(b, v8_dir, bootstrapped_v8, target, optimize);
     };
-
-    const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
-    prepare_step.dependOn(&bootstrapped_v8.step);
 
     const build_step = b.step("build-v8", "Build v8");
     build_step.dependOn(&built_v8.step);
