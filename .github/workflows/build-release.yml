@@ -23,7 +23,7 @@ jobs:
 
     runs-on: ubuntu-22.04
     steps:
-      - uses: mlugg/setup-zig@v2
+      - uses: mlugg/setup-zig@v2.0.5
         with:
           version: ${{ env.ZIG_VERSION }}
           cache-key: ${{ env.ZIG_VERSION }}-${{ env.OS }}-${{ env.ARCH }}
@@ -32,6 +32,8 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - run: zig env
 
       - run: |
           sudo apt-get update
