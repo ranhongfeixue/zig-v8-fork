@@ -4,6 +4,13 @@ const V8_VERSION: []const u8 = "14.0.365.4";
 
 const LazyPath = std.Build.LazyPath;
 
+fn addDepotToolsToPath(b: *std.Build, step: *std.Build.Step.Run, depot_tools: *std.Build.Dependency) void {
+    const old_path = step.getEnvMap().get("PATH") orelse "";
+    const depot_tools_abs_path = b.pathFromRoot(depot_tools.path("").getPath(b));
+    const new_path = b.fmt("{s}:{s}", .{ depot_tools_abs_path, old_path });
+    step.setEnvironmentVariable("PATH", new_path);
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -250,6 +257,7 @@ fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
     gclient_sync.addFileArg(depot_tools.path("gclient"));
     gclient_sync.addArgs(&.{"sync"});
     gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
+    addDepotToolsToPath(b, gclient_sync, depot_tools);
     gclient_sync.step.dependOn(&write_gclient_args.step);
 
     // Run clang update
@@ -323,12 +331,14 @@ fn buildV8(
         b.fmt("--args={s}", .{gn_args.items}),
     });
     gn_run.setCwd(v8_dir);
+    addDepotToolsToPath(b, gn_run, depot_tools);
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
     var ninja_run = std.Build.Step.Run.create(b, "run ninja");
     ninja_run.addFileArg(depot_tools.path("ninja"));
     ninja_run.addArgs(&.{ "-C", out_dir, "c_v8" });
     ninja_run.setCwd(v8_dir);
+    addDepotToolsToPath(b, ninja_run, depot_tools);
     ninja_run.step.dependOn(&gn_run.step);
 
     const wf = b.addWriteFiles();
