@@ -310,7 +310,7 @@ fn buildV8(
         },
         .linux => {
             if (arch == .aarch64) {
-                try gn_args.appendSlice(allocator, "clang_base_path=\"usr/lib/llvm-21\"\n");
+                try gn_args.appendSlice(allocator, "clang_base_path=\"/usr/lib/llvm-21\"\n");
                 try gn_args.appendSlice(allocator, "clang_use_chrome_plugins=false\n");
                 try gn_args.appendSlice(allocator, "treat_warnings_as_errors=false\n");
             }
