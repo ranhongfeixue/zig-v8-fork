@@ -1,4 +1,5 @@
 /.zig-cache/
+/.lp-cache/
 /zig-out/
 /v8/
 result

@@ -4,11 +4,12 @@ const V8_VERSION: []const u8 = "14.0.365.4";
 
 const LazyPath = std.Build.LazyPath;
 
-fn addDepotToolsToPath(b: *std.Build, step: *std.Build.Step.Run, depot_tools: *std.Build.Dependency) void {
-    const old_path = step.getEnvMap().get("PATH") orelse "";
-    const depot_tools_abs_path = b.pathFromRoot(depot_tools.path("").getPath(b));
-    const new_path = b.fmt("{s}:{s}", .{ depot_tools_abs_path, old_path });
-    step.setEnvironmentVariable("PATH", new_path);
+fn getDepotToolExePath(b: *std.Build, depot_tools_dir: []const u8, executable: []const u8) []const u8 {
+    return b.fmt("{s}/{s}", .{ depot_tools_dir, executable });
+}
+
+fn addDepotToolsToPath(step: *std.Build.Step.Run, depot_tools_dir: []const u8) void {
+    step.addPathDir(depot_tools_dir);
 }
 
 pub fn build(b: *std.Build) !void {
@@ -22,11 +23,15 @@ pub fn build(b: *std.Build) !void {
         b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
     );
 
-    const cache_root = b.option([]const u8, "v8_cache_root", "Root directory for V8 cache") orelse
-        (b.cache_root.path orelse ".zig-cache");
+    const cache_root = b.option([]const u8, "cache_root", "Root directory for the V8 and depot_tools cache") orelse b.pathFromRoot(".lp-cache");
+    std.fs.cwd().access(cache_root, .{}) catch {
+        try std.fs.cwd().makeDir(cache_root);
+    };
+
     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
 
     const v8_dir = b.fmt("{s}/v8-{s}", .{ cache_root, V8_VERSION });
+    const depot_tools_dir = b.fmt("{s}/depot_tools-{s}", .{ cache_root, V8_VERSION });
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
         // Use prebuilt_v8 if available.
@@ -34,13 +39,14 @@ pub fn build(b: *std.Build) !void {
         _ = wf.addCopyFile(.{ .cwd_relative = path }, "libc_v8.a");
         break :blk wf;
     } else blk: {
-        const bootstrapped_v8 = try bootstrapV8(b, v8_dir);
+        const bootstrapped_depot_tools = try bootstrapDepotTools(b, depot_tools_dir);
+        const bootstrapped_v8 = try bootstrapV8(b, bootstrapped_depot_tools, v8_dir, depot_tools_dir);
 
         const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
         prepare_step.dependOn(&bootstrapped_v8.step);
 
         // Otherwise, go through build process.
-        break :blk try buildV8(b, v8_dir, bootstrapped_v8, target, optimize);
+        break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, optimize);
     };
 
     const build_step = b.step("build-v8", "Build v8");
@@ -109,8 +115,46 @@ pub fn build(b: *std.Build) !void {
     }
 }
 
-fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
+fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.Step.Run {
     const depot_tools = b.dependency("depot_tools", .{});
+    const marker_file = b.fmt("{s}/.bootstrap-complete", .{depot_tools_dir});
+
+    const needs_full_bootstrap = blk: {
+        std.fs.cwd().access(marker_file, .{}) catch break :blk true;
+        break :blk false;
+    };
+
+    if (!needs_full_bootstrap) {
+        std.debug.print("Using cached depot_tools bootstrap from {s}\n", .{depot_tools_dir});
+        const noop = b.addSystemCommand(&.{"true"});
+        return noop;
+    }
+
+    std.debug.print("Bootstrapping depot_tools {s} in {s} (this will take a while)...\n", .{ V8_VERSION, depot_tools_dir });
+
+    const copy_depot_tools = b.addSystemCommand(&.{ "cp", "-r" });
+    copy_depot_tools.addDirectoryArg(depot_tools.path(""));
+    copy_depot_tools.addArg(depot_tools_dir);
+
+    const ensure_bootstrap = b.addSystemCommand(&.{
+        getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"),
+    });
+    ensure_bootstrap.setCwd(.{ .cwd_relative = depot_tools_dir });
+    addDepotToolsToPath(ensure_bootstrap, depot_tools_dir);
+    ensure_bootstrap.step.dependOn(&copy_depot_tools.step);
+
+    const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
+    create_marker.step.dependOn(&ensure_bootstrap.step);
+
+    return create_marker;
+}
+
+fn bootstrapV8(
+    b: *std.Build,
+    bootstrapped_depot_tools: *std.Build.Step.Run,
+    v8_dir: []const u8,
+    depot_tools_dir: []const u8,
+) !*std.Build.Step.Run {
     const marker_file = b.fmt("{s}/.bootstrap-complete", .{v8_dir});
 
     // Check if already bootstrapped
@@ -200,6 +244,7 @@ fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
 
     // Create cache directory
     const mkdir = b.addSystemCommand(&.{ "mkdir", "-p", v8_dir });
+    mkdir.step.dependOn(&bootstrapped_depot_tools.step);
 
     // Write .gclient file
     const gclient_content = b.fmt(
@@ -253,16 +298,21 @@ fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
     write_gclient_args.step.dependOn(&mkdir_build_config.step);
 
     // Run gclient sync
-    var gclient_sync = std.Build.Step.Run.create(b, "run gclient sync");
-    gclient_sync.addFileArg(depot_tools.path("gclient"));
-    gclient_sync.addArgs(&.{"sync"});
+    const gclient_sync = b.addSystemCommand(&.{
+        getDepotToolExePath(b, depot_tools_dir, "gclient"),
+        "sync",
+    });
     gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
-    addDepotToolsToPath(b, gclient_sync, depot_tools);
+    addDepotToolsToPath(gclient_sync, depot_tools_dir);
     gclient_sync.step.dependOn(&write_gclient_args.step);
 
     // Run clang update
-    const clang_update = b.addSystemCommand(&.{ "python3", "tools/clang/scripts/update.py" });
+    const clang_update = b.addSystemCommand(&.{
+        getDepotToolExePath(b, depot_tools_dir, "python-bin/python3"),
+        "tools/clang/scripts/update.py",
+    });
     clang_update.setCwd(.{ .cwd_relative = v8_dir });
+    addDepotToolsToPath(clang_update, depot_tools_dir);
     clang_update.step.dependOn(&gclient_sync.step);
 
     // Create marker file
@@ -274,13 +324,13 @@ fn bootstrapV8(b: *std.Build, v8_dir: []const u8) !*std.Build.Step.Run {
 
 fn buildV8(
     b: *std.Build,
-    v8_cache: []const u8,
+    v8_dir: []const u8,
+    depot_tools_dir: []const u8,
     bootstrapped_v8: *std.Build.Step.Run,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) !*std.Build.Step.WriteFile {
-    const depot_tools = b.dependency("depot_tools", .{});
-    const v8_dir: LazyPath = .{ .cwd_relative = v8_cache };
+    const v8_dir_lazy_path: LazyPath = .{ .cwd_relative = v8_dir };
 
     const allocator = b.allocator;
 
@@ -320,9 +370,8 @@ fn buildV8(
 
     const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(tag), if (is_debug) "debug" else "release" });
 
-    var gn_run = std.Build.Step.Run.create(b, "run gn");
-    gn_run.addFileArg(depot_tools.path("gn"));
-    gn_run.addArgs(&.{
+    const gn_run = b.addSystemCommand(&.{
+        getDepotToolExePath(b, depot_tools_dir, "gn"),
         "--root=.",
         "--root-target=//zig",
         "--dotfile=zig/.gn",
@@ -330,21 +379,24 @@ fn buildV8(
         out_dir,
         b.fmt("--args={s}", .{gn_args.items}),
     });
-    gn_run.setCwd(v8_dir);
-    addDepotToolsToPath(b, gn_run, depot_tools);
+    gn_run.setCwd(v8_dir_lazy_path);
+    addDepotToolsToPath(gn_run, depot_tools_dir);
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
-    var ninja_run = std.Build.Step.Run.create(b, "run ninja");
-    ninja_run.addFileArg(depot_tools.path("ninja"));
-    ninja_run.addArgs(&.{ "-C", out_dir, "c_v8" });
-    ninja_run.setCwd(v8_dir);
-    addDepotToolsToPath(b, ninja_run, depot_tools);
+    const ninja_run = b.addSystemCommand(&.{
+        getDepotToolExePath(b, depot_tools_dir, "ninja"),
+        "-C",
+        out_dir,
+        "c_v8",
+    });
+    ninja_run.setCwd(v8_dir_lazy_path);
+    addDepotToolsToPath(ninja_run, depot_tools_dir);
     ninja_run.step.dependOn(&gn_run.step);
 
     const wf = b.addWriteFiles();
     wf.step.dependOn(&ninja_run.step);
     const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
-    _ = wf.addCopyFile(v8_dir.path(b, libc_v8_path), "libc_v8.a");
+    _ = wf.addCopyFile(v8_dir_lazy_path.path(b, libc_v8_path), "libc_v8.a");
 
     return wf;
 }
