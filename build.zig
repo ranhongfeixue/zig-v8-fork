@@ -5,12 +5,11 @@ const V8_VERSION: []const u8 = "14.0.365.4";
 const LazyPath = std.Build.LazyPath;
 
 fn getDepotToolExePath(b: *std.Build, depot_tools_dir: []const u8, executable: []const u8) []const u8 {
-    return b.fmt("{s}/{s}", .{ b.pathFromRoot(depot_tools_dir), executable });
+    return b.fmt("{s}/{s}", .{ depot_tools_dir, executable });
 }
 
-fn addDepotToolsToPath(b: *std.Build, step: *std.Build.Step.Run, depot_tools_dir: []const u8) void {
-    const depot_tools_absolute_path = b.pathFromRoot(depot_tools_dir);
-    step.addPathDir(depot_tools_absolute_path);
+fn addDepotToolsToPath(step: *std.Build.Step.Run, depot_tools_dir: []const u8) void {
+    step.addPathDir(depot_tools_dir);
 }
 
 pub fn build(b: *std.Build) !void {
@@ -24,7 +23,7 @@ pub fn build(b: *std.Build) !void {
         b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
     );
 
-    const cache_root = b.option([]const u8, "cache_root", "Root directory for the V8 and depot_tools cache") orelse ".lp-cache";
+    const cache_root = b.option([]const u8, "cache_root", "Root directory for the V8 and depot_tools cache") orelse b.pathFromRoot(".lp-cache");
     std.fs.cwd().access(cache_root, .{}) catch {
         try std.fs.cwd().makeDir(cache_root);
     };
@@ -141,7 +140,7 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
         getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"),
     });
     ensure_bootstrap.setCwd(.{ .cwd_relative = depot_tools_dir });
-    addDepotToolsToPath(b, ensure_bootstrap, depot_tools_dir);
+    addDepotToolsToPath(ensure_bootstrap, depot_tools_dir);
     ensure_bootstrap.step.dependOn(&copy_depot_tools.step);
 
     const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
@@ -304,7 +303,7 @@ fn bootstrapV8(
         "sync",
     });
     gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
-    addDepotToolsToPath(b, gclient_sync, depot_tools_dir);
+    addDepotToolsToPath(gclient_sync, depot_tools_dir);
     gclient_sync.step.dependOn(&write_gclient_args.step);
 
     // Run clang update
@@ -313,7 +312,7 @@ fn bootstrapV8(
         "tools/clang/scripts/update.py",
     });
     clang_update.setCwd(.{ .cwd_relative = v8_dir });
-    addDepotToolsToPath(b, clang_update, depot_tools_dir);
+    addDepotToolsToPath(clang_update, depot_tools_dir);
     clang_update.step.dependOn(&gclient_sync.step);
 
     // Create marker file
@@ -381,7 +380,7 @@ fn buildV8(
         b.fmt("--args={s}", .{gn_args.items}),
     });
     gn_run.setCwd(v8_dir_lazy_path);
-    addDepotToolsToPath(b, gn_run, depot_tools_dir);
+    addDepotToolsToPath(gn_run, depot_tools_dir);
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
     const ninja_run = b.addSystemCommand(&.{
@@ -391,7 +390,7 @@ fn buildV8(
         "c_v8",
     });
     ninja_run.setCwd(v8_dir_lazy_path);
-    addDepotToolsToPath(b, ninja_run, depot_tools_dir);
+    addDepotToolsToPath(ninja_run, depot_tools_dir);
     ninja_run.step.dependOn(&gn_run.step);
 
     const wf = b.addWriteFiles();
