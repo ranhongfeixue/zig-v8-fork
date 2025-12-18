@@ -52,6 +52,11 @@ pub const MicrotasksPolicy = struct {
     pub const kAuto = c.kAuto;
 };
 
+pub const FunctionCodeHandling = struct {
+    pub const kClear = c.kClear;
+    pub const kKeep = c.kKeep;
+};
+
 // Currently, user callback functions passed into FunctionTemplate will need to have this declared as a param and then
 // converted to FunctionCallbackInfo to get a nicer interface.
 pub const C_FunctionCallbackInfo = c.FunctionCallbackInfo;
@@ -508,6 +513,10 @@ pub const Isolate = struct {
     pub fn enqueueMicrotaskFunc(self: Self, function: Function) void {
         c.v8__Isolate__EnqueueMicrotaskFunc(self.handle, function.handle);
     }
+
+    pub fn getDataFromSnapshotOnce(self: Self, idx: usize) ?*const c.Data {
+        return c.v8__Isolate__GetDataFromSnapshotOnce(self.handle, idx);
+    }
 };
 
 pub const HandleScope = struct {
@@ -558,6 +567,11 @@ pub const Context = struct {
         };
     }
 
+    pub fn fromSnapshot(isolate: Isolate, index: usize) ?Self {
+        const handle = c.v8__Context__FromSnapshot(isolate.handle, index) orelse return null;
+        return .{.handle = handle};
+    }
+
     /// [V8]
     /// Enter this context.  After entering a context, all code compiled
     /// and run is compiled and run in this context.  If another context
@@ -600,6 +614,10 @@ pub const Context = struct {
 
     pub fn debugContextId(self: Self) i32 {
         return c.v8__Context__DebugContextId(self.handle);
+    }
+
+    pub fn getDataFromSnapshotOnce(self: Self, idx: usize) ?*const c.Data {
+        return c.v8__Context__GetDataFromSnapshotOnce(self.handle, idx);
     }
 };
 
@@ -3217,3 +3235,43 @@ pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.c) ?[*]u8 {
     const allocated_bytes = allocator.alloc(u8, bytes) catch return null;
     return allocated_bytes.ptr;
 }
+
+pub const StartupData = c.StartupData;
+
+pub const SnapshotCreator = struct {
+    handle: *c.SnapshotCreator = undefined,
+
+    pub fn init(self: *SnapshotCreator, params: *const c.CreateParams) void {
+        self.handle = c.v8__SnapshotCreator__CREATE(params).?;
+    }
+
+    pub fn getIsolate(self: *SnapshotCreator) Isolate {
+        return .{
+            .handle = c.v8__SnapshotCreator__getIsolate(self.handle).?,
+        };
+    }
+
+    pub fn setDefaultContext(self: *SnapshotCreator, context: Context) void {
+        c.v8__SnapshotCreator__setDefaultContext(self.handle, context.handle);
+    }
+
+    pub fn addData(self: *SnapshotCreator, data: *const c.Data) usize {
+        return c.v8__SnapshotCreator__AddData(self.handle, data);
+    }
+
+    pub fn addDataWithContext(self: *SnapshotCreator, ctx: Context, data: *const c.Data) usize {
+        return c.v8__SnapshotCreator__AddData2(self.handle, ctx.handle, data);
+    }
+
+    pub fn createBlob(self: *SnapshotCreator, function_code_handling: c_uint) StartupData {
+        return c.v8__SnapshotCreator__createBlob(self.handle, function_code_handling);
+    }
+
+    pub fn deinit(self: *SnapshotCreator) void {
+        c.v8__SnapshotCreator__DESTRUCT(self.handle);
+    }
+
+    pub fn startupDataIsValid(data: StartupData) bool {
+        return c.v8__StartupData__IsValid(data);
+    }
+};
