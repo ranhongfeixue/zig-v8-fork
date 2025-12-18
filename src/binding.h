@@ -205,6 +205,9 @@ const char* v8__V8__GetVersion();
 // Microtask
 typedef enum MicrotasksPolicy { kExplicit, kScoped, kAuto } MicrotasksPolicy;
 
+// Snapshot
+typedef enum FunctionCodeHandling { kClear, kKeep } FunctionCodeHandling;
+
 // Isolate
 Isolate* v8__Isolate__New(CreateParams* params);
 void v8__Isolate__Enter(Isolate* isolate);
@@ -269,6 +272,7 @@ void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 typedef void (*MicrotaskCallback)(void* data);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);
 void v8__Isolate__EnqueueMicrotaskFunc(Isolate* self, const Function* function);
+const Data* v8__Isolate__GetDataFromSnapshotOnce(const Isolate *self, size_t idx);
 
 typedef struct StartupData {
     const char* data;
@@ -410,6 +414,7 @@ bool v8__StackFrame__IsUserJavaScript(const StackFrame* self);
 typedef struct Context Context;
 typedef struct ObjectTemplate ObjectTemplate;
 Context* v8__Context__New(Isolate* isolate, const ObjectTemplate* global_tmpl, const Value* global_obj);
+Context* v8__Context__FromSnapshot(Isolate*, size_t);
 void v8__Context__Enter(const Context* context);
 void v8__Context__Exit(const Context* context);
 Isolate* v8__Context__GetIsolate(const Context* context);
@@ -422,6 +427,7 @@ void v8__Context__SetEmbedderData(
     int idx,
     const Value* val);
 int v8__Context__DebugContextId(const Context* self);
+const Data* v8__Context__GetDataFromSnapshotOnce(const Context *self, size_t idx);
 
 // Boolean
 const Boolean* v8__Boolean__New(
@@ -1267,3 +1273,15 @@ void v8_inspector__RemoteObject__setPreview(RemoteObject* self, ObjectPreview* p
 bool v8_inspector__RemoteObject__hasCustomPreview(RemoteObject* self);
 const CustomPreview* v8_inspector__RemoteObject__getCustomPreview(RemoteObject* self);
 void v8_inspector__RemoteObject__setCustomPreview(RemoteObject* self, CustomPreview* customPreview);
+
+// SnapshotCreator
+typedef struct SnapshotCreator SnapshotCreator;
+
+SnapshotCreator* v8__SnapshotCreator__CREATE(const CreateParams*);
+Isolate* v8__SnapshotCreator__getIsolate(SnapshotCreator*);
+void v8__SnapshotCreator__setDefaultContext(SnapshotCreator*, const Context*);
+size_t v8__SnapshotCreator__AddData(SnapshotCreator*, const Data* data);
+size_t v8__SnapshotCreator__AddData2(SnapshotCreator*, const Context* ctx, const Data* data);
+StartupData v8__SnapshotCreator__createBlob(SnapshotCreator*, FunctionCodeHandling);
+void v8__SnapshotCreator__DESTRUCT(SnapshotCreator*);
+bool v8__StartupData__IsValid(StartupData);

@@ -396,6 +396,14 @@ void v8__Isolate__EnqueueMicrotaskFunc(v8::Isolate* self, const v8::Function* fu
     self->EnqueueMicrotask(ptr_to_local(function));
 }
 
+const v8::Data* v8__Isolate__GetDataFromSnapshotOnce(v8::Isolate *self, size_t idx) {
+    v8::MaybeLocal<v8::Data> maybe = self->GetDataFromSnapshotOnce<v8::Data>(idx);
+    if (maybe.IsEmpty()) {
+        return nullptr;
+    }
+    return local_to_ptr(maybe.ToLocalChecked());
+}
+
 size_t v8__HeapStatistics__SIZEOF() {
     return sizeof(v8::HeapStatistics);
 }
@@ -491,6 +499,14 @@ v8::Context* v8__Context__New(
     );
 }
 
+v8::Context* v8__Context__FromSnapshot(v8::Isolate* isolate, size_t index) {
+    v8::MaybeLocal<v8::Context> maybe = v8::Context::FromSnapshot(isolate, index);
+    if (maybe.IsEmpty()) {
+        return nullptr;
+    }
+    return local_to_ptr(maybe.ToLocalChecked());
+}
+
 void v8__Context__Enter(const v8::Context& context) { ptr_to_local(&context)->Enter(); }
 
 void v8__Context__Exit(const v8::Context& context) { ptr_to_local(&context)->Exit(); }
@@ -519,6 +535,14 @@ void v8__Context__SetEmbedderData(
 
 int v8__Context__DebugContextId(const v8::Context& self) {
     return v8::debug::GetContextId(ptr_to_local(&self));
+}
+
+const v8::Data* v8__Context__GetDataFromSnapshotOnce(v8::Context *self, size_t idx) {
+    v8::MaybeLocal<v8::Data> maybe = self->GetDataFromSnapshotOnce<v8::Data>(idx);
+    if (maybe.IsEmpty()) {
+        return nullptr;
+    }
+    return local_to_ptr(maybe.ToLocalChecked());
 }
 
 // ScriptOrigin
@@ -2255,6 +2279,47 @@ void v8_inspector__Client__consoleAPIMessage(
     unsigned columnNumber, v8_inspector::V8StackTrace* stackTrace) {
   self->consoleAPIMessage(contextGroupId, level, message, url, lineNumber,
                           columnNumber, stackTrace);
+}
+
+} // extern "C"
+
+// SnapshotCreator
+extern "C" {
+
+v8::SnapshotCreator* v8__SnapshotCreator__CREATE(const v8::Isolate::CreateParams& params) {
+    return new v8::SnapshotCreator(params);
+}
+
+v8::Isolate* v8__SnapshotCreator__getIsolate(v8::SnapshotCreator* self) {
+    return self->GetIsolate();
+}
+
+size_t v8__SnapshotCreator__AddData(v8::SnapshotCreator* self, const v8::Data* data) {
+    return self->AddData(ptr_to_local(data));
+}
+
+size_t v8__SnapshotCreator__AddData2(v8::SnapshotCreator* self, const v8::Context* ctx, const v8::Data* data) {
+    return self->AddData(ptr_to_local(ctx), ptr_to_local(data));
+}
+
+void v8__SnapshotCreator__setDefaultContext(
+    v8::SnapshotCreator* self,
+    const v8::Context& ctx) {
+    return self->SetDefaultContext(ptr_to_local(&ctx));
+}
+
+v8::StartupData v8__SnapshotCreator__createBlob(
+    v8::SnapshotCreator *self,
+    v8::SnapshotCreator::FunctionCodeHandling function_code_handling) {
+  return self->CreateBlob(function_code_handling);
+}
+
+void v8__SnapshotCreator__DESTRUCT(v8::SnapshotCreator* self) {
+  delete self;
+}
+
+bool v8__StartupData__IsValid(v8::StartupData self) {
+    return self.IsValid();
 }
 
 } // extern "C"
