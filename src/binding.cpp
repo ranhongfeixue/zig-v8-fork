@@ -1,3 +1,5 @@
+// Based on https://github.com/denoland/rusty_v8/blob/main/src/binding.cc
+
 #include <cassert>
 #include "include/libplatform/libplatform.h"
 #include "include/v8-inspector.h"
