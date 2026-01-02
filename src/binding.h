@@ -10,10 +10,10 @@ typedef struct Isolate Isolate;
 typedef struct StackTrace StackTrace;
 typedef struct StackFrame StackFrame;
 typedef struct FixedArray FixedArray;
-typedef struct Module Module;
+typedef struct Data Module;
 typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
-typedef struct Context Context;
+typedef struct Data Context;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
 // Super type.
@@ -411,7 +411,6 @@ bool v8__StackFrame__IsWasm(const StackFrame* self);
 bool v8__StackFrame__IsUserJavaScript(const StackFrame* self);
 
 // Context
-typedef struct Context Context;
 typedef struct ObjectTemplate ObjectTemplate;
 Context* v8__Context__New(Isolate* isolate, const ObjectTemplate* global_tmpl, const Value* global_obj);
 Context* v8__Context__FromSnapshot(Isolate*, size_t);
