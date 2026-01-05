@@ -3233,12 +3233,12 @@ pub const RemoteObject = struct {
     }
 };
 
-// /// Enables C to allocate using the given Zig allocator
-// pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.c) ?[*]u8 {
-//     const allocator: *std.mem.Allocator = @ptrCast(@alignCast(self));
-//     const allocated_bytes = allocator.alloc(u8, bytes) catch return null;
-//     return allocated_bytes.ptr;
-// }
+/// Enables C to allocate using the given Zig allocator
+pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.c) ?[*]u8 {
+    const allocator: *std.mem.Allocator = @ptrCast(@alignCast(self));
+    const allocated_bytes = allocator.alloc(u8, bytes) catch return null;
+    return allocated_bytes.ptr;
+}
 
 pub const StartupData = c.StartupData;
 
