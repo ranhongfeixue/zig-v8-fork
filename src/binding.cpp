@@ -2352,4 +2352,8 @@ bool v8__StartupData__IsValid(v8::StartupData self) {
     return self.IsValid();
 }
 
+void v8__StartupData__DELETE(const char* data) {
+    delete[] data;
+}
+
 } // extern "C"

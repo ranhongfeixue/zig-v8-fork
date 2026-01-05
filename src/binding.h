@@ -1304,3 +1304,4 @@ size_t v8__SnapshotCreator__AddData2(SnapshotCreator*, const Context* ctx, const
 StartupData v8__SnapshotCreator__createBlob(SnapshotCreator*, FunctionCodeHandling);
 void v8__SnapshotCreator__DESTRUCT(SnapshotCreator*);
 bool v8__StartupData__IsValid(StartupData);
+void v8__StartupData__DELETE(const char* data);
