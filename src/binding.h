@@ -217,6 +217,7 @@ Context* v8__Isolate__GetCurrentContext(Isolate* isolate);
 const Value* v8__Isolate__ThrowException(
     Isolate* isolate,
     const Value* exception);
+int v8__Isolate__ContextDisposedNotification(Isolate* isolate);
 void v8__Isolate__SetHostImportModuleDynamicallyCallback(
     Isolate* isolate,
     HostImportModuleDynamicallyCallback callback);
