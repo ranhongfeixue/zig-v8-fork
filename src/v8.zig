@@ -768,6 +768,10 @@ pub const FunctionCallbackInfo = struct {
     pub fn getExternalValue(self: Self) ?*anyopaque {
         return self.getData().castTo(External).get();
     }
+
+    pub fn isConstructCall(self: Self) bool {
+        return c.v8__FunctionCallbackInfo__IsConstructCall(self.handle);
+    }
 };
 
 pub const ReturnValue = struct {

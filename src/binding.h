@@ -731,6 +731,8 @@ const Object* v8__FunctionCallbackInfo__This(
     const FunctionCallbackInfo* self);
 const Value* v8__FunctionCallbackInfo__Data(
     const FunctionCallbackInfo* self);
+bool v8__FunctionCallbackInfo__IsConstructCall(
+    const FunctionCallbackInfo* self);
 
 // PropertyCallbackInfo
 Isolate* v8__PropertyCallbackInfo__GetIsolate(
