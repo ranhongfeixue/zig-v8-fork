@@ -1321,6 +1321,11 @@ const v8::Value* v8__FunctionCallbackInfo__Data(
     return local_to_ptr(self.Data());
 }
 
+bool v8__FunctionCallbackInfo__IsConstructCall(
+    const v8::FunctionCallbackInfo<v8::Value>& self) {
+    return self.IsConstructCall();
+}
+
 // PropertyCallbackInfo
 
 v8::Isolate* v8__PropertyCallbackInfo__GetIsolate(
