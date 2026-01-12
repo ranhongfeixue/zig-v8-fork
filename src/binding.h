@@ -880,6 +880,9 @@ void v8__Global__SetWeakFinalizer(
     void* finalizer_ctx,
     WeakCallback finalizer_cb,
     WeakCallbackType type);
+const Data* v8__Global__Get(
+    Global* self,
+    Isolate* isolate);
 
 // Eternal
 typedef struct Eternal {

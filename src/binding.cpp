@@ -1603,6 +1603,11 @@ void v8__Global__SetWeakFinalizer(
         v8::WeakCallbackType type) {
     self->SetWeak(finalizer_ctx, finalizer_cb, type);
 }
+const v8::Data* v8__Global__Get(
+        v8::Global<v8::Data>* self,
+        v8::Isolate* isolate) {
+    return local_to_ptr(self->Get(isolate));
+}
 
 // Eternal
 
