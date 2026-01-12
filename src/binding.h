@@ -881,6 +881,18 @@ void v8__Global__SetWeakFinalizer(
     WeakCallback finalizer_cb,
     WeakCallbackType type);
 
+// Eternal
+typedef struct Eternal {
+    uintptr_t data_ptr;
+} Eternal;
+void v8__Eternal__New(
+    Isolate* isolate,
+    const Data* data,
+    Eternal* out);
+const Data* v8__Eternal__Get(
+    Eternal* self,
+    Isolate* isolate);
+
 // WeakCallbackInfo
 Isolate* v8__WeakCallbackInfo__GetIsolate(const WeakCallbackInfo* self);
 void* v8__WeakCallbackInfo__GetParameter(const WeakCallbackInfo* self);
