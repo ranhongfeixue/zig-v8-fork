@@ -881,7 +881,7 @@ void v8__Global__SetWeakFinalizer(
     WeakCallback finalizer_cb,
     WeakCallbackType type);
 const Data* v8__Global__Get(
-    Global* self,
+    const Global* self,
     Isolate* isolate);
 
 // Eternal
@@ -893,7 +893,7 @@ void v8__Eternal__New(
     const Data* data,
     Eternal* out);
 const Data* v8__Eternal__Get(
-    Eternal* self,
+    const Eternal* self,
     Isolate* isolate);
 
 // WeakCallbackInfo

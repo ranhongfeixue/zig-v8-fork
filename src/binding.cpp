@@ -1604,7 +1604,7 @@ void v8__Global__SetWeakFinalizer(
     self->SetWeak(finalizer_ctx, finalizer_cb, type);
 }
 const v8::Data* v8__Global__Get(
-        v8::Global<v8::Data>* self,
+        const v8::Global<v8::Data>* self,
         v8::Isolate* isolate) {
     return local_to_ptr(self->Get(isolate));
 }
@@ -1619,7 +1619,7 @@ void v8__Eternal__New(
 }
 
 const v8::Data* v8__Eternal__Get(
-        v8::Eternal<v8::Data>* self,
+        const v8::Eternal<v8::Data>* self,
         v8::Isolate* isolate) {
     return local_to_ptr(self->Get(isolate));
 }
