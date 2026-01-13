@@ -10,10 +10,10 @@ typedef struct Isolate Isolate;
 typedef struct StackTrace StackTrace;
 typedef struct StackFrame StackFrame;
 typedef struct FixedArray FixedArray;
-typedef struct Module Module;
+typedef struct Data Module;
 typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
-typedef struct Context Context;
+typedef struct Data Context;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
 // Super type.
@@ -217,6 +217,7 @@ Context* v8__Isolate__GetCurrentContext(Isolate* isolate);
 const Value* v8__Isolate__ThrowException(
     Isolate* isolate,
     const Value* exception);
+int v8__Isolate__ContextDisposedNotification(Isolate* isolate);
 void v8__Isolate__SetHostImportModuleDynamicallyCallback(
     Isolate* isolate,
     HostImportModuleDynamicallyCallback callback);
@@ -411,7 +412,6 @@ bool v8__StackFrame__IsWasm(const StackFrame* self);
 bool v8__StackFrame__IsUserJavaScript(const StackFrame* self);
 
 // Context
-typedef struct Context Context;
 typedef struct ObjectTemplate ObjectTemplate;
 Context* v8__Context__New(Isolate* isolate, const ObjectTemplate* global_tmpl, const Value* global_obj);
 Context* v8__Context__FromSnapshot(Isolate*, size_t);
@@ -863,6 +863,39 @@ void v8__Persistent__SetWeakFinalizer(
     WeakCallback finalizer_cb,
     WeakCallbackType type);
 
+// Global
+typedef struct Global {
+    uintptr_t data_ptr;
+} Global;
+void v8__Global__New(
+    Isolate* isolate,
+    const Data* data,
+    Global* out);
+void v8__Global__Reset(
+    Global* self);
+void v8__Global__SetWeak(
+    Global* self);
+void v8__Global__SetWeakFinalizer(
+    Global* self,
+    void* finalizer_ctx,
+    WeakCallback finalizer_cb,
+    WeakCallbackType type);
+const Data* v8__Global__Get(
+    const Global* self,
+    Isolate* isolate);
+
+// Eternal
+typedef struct Eternal {
+    uintptr_t data_ptr;
+} Eternal;
+void v8__Eternal__New(
+    Isolate* isolate,
+    const Data* data,
+    Eternal* out);
+const Data* v8__Eternal__Get(
+    const Eternal* self,
+    Isolate* isolate);
+
 // WeakCallbackInfo
 Isolate* v8__WeakCallbackInfo__GetIsolate(const WeakCallbackInfo* self);
 void* v8__WeakCallbackInfo__GetParameter(const WeakCallbackInfo* self);
@@ -1287,3 +1320,4 @@ size_t v8__SnapshotCreator__AddData2(SnapshotCreator*, const Context* ctx, const
 StartupData v8__SnapshotCreator__createBlob(SnapshotCreator*, FunctionCodeHandling);
 void v8__SnapshotCreator__DESTRUCT(SnapshotCreator*);
 bool v8__StartupData__IsValid(StartupData);
+void v8__StartupData__DELETE(const char* data);

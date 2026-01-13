@@ -290,6 +290,10 @@ const v8::Context* v8__Isolate__GetCurrentContext(v8::Isolate* isolate) {
     return local_to_ptr(isolate->GetCurrentContext());
 }
 
+int v8__Isolate__ContextDisposedNotification(v8::Isolate* isolate) {
+    return isolate->ContextDisposedNotification();
+}
+
 size_t v8__Isolate__CreateParams__SIZEOF() {
     return sizeof(v8::Isolate::CreateParams);
 }
@@ -1575,6 +1579,51 @@ void v8__Persistent__SetWeakFinalizer(
     self->SetWeak(finalizer_ctx, finalizer_cb, type);
 }
 
+// Global
+
+void v8__Global__New(
+        v8::Isolate* isolate,
+        const v8::Data& data,
+        v8::Global<v8::Data>* out) {
+    new (out) v8::Global<v8::Data>(isolate, ptr_to_local(&data));
+}
+
+void v8__Global__Reset(v8::Global<v8::Data>* self) {
+    self->Reset();
+}
+
+void v8__Global__SetWeak(v8::Global<v8::Data>* self) {
+    self->SetWeak();
+}
+
+void v8__Global__SetWeakFinalizer(
+        v8::Global<v8::Data>* self,
+        void* finalizer_ctx,
+        v8::WeakCallbackInfo<void>::Callback finalizer_cb,
+        v8::WeakCallbackType type) {
+    self->SetWeak(finalizer_ctx, finalizer_cb, type);
+}
+const v8::Data* v8__Global__Get(
+        const v8::Global<v8::Data>* self,
+        v8::Isolate* isolate) {
+    return local_to_ptr(self->Get(isolate));
+}
+
+// Eternal
+
+void v8__Eternal__New(
+        v8::Isolate* isolate,
+        const v8::Data& data,
+        v8::Eternal<v8::Data>* out) {
+    new (out) v8::Eternal<v8::Data>(isolate, ptr_to_local(&data));
+}
+
+const v8::Data* v8__Eternal__Get(
+        const v8::Eternal<v8::Data>* self,
+        v8::Isolate* isolate) {
+    return local_to_ptr(self->Get(isolate));
+}
+
 // WeakCallbackInfo
 
 v8::Isolate* v8__WeakCallbackInfo__GetIsolate(
@@ -2325,6 +2374,10 @@ void v8__SnapshotCreator__DESTRUCT(v8::SnapshotCreator* self) {
 
 bool v8__StartupData__IsValid(v8::StartupData self) {
     return self.IsValid();
+}
+
+void v8__StartupData__DELETE(const char* data) {
+    delete[] data;
 }
 
 } // extern "C"
