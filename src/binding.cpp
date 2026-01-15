@@ -327,6 +327,18 @@ void v8__Isolate__SetPromiseRejectCallback(
     isolate->SetPromiseRejectCallback(callback);
 }
 
+void v8__Isolate__SetFatalErrorHandler(
+        v8::Isolate* isolate,
+        v8::FatalErrorCallback callback) {
+    isolate->SetFatalErrorHandler(callback);
+}
+
+void v8__Isolate__SetOOMErrorHandler(
+        v8::Isolate* isolate,
+        v8::OOMErrorCallback callback) {
+    isolate->SetOOMErrorHandler(callback);
+}
+
 v8::MicrotasksPolicy v8__Isolate__GetMicrotasksPolicy(const v8::Isolate* self) {
     return self->GetMicrotasksPolicy();
 }

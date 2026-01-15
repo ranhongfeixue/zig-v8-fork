@@ -88,6 +88,12 @@ typedef enum MessageErrorLevel {
                   kMessageWarning,
 } MessageErrorLevel;
 typedef void (*MessageCallback)(const Message* message, const Value* data);
+typedef struct OOMDetails {
+    bool is_heap_oom;
+    const char* detail;
+} OOMDetails;
+typedef void (*FatalErrorCallback)(const char* location, const char* message);
+typedef void (*OOMErrorCallback)(const char* location, const OOMDetails* details);
 typedef usize UniquePtr;
 typedef struct SharedPtr {
     usize a;
@@ -227,6 +233,12 @@ void v8__Isolate__SetHostInitializeImportMetaObjectCallback(
 void v8__Isolate__SetPromiseRejectCallback(
     Isolate* isolate,
     PromiseRejectCallback callback);
+void v8__Isolate__SetFatalErrorHandler(
+    Isolate* isolate,
+    FatalErrorCallback callback);
+void v8__Isolate__SetOOMErrorHandler(
+    Isolate* isolate,
+    OOMErrorCallback callback);
 MicrotasksPolicy v8__Isolate__GetMicrotasksPolicy(const Isolate* self);
 void v8__Isolate__SetMicrotasksPolicy(
     Isolate* self,
