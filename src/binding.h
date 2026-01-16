@@ -302,6 +302,11 @@ typedef struct ResourceConstraints {
     uint32_t* stack_limit_;
 } ResourceConstraints;
 
+void v8__ResourceConstraints__ConfigureDefaultsFromHeapSize(
+    ResourceConstraints* self,
+    usize initial_heap_size_in_bytes,
+    usize maximum_heap_size_in_bytes);
+
 typedef struct CreateParams {
     void* code_event_handler; // JitCodeEventHandler
     ResourceConstraints constraints;

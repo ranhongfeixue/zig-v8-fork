@@ -303,6 +303,13 @@ void v8__Isolate__CreateParams__CONSTRUCT(v8::Isolate::CreateParams* buf) {
     new (buf) v8::Isolate::CreateParams();
 }
 
+void v8__ResourceConstraints__ConfigureDefaultsFromHeapSize(
+        v8::ResourceConstraints* self,
+        size_t initial_heap_size_in_bytes,
+        size_t maximum_heap_size_in_bytes) {
+    self->ConfigureDefaultsFromHeapSize(initial_heap_size_in_bytes, maximum_heap_size_in_bytes);
+}
+
 const v8::Value* v8__Isolate__ThrowException(
         v8::Isolate* isolate,
         const v8::Value& exception) {
