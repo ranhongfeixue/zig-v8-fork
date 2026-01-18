@@ -895,6 +895,9 @@ void v8__Global__SetWeakFinalizer(
 const Data* v8__Global__Get(
     const Global* self,
     Isolate* isolate);
+bool v8__Global__IsEqual(
+    const Global* self,
+    const Data*);
 
 // Eternal
 typedef struct Eternal {

@@ -1621,6 +1621,12 @@ const v8::Data* v8__Global__Get(
     return local_to_ptr(self->Get(isolate));
 }
 
+bool v8__Global__IsEqual(
+        const v8::Global<v8::Data>* self,
+        const v8::Data* other) {
+    return *self == ptr_to_local(other);
+}
+
 // Eternal
 
 void v8__Eternal__New(
