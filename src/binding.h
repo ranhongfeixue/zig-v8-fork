@@ -890,6 +890,8 @@ void v8__Global__New(
     Global* out);
 void v8__Global__Reset(
     Global* self);
+void v8__Global__ClearWeak(
+    Global* self);
 void v8__Global__SetWeak(
     Global* self);
 void v8__Global__SetWeakFinalizer(
