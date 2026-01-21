@@ -2031,6 +2031,11 @@ void v8_inspector__Inspector__ContextCreated(v8_inspector::V8Inspector *self,
   self->contextCreated(info);
 }
 
+void v8_inspector__Inspector__ContextDestroyed(v8_inspector::V8Inspector *self,
+                                               const v8::Context &ctx) {
+    self->contextDestroyed(ptr_to_local(&ctx));
+}
+
 // InspectorSession
 
 void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {
