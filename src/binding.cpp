@@ -1615,6 +1615,10 @@ void v8__Global__SetWeak(v8::Global<v8::Data>* self) {
     self->SetWeak();
 }
 
+void v8__Global__ClearWeak(v8::Global<v8::Data>* self) {
+    self->ClearWeak();
+}
+
 void v8__Global__SetWeakFinalizer(
         v8::Global<v8::Data>* self,
         void* finalizer_ctx,
