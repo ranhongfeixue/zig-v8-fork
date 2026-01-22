@@ -1898,6 +1898,193 @@ const v8::String* v8__CpuProfile__Serialize(const v8::CpuProfile* self, v8::Isol
     );
 }
 
+// HeapProfiler
+// ------------
+
+v8::HeapProfiler* v8__HeapProfiler__Get(v8::Isolate* isolate) {
+    return isolate->GetHeapProfiler();
+}
+
+const v8::HeapSnapshot* v8__HeapProfiler__TakeHeapSnapshot(
+        v8::HeapProfiler* self,
+        v8::ActivityControl* activity_control) {
+    return self->TakeHeapSnapshot(activity_control);
+}
+
+void v8__HeapProfiler__StartTrackingHeapObjects(
+        v8::HeapProfiler* self,
+        bool track_allocations) {
+    self->StartTrackingHeapObjects(track_allocations);
+}
+
+void v8__HeapProfiler__StopTrackingHeapObjects(v8::HeapProfiler* self) {
+    self->StopTrackingHeapObjects();
+}
+
+void v8__HeapProfiler__StartSamplingHeapProfiler(
+        v8::HeapProfiler* self,
+        uint64_t sample_interval,
+        int stack_depth) {
+    self->StartSamplingHeapProfiler(sample_interval, stack_depth);
+}
+
+void v8__HeapProfiler__StopSamplingHeapProfiler(v8::HeapProfiler* self) {
+    self->StopSamplingHeapProfiler();
+}
+
+v8::AllocationProfile* v8__HeapProfiler__GetAllocationProfile(v8::HeapProfiler* self) {
+    return self->GetAllocationProfile();
+}
+
+const v8::String* v8__HeapProfiler__GetHeapStats(
+        v8::HeapProfiler* self,
+        v8::Isolate* isolate) {
+    StringOutputStream stream;
+    self->GetHeapStats(&stream);
+    return maybe_local_to_ptr(
+        v8::String::NewFromUtf8(isolate, stream.str().c_str(), v8::NewStringType::kNormal, stream.str().length())
+    );
+}
+
+void v8__HeapProfiler__DeleteAllHeapSnapshots(v8::HeapProfiler* self) {
+    self->DeleteAllHeapSnapshots();
+}
+
+int v8__HeapProfiler__GetSnapshotCount(v8::HeapProfiler* self) {
+    return self->GetSnapshotCount();
+}
+
+const v8::HeapSnapshot* v8__HeapProfiler__GetHeapSnapshot(
+        v8::HeapProfiler* self,
+        int index) {
+    return self->GetHeapSnapshot(index);
+}
+
+void v8__HeapSnapshot__Delete(const v8::HeapSnapshot* self) {
+    const_cast<v8::HeapSnapshot*>(self)->Delete();
+}
+
+const v8::String* v8__HeapSnapshot__Serialize(
+        const v8::HeapSnapshot* self,
+        v8::Isolate* isolate) {
+    StringOutputStream stream;
+    self->Serialize(&stream);
+    return maybe_local_to_ptr(
+        v8::String::NewFromUtf8(isolate, stream.str().c_str(), v8::NewStringType::kNormal, stream.str().length())
+    );
+}
+
+// Helper to escape JSON strings
+static void escapeJsonString(std::string& out, const char* str) {
+    out += '"';
+    for (const char* p = str; *p; ++p) {
+        switch (*p) {
+            case '"': out += "\\\""; break;
+            case '\\': out += "\\\\"; break;
+            case '\b': out += "\\b"; break;
+            case '\f': out += "\\f"; break;
+            case '\n': out += "\\n"; break;
+            case '\r': out += "\\r"; break;
+            case '\t': out += "\\t"; break;
+            default:
+                if (static_cast<unsigned char>(*p) < 0x20) {
+                    char buf[7];
+                    snprintf(buf, sizeof(buf), "\\u%04x", *p);
+                    out += buf;
+                } else {
+                    out += *p;
+                }
+        }
+    }
+    out += '"';
+}
+
+// Helper to convert V8 string to std::string
+static std::string v8StringToStdString(v8::Isolate* isolate, v8::Local<v8::String> str) {
+    if (str.IsEmpty()) return "";
+    v8::String::Utf8Value utf8(isolate, str);
+    return std::string(*utf8, utf8.length());
+}
+
+// Helper to serialize AllocationProfile node recursively
+static void serializeAllocationNode(std::string& out, v8::Isolate* isolate, const v8::AllocationProfile::Node* node, bool is_first) {
+    if (!is_first) out += ",";
+    out += "{";
+
+    out += "\"id\":";
+    out += std::to_string(node->node_id);
+
+    out += ",\"callFrame\":{";
+    out += "\"functionName\":";
+    std::string name = v8StringToStdString(isolate, node->name);
+    escapeJsonString(out, name.c_str());
+    out += ",\"scriptId\":\"";
+    out += std::to_string(node->script_id);
+    out += "\",\"url\":";
+    std::string script_name = v8StringToStdString(isolate, node->script_name);
+    escapeJsonString(out, script_name.c_str());
+    out += ",\"lineNumber\":";
+    out += std::to_string(node->line_number);
+    out += ",\"columnNumber\":";
+    out += std::to_string(node->column_number);
+    out += "}";
+
+    // Calculate total size from allocations
+    size_t total_size = 0;
+    for (const auto& allocation : node->allocations) {
+        total_size += allocation.size * allocation.count;
+    }
+    out += ",\"selfSize\":";
+    out += std::to_string(total_size);
+
+    out += ",\"allocations\":[";
+    for (size_t i = 0; i < node->allocations.size(); ++i) {
+        if (i > 0) out += ",";
+        out += "{\"size\":";
+        out += std::to_string(node->allocations[i].size);
+        out += ",\"count\":";
+        out += std::to_string(node->allocations[i].count);
+        out += "}";
+    }
+    out += "]";
+
+    out += ",\"children\":[";
+    for (size_t i = 0; i < node->children.size(); ++i) {
+        serializeAllocationNode(out, isolate, node->children[i], i == 0);
+    }
+    out += "]";
+
+    out += "}";
+}
+
+void v8__AllocationProfile__Delete(v8::AllocationProfile* self) {
+    delete self;
+}
+
+const v8::String* v8__AllocationProfile__Serialize(
+        v8::AllocationProfile* self,
+        v8::Isolate* isolate) {
+    std::string json;
+    json += "{\"head\":";
+    serializeAllocationNode(json, isolate, self->GetRootNode(), true);
+
+    json += ",\"samples\":[";
+    for (size_t i = 0; i < self->GetSamples().size(); ++i) {
+        if (i > 0) json += ",";
+        const auto& sample = self->GetSamples()[i];
+        json += "{\"size\":";
+        json += std::to_string(sample.size);
+        json += ",\"nodeId\":";
+        json += std::to_string(sample.node_id);
+        json += "}";
+    }
+    json += "]}";
+
+    return maybe_local_to_ptr(
+        v8::String::NewFromUtf8(isolate, json.c_str(), v8::NewStringType::kNormal, json.length())
+    );
+}
+
 // Inspector
 // ---------
 
