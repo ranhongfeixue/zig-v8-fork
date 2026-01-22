@@ -569,7 +569,7 @@ pub const Context = struct {
 
     pub fn fromSnapshot(isolate: Isolate, index: usize) ?Self {
         const handle = c.v8__Context__FromSnapshot(isolate.handle, index) orelse return null;
-        return .{.handle = handle};
+        return .{ .handle = handle };
     }
 
     /// [V8]
