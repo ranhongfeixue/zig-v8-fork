@@ -1177,6 +1177,30 @@ void v8__CpuProfile__Delete(const CpuProfile* self);
 const CpuProfileNode* v8__CpuProfile__GetTopDownRoot(const CpuProfile* self);
 const String* v8__CpuProfile__Serialize(const CpuProfile* self, Isolate* isolate);
 
+// HeapProfiler
+// ------------
+
+typedef struct HeapProfiler HeapProfiler;
+typedef struct HeapSnapshot HeapSnapshot;
+typedef struct AllocationProfile AllocationProfile;
+typedef void (*ActivityControlCallback)(int, int);
+
+HeapProfiler* v8__HeapProfiler__Get(Isolate* isolate);
+const HeapSnapshot* v8__HeapProfiler__TakeHeapSnapshot(HeapProfiler* self, ActivityControlCallback callback);
+void v8__HeapProfiler__StartTrackingHeapObjects(HeapProfiler* self, bool track_allocations);
+void v8__HeapProfiler__StopTrackingHeapObjects(HeapProfiler* self);
+void v8__HeapProfiler__StartSamplingHeapProfiler(HeapProfiler* self, uint64_t sample_interval, int stack_depth);
+void v8__HeapProfiler__StopSamplingHeapProfiler(HeapProfiler* self);
+AllocationProfile* v8__HeapProfiler__GetAllocationProfile(HeapProfiler* self);
+const String* v8__HeapProfiler__GetHeapStats(HeapProfiler* self, Isolate* isolate);
+void v8__HeapProfiler__DeleteAllHeapSnapshots(HeapProfiler* self);
+int v8__HeapProfiler__GetSnapshotCount(HeapProfiler* self);
+const HeapSnapshot* v8__HeapProfiler__GetHeapSnapshot(HeapProfiler* self, int index);
+void v8__HeapSnapshot__Delete(const HeapSnapshot* self);
+const String* v8__HeapSnapshot__Serialize(const HeapSnapshot* self, Isolate* isolate);
+void v8__AllocationProfile__Delete(AllocationProfile* self);
+const String* v8__AllocationProfile__Serialize(AllocationProfile* self, Isolate* isolate);
+
 // Inspector
 // ---------
 
