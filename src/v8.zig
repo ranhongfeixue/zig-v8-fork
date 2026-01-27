@@ -400,6 +400,16 @@ pub const Isolate = struct {
         c.v8__Isolate__LowMemoryNotification(self.handle);
     }
 
+    pub const MemoryPressureLevel = enum(u32) {
+        none = c.kNone,
+        moderate = c.kModerate,
+        critical = c.kCritical,
+    };
+
+    pub fn memoryPressureNotification(self: Self, level: MemoryPressureLevel) void {
+        c.v8__Isolate__MemoryPressureNotification(self.handle, @intFromEnum(level));
+    }
+
     pub fn getHeapStatistics(self: Self) c.HeapStatistics {
         var res: c.HeapStatistics = undefined;
         c.v8__Isolate__GetHeapStatistics(self.handle, &res);

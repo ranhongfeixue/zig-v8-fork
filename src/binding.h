@@ -260,6 +260,12 @@ void v8__Isolate__TerminateExecution(Isolate* self);
 bool v8__Isolate__IsExecutionTerminating(Isolate* self);
 void v8__Isolate__CancelTerminateExecution(Isolate* self);
 void v8__Isolate__LowMemoryNotification(Isolate* self);
+typedef enum MemoryPressureLevel {
+    kNone = 0,
+    kModerate = 1,
+    kCritical = 2
+} MemoryPressureLevel;
+void v8__Isolate__MemoryPressureNotification(Isolate* self, MemoryPressureLevel level);
 typedef struct HeapStatistics {
     size_t total_heap_size;
     size_t total_heap_size_executable;
