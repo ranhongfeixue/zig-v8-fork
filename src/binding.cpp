@@ -2231,6 +2231,11 @@ void v8_inspector__Inspector__ContextDestroyed(v8_inspector::V8Inspector *self,
     self->contextDestroyed(ptr_to_local(&ctx));
 }
 
+void v8_inspector__Inspector__ResetContextGroup(v8_inspector::V8Inspector *self,
+                                               int contextGroupId) {
+    self->resetContextGroup(contextGroupId);
+}
+
 // InspectorSession
 
 void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {
