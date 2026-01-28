@@ -397,6 +397,10 @@ void v8__Isolate__LowMemoryNotification(v8::Isolate* self) {
     self->LowMemoryNotification();
 }
 
+void v8__Isolate__MemoryPressureNotification(v8::Isolate* self, v8::MemoryPressureLevel level) {
+    self->MemoryPressureNotification(level);
+}
+
 void v8__Isolate__GetHeapStatistics(
         v8::Isolate* self,
         v8::HeapStatistics* stats) {
