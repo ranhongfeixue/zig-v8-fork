@@ -12,9 +12,58 @@ fn addDepotToolsToPath(step: *std.Build.Step.Run, depot_tools_dir: []const u8) v
     step.addPathDir(depot_tools_dir);
 }
 
+const GnArgs = struct {
+    is_asan: bool,
+    is_tsan: bool,
+    is_debug: bool,
+    symbol_level: u8,
+    v8_enable_sandbox: bool,
+
+    fn asString(self: GnArgs, b: *std.Build, target: std.Build.ResolvedTarget) ![]const u8 {
+        const tag = target.result.os.tag;
+        const arch = target.result.cpu.arch;
+
+        var args: std.ArrayList(u8) = .empty;
+        const gpa = b.allocator;
+
+        // official builds depend on pgo
+        try args.appendSlice(gpa, "is_official_build=false\n");
+        try args.appendSlice(gpa, b.fmt("is_debug={}\n", .{self.is_debug}));
+        try args.appendSlice(gpa, b.fmt("symbol_level={d}\n", .{self.symbol_level}));
+        try args.appendSlice(gpa, b.fmt("is_asan={}\n", .{self.is_asan}));
+        try args.appendSlice(gpa, b.fmt("is_tsan={}\n", .{self.is_tsan}));
+        try args.appendSlice(gpa, b.fmt("v8_enable_sandbox={}\n", .{self.v8_enable_sandbox}));
+
+        switch (tag) {
+            .ios => {
+                try args.appendSlice(gpa, "v8_enable_pointer_compression=false\n");
+                try args.appendSlice(gpa, "v8_enable_webassembly=false\n");
+            },
+            .linux => {
+                if (arch == .aarch64) {
+                    try args.appendSlice(gpa, "clang_base_path=\"/usr/lib/llvm-21\"\n");
+                    try args.appendSlice(gpa, "clang_use_chrome_plugins=false\n");
+                    try args.appendSlice(gpa, "treat_warnings_as_errors=false\n");
+                }
+            },
+            else => {},
+        }
+
+        return gpa.dupe(u8, args.items);
+    }
+};
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+
+    const gn_args = GnArgs{
+        .is_debug = optimize == .Debug,
+        .symbol_level = b.option(u8, "symbol_level", "Symbol level") orelse if (optimize == .Debug) 1 else 0,
+        .is_asan = b.option(bool, "is_asan", "Address sanitizer") orelse false,
+        .is_tsan = b.option(bool, "is_tsan", "Thread sanitizer") orelse false,
+        .v8_enable_sandbox = b.option(bool, "v8_enable_sandbox", "V8 lightable sandbox") orelse false,
+    };
 
     var build_opts = b.addOptions();
     build_opts.addOption(
@@ -46,7 +95,7 @@ pub fn build(b: *std.Build) !void {
         prepare_step.dependOn(&bootstrapped_v8.step);
 
         // Otherwise, go through build process.
-        break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, optimize);
+        break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, gn_args);
     };
 
     const build_step = b.step("build-v8", "Build v8");
@@ -328,47 +377,12 @@ fn buildV8(
     depot_tools_dir: []const u8,
     bootstrapped_v8: *std.Build.Step.Run,
     target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
+    gn_args: GnArgs,
 ) !*std.Build.Step.WriteFile {
     const v8_dir_lazy_path: LazyPath = .{ .cwd_relative = v8_dir };
 
-    const allocator = b.allocator;
-
-    const tag = target.result.os.tag;
-    const arch = target.result.cpu.arch;
-    const is_debug = optimize == .Debug;
-
-    var gn_args: std.ArrayList(u8) = .empty;
-    defer gn_args.deinit(allocator);
-
-    // official builds depend on pgo
-    try gn_args.appendSlice(allocator, "is_official_build=false\n");
-
-    if (is_debug) {
-        try gn_args.appendSlice(allocator, "is_debug=true\n");
-        try gn_args.appendSlice(allocator, "symbol_level=1\n");
-    } else {
-        try gn_args.appendSlice(allocator, "is_debug=false\n");
-        try gn_args.appendSlice(allocator, "symbol_level=0\n");
-    }
-
-    switch (tag) {
-        .ios => {
-            try gn_args.appendSlice(allocator, "v8_enable_pointer_compression=false\n");
-            try gn_args.appendSlice(allocator, "v8_enable_webassembly=false\n");
-            // TODO: target_environment for this target.
-        },
-        .linux => {
-            if (arch == .aarch64) {
-                try gn_args.appendSlice(allocator, "clang_base_path=\"/usr/lib/llvm-21\"\n");
-                try gn_args.appendSlice(allocator, "clang_use_chrome_plugins=false\n");
-                try gn_args.appendSlice(allocator, "treat_warnings_as_errors=false\n");
-            }
-        },
-        else => {},
-    }
-
-    const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(tag), if (is_debug) "debug" else "release" });
+    const args_string = try gn_args.asString(b, target);
+    const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(target.result.os.tag), if (gn_args.is_debug) "debug" else "release" });
 
     const gn_run = b.addSystemCommand(&.{
         getDepotToolExePath(b, depot_tools_dir, "gn"),
@@ -377,7 +391,7 @@ fn buildV8(
         "--dotfile=zig/.gn",
         "gen",
         out_dir,
-        b.fmt("--args={s}", .{gn_args.items}),
+        b.fmt("--args={s}", .{args_string}),
     });
     gn_run.setCwd(v8_dir_lazy_path);
     addDepotToolsToPath(gn_run, depot_tools_dir);
