@@ -1409,6 +1409,25 @@ const v8::Value* v8__ReturnValue__Get(
 
 // FunctionTemplate
 
+typedef enum SideEffectType {
+    kSideEffectType_HasSideEffect = 0,
+    kSideEffectType_HasNoSideEffect = 1,
+    kSideEffectType_HasSideEffectToReceiver = 2,
+} SideEffectType;
+
+typedef enum ConstructorBehavior {
+    kConstructorBehavior_Allow = 0,
+    kConstructorBehavior_Throw = 1,
+} ConstructorBehavior;
+
+typedef struct v8__FunctionTemplateConfig {
+    v8::FunctionCallback callback;
+    const v8::Value* data;
+    int length;
+    ConstructorBehavior behavior;
+    SideEffectType side_effect_type;
+} v8__FunctionTemplateConfig;
+
 const v8::FunctionTemplate* v8__FunctionTemplate__New__DEFAULT(
         v8::Isolate* isolate) {
     return local_to_ptr(v8::FunctionTemplate::New(isolate));
@@ -1425,6 +1444,24 @@ const v8::FunctionTemplate* v8__FunctionTemplate__New__DEFAULT3(
         v8::FunctionCallback callback_or_null,
         const v8::Value& data) {
     return local_to_ptr(v8::FunctionTemplate::New(isolate, callback_or_null, ptr_to_local(&data)));
+}
+
+const v8::FunctionTemplate* v8__FunctionTemplate__New__Config(
+        v8::Isolate* isolate,
+        const v8__FunctionTemplateConfig* config) {
+    v8::SideEffectType side_effect = static_cast<v8::SideEffectType>(config->side_effect_type);
+    v8::ConstructorBehavior behavior = static_cast<v8::ConstructorBehavior>(config->behavior);
+    v8::Local<v8::Value> data = config->data ? ptr_to_local(config->data) : v8::Local<v8::Value>();
+
+    return local_to_ptr(v8::FunctionTemplate::New(
+        isolate,
+        config->callback,
+        data,
+        v8::Local<v8::Signature>(),  // signature - default
+        config->length,
+        behavior,
+        side_effect
+    ));
 }
 
 const v8::ObjectTemplate* v8__FunctionTemplate__InstanceTemplate(

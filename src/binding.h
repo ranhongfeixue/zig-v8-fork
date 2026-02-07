@@ -791,6 +791,26 @@ const Value* v8__ReturnValue__Get(
 
 // FunctionTemplate
 typedef void (*FunctionCallback)(const FunctionCallbackInfo*);
+
+typedef enum SideEffectType {
+    kSideEffectType_HasSideEffect = 0,
+    kSideEffectType_HasNoSideEffect = 1,
+    kSideEffectType_HasSideEffectToReceiver = 2,
+} SideEffectType;
+
+typedef enum ConstructorBehavior {
+    kConstructorBehavior_Allow = 0,
+    kConstructorBehavior_Throw = 1,
+} ConstructorBehavior;
+
+typedef struct v8__FunctionTemplateConfig {
+    FunctionCallback callback;
+    const Value* data;
+    int length;
+    ConstructorBehavior behavior;
+    SideEffectType side_effect_type;
+} v8__FunctionTemplateConfig;
+
 const FunctionTemplate* v8__FunctionTemplate__New__DEFAULT(
     Isolate* isolate);
 const FunctionTemplate* v8__FunctionTemplate__New__DEFAULT2(
@@ -800,6 +820,9 @@ const FunctionTemplate* v8__FunctionTemplate__New__DEFAULT3(
     Isolate* isolate,
     FunctionCallback callback_or_null,
     const Value* data);
+const FunctionTemplate* v8__FunctionTemplate__New__Config(
+    Isolate* isolate,
+    const v8__FunctionTemplateConfig* config);
 const ObjectTemplate* v8__FunctionTemplate__InstanceTemplate(
     const FunctionTemplate* self);
 const ObjectTemplate* v8__FunctionTemplate__PrototypeTemplate(
