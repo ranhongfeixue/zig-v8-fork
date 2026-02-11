@@ -657,6 +657,27 @@ void v8__ScriptCompiler__CachedData__DELETE(v8::ScriptCompiler::CachedData* self
     delete self;
 }
 
+const v8::Function* v8__ScriptCompiler__CompileFunction(
+        const v8::Context& context,
+        v8::ScriptCompiler::Source* source,
+        size_t arguments_count,
+        const v8::String* const arguments[],
+        size_t context_extension_count,
+        const v8::Object* const context_extensions[],
+        v8::ScriptCompiler::CompileOptions options,
+        v8::ScriptCompiler::NoCacheReason reason) {
+    v8::MaybeLocal<v8::Function> maybe_local = v8::ScriptCompiler::CompileFunction(
+        ptr_to_local(&context),
+        source,
+        arguments_count,
+        const_ptr_array_to_local_array(arguments),
+        context_extension_count,
+        const_ptr_array_to_local_array(context_extensions),
+        options,
+        reason);
+    return maybe_local_to_ptr(maybe_local);
+}
+
 const v8::Module* v8__ScriptCompiler__CompileModule(
         v8::Isolate* isolate,
         v8::ScriptCompiler::Source* source,

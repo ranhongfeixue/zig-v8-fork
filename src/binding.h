@@ -1168,6 +1168,15 @@ Script* v8__ScriptCompiler__Compile(
         ScriptCompilerSource* source,
         CompileOptions options,
         NoCacheReason reason);
+Function* v8__ScriptCompiler__CompileFunction(
+        const Context* context,
+        ScriptCompilerSource* source,
+        size_t arguments_count,
+        const String* const arguments[],
+        size_t context_extension_count,
+        const Object* const context_extensions[],
+        CompileOptions options,
+        NoCacheReason reason);
 
 // ModuleRequest
 typedef Data ModuleRequest;
