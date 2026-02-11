@@ -1927,6 +1927,33 @@ pub const ScriptCompiler = struct {
             };
         } else return error.JsException;
     }
+
+    pub fn compileFunction(
+        ctx: Context,
+        src: *ScriptCompilerSource,
+        arguments: []const String,
+        context_extensions: []const Object,
+        options: ScriptCompiler.CompileOptions,
+        reason: ScriptCompiler.NoCacheReason,
+    ) !Function {
+        const c_args = @as(?[*]const ?*const c.String, @ptrCast(arguments.ptr));
+        const c_exts = @as(?[*]const ?*const c.Object, @ptrCast(context_extensions.ptr));
+        const mb_res = c.v8__ScriptCompiler__CompileFunction(
+            ctx.handle,
+            &src.inner,
+            arguments.len,
+            c_args,
+            context_extensions.len,
+            c_exts,
+            @intFromEnum(options),
+            @intFromEnum(reason),
+        );
+        if (mb_res) |res| {
+            return Function{
+                .handle = res,
+            };
+        } else return error.JsException;
+    }
 };
 
 pub const Script = struct {
