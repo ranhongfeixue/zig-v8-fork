@@ -668,6 +668,9 @@ void v8__Object__SetAlignedPointerInInternalField(
     const Object* self,
     int idx,
     void* ptr);
+void* v8__Object__GetAlignedPointerFromInternalField(
+    const Object* self,
+    int idx);
 
 // Exception
 const Value* v8__Exception__Error(const String* message);

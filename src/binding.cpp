@@ -1335,6 +1335,12 @@ void v8__Object__SetAlignedPointerInInternalField(
     ptr_to_local(self)->SetAlignedPointerInInternalField(idx, ptr);
 }
 
+void * v8__Object__GetAlignedPointerFromInternalField(
+        const v8::Object* self,
+        int idx) {
+    return ptr_to_local(self)->GetAlignedPointerFromInternalField(idx);
+}
+
 // FunctionCallbackInfo
 
 v8::Isolate* v8__FunctionCallbackInfo__GetIsolate(
