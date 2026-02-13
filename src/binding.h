@@ -14,6 +14,7 @@ typedef struct Data Module;
 typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
 typedef struct Data Context;
+typedef struct Data Private;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
 // Super type.
@@ -671,6 +672,11 @@ void v8__Object__SetAlignedPointerInInternalField(
 void* v8__Object__GetAlignedPointerFromInternalField(
     const Object* self,
     int idx);
+
+void v8__Object__HasPrivate(const Object* self, const Context *ctx, const Private* private, MaybeBool* out);
+void v8__Object__DeletePrivate(const Object* self, const Context *ctx, const Private* private, MaybeBool* out);
+void v8__Object__SetPrivate(const Object* self, const Context *ctx, const Private* private, const Value* value, MaybeBool* out);
+const Value* v8__Object__GetPrivate(const Object* self, const Context *ctx, const Private* private);
 
 // Exception
 const Value* v8__Exception__Error(const String* message);
@@ -1412,3 +1418,6 @@ StartupData v8__SnapshotCreator__createBlob(SnapshotCreator*, FunctionCodeHandli
 void v8__SnapshotCreator__DESTRUCT(SnapshotCreator*);
 bool v8__StartupData__IsValid(StartupData);
 void v8__StartupData__DELETE(const char* data);
+
+// Private
+Private* v8__Private__New(Isolate* isolate, const String* key);
