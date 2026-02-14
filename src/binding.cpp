@@ -1341,6 +1341,47 @@ void * v8__Object__GetAlignedPointerFromInternalField(
     return ptr_to_local(self)->GetAlignedPointerFromInternalField(idx);
 }
 
+void v8__Object__HasPrivate(
+        const v8::Object& self,
+        const v8::Context& ctx,
+        const v8::Private& key,
+        v8::Maybe<bool>* out) {
+    *out = ptr_to_local(&self)->HasPrivate(
+        ptr_to_local(&ctx), ptr_to_local(&key)
+    );
+}
+
+void v8__Object__DeletePrivate(
+        const v8::Object& self,
+        const v8::Context& ctx,
+        const v8::Private& key,
+        v8::Maybe<bool>* out) {
+    *out = ptr_to_local(&self)->DeletePrivate(
+        ptr_to_local(&ctx), ptr_to_local(&key)
+    );
+}
+
+void v8__Object__SetPrivate(
+        const v8::Object& self,
+        const v8::Context& ctx,
+        const v8::Private& key,
+        const v8::Value& value,
+        v8::Maybe<bool>* out) {
+    *out = ptr_to_local(&self)->SetPrivate(
+        ptr_to_local(&ctx),
+        ptr_to_local(&key),
+        ptr_to_local(&value)
+    );
+}
+
+const v8::Value* v8__Object__GetPrivate(
+        const v8::Object& self,
+        const v8::Context& ctx,
+        const v8::Private& key) {
+    return maybe_local_to_ptr(
+        ptr_to_local(&self)->GetPrivate(ptr_to_local(&ctx), ptr_to_local(&key))
+    );
+}
 // FunctionCallbackInfo
 
 v8::Isolate* v8__FunctionCallbackInfo__GetIsolate(
@@ -2672,6 +2713,18 @@ bool v8__StartupData__IsValid(v8::StartupData self) {
 
 void v8__StartupData__DELETE(const char* data) {
     delete[] data;
+}
+
+} // extern "C"
+
+
+// Private
+extern "C" {
+
+v8::Private* v8__Private__New(
+        v8::Isolate* isolate,
+        const v8::String& name) {
+    return local_to_ptr(v8::Private::New(isolate, ptr_to_local(&name)));
 }
 
 } // extern "C"
