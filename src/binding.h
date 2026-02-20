@@ -15,6 +15,7 @@ typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
 typedef struct Data Context;
 typedef struct Data Private;
+typedef struct MicrotaskQueue MicrotaskQueue;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
 // Super type.
@@ -212,6 +213,14 @@ const char* v8__V8__GetVersion();
 // Microtask
 typedef enum MicrotasksPolicy { kExplicit, kScoped, kAuto } MicrotasksPolicy;
 
+// MicrotaskQueue
+MicrotaskQueue* v8__MicrotaskQueue__New(Isolate* isolate, MicrotasksPolicy policy);
+void v8__MicrotaskQueue__DELETE(MicrotaskQueue* queue);
+void v8__MicrotaskQueue__PerformCheckpoint(MicrotaskQueue* queue, Isolate* isolate);
+typedef void (*MicrotaskCallback)(void* data);
+void v8__MicrotaskQueue__EnqueueMicrotask(MicrotaskQueue* queue, Isolate* isolate, MicrotaskCallback callback, void* data);
+void v8__MicrotaskQueue__EnqueueMicrotaskFunc(MicrotaskQueue* queue, Isolate* isolate, const Function* function);
+
 // Snapshot
 typedef enum FunctionCodeHandling { kClear, kKeep } FunctionCodeHandling;
 
@@ -289,7 +298,6 @@ void v8__Isolate__GetHeapStatistics(
 usize v8__HeapStatistics__SIZEOF();
 void* v8__Isolate__GetData(Isolate* self, int idx);
 void v8__Isolate__SetData(Isolate* self, int idx, void* val);
-typedef void (*MicrotaskCallback)(void* data);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);
 void v8__Isolate__EnqueueMicrotaskFunc(Isolate* self, const Function* function);
 const Data* v8__Isolate__GetDataFromSnapshotOnce(const Isolate *self, size_t idx);
@@ -437,7 +445,15 @@ bool v8__StackFrame__IsUserJavaScript(const StackFrame* self);
 
 // Context
 typedef struct ObjectTemplate ObjectTemplate;
+
+typedef struct v8__ContextConfig {
+    const ObjectTemplate* global_template;
+    const Value* global_object;
+    MicrotaskQueue* microtask_queue;
+} v8__ContextConfig;
+
 Context* v8__Context__New(Isolate* isolate, const ObjectTemplate* global_tmpl, const Value* global_obj);
+Context* v8__Context__New__Config(Isolate* isolate, const v8__ContextConfig* config);
 Context* v8__Context__FromSnapshot(Isolate*, size_t);
 void v8__Context__Enter(const Context* context);
 void v8__Context__Exit(const Context* context);
@@ -450,6 +466,14 @@ void v8__Context__SetEmbedderData(
     const Context* self,
     int idx,
     const Value* val);
+void* v8__Context__GetAlignedPointerFromEmbedderData(
+    const Context* self,
+    int idx);
+void v8__Context__SetAlignedPointerInEmbedderData(
+    const Context* self,
+    int idx,
+    void* ptr);
+
 int v8__Context__DebugContextId(const Context* self);
 const Data* v8__Context__GetDataFromSnapshotOnce(const Context *self, size_t idx);
 
