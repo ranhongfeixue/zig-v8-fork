@@ -423,6 +423,10 @@ void v8__Isolate__EnqueueMicrotaskFunc(v8::Isolate* self, const v8::Function* fu
     self->EnqueueMicrotask(ptr_to_local(function));
 }
 
+bool v8__Isolate__HasPendingBackgroundTasks(v8::Isolate* self) {
+    return self->HasPendingBackgroundTasks();
+}
+
 // MicrotaskQueue
 
 v8::MicrotaskQueue* v8__MicrotaskQueue__New(
