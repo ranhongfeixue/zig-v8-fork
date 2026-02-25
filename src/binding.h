@@ -300,6 +300,7 @@ void* v8__Isolate__GetData(Isolate* self, int idx);
 void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);
 void v8__Isolate__EnqueueMicrotaskFunc(Isolate* self, const Function* function);
+bool v8__Isolate__HasPendingBackgroundTasks(Isolate *self);
 const Data* v8__Isolate__GetDataFromSnapshotOnce(const Isolate *self, size_t idx);
 
 typedef struct StartupData {
