@@ -478,6 +478,10 @@ void v8__Context__SetAlignedPointerInEmbedderData(
 int v8__Context__DebugContextId(const Context* self);
 const Data* v8__Context__GetDataFromSnapshotOnce(const Context *self, size_t idx);
 
+void v8__Context__SetSecurityToken(const Context* self, const Value* val);
+void v8__Context__UseDefaultSecurityToken(const Context* self);
+const Value* v8__Context__GetSecurityToken(const Context* self);
+
 // Boolean
 const Boolean* v8__Boolean__New(
     Isolate* isolate,

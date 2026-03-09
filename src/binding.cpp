@@ -643,6 +643,19 @@ const v8::Data* v8__Context__GetDataFromSnapshotOnce(v8::Context *self, size_t i
     return local_to_ptr(maybe.ToLocalChecked());
 }
 
+void v8__Context__SetSecurityToken(
+        const v8::Context& self,
+        const v8::Value& val) {
+    ptr_to_local(&self)->SetSecurityToken(ptr_to_local(&val));
+}
+void v8__Context__UseDefaultSecurityToken(
+    const v8::Context& self) {
+    ptr_to_local(&self)->UseDefaultSecurityToken();
+}
+const v8::Value* v8__Context__GetSecurityToken(
+        const v8::Context& self) {
+    return local_to_ptr(ptr_to_local(&self)->GetSecurityToken());
+}
 // ScriptOrigin
 
 void v8__ScriptOrigin__CONSTRUCT(
