@@ -5,8 +5,8 @@
     .fingerprint = 0x10be7411eb47d7c5,
     .dependencies = .{
         .depot_tools = .{
-            .url = "git+https://github.com/rust-skia/depot_tools#8efa575d754b8703d99b0f827528e45aeaa167aa",
-            .hash = "N-V-__8AANgeXQAuTDjDItrtITfVslPonFWB-h3Az2C0-2AM",
+            .url = "https://chromium.googlesource.com/chromium/tools/depot_tools.git/+archive/4ce8ba39a3488397a2d1494f167020f21de502f3.tar.gz",
+            .hash = "N-V-__8AABDOXwDW4TLrTiydikRCN2ym9hJI1GKGR09ZLBvY",
         },
     },
 }
