@@ -26,6 +26,9 @@ const GnArgs = struct {
         var args: std.ArrayList(u8) = .empty;
         const gpa = b.allocator;
 
+        // Use modern siso instead of outdated ninja to speed up the build.
+        try args.appendSlice(gpa, "use_siso=true\n");
+
         // official builds depend on pgo
         try args.appendSlice(gpa, "is_official_build=false\n");
         try args.appendSlice(gpa, b.fmt("is_debug={}\n", .{self.is_debug}));
@@ -398,7 +401,7 @@ fn buildV8(
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
     const ninja_run = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "ninja"),
+        getDepotToolExePath(b, depot_tools_dir, "autoninja"),
         "-C",
         out_dir,
         "c_v8",
