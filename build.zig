@@ -188,12 +188,28 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
     copy_depot_tools.addDirectoryArg(depot_tools.path(""));
     copy_depot_tools.addArg(depot_tools_dir);
 
+    const build_telemetry_config_content =
+        \\ {
+        \\   "user": "lightpanda",
+        \\   "status": "opt-out",
+        \\   "countdown": 20,
+        \\   "version": 1
+        \\ }
+    ;
+
+    const write_telemetry_config = b.addSystemCommand(&.{ "sh", "-c" });
+    write_telemetry_config.addArg(b.fmt("echo '{s}' > {s}/build_telemetry.cfg", .{
+        build_telemetry_config_content,
+        depot_tools_dir,
+    }));
+    write_telemetry_config.step.dependOn(&copy_depot_tools.step);
+
     const ensure_bootstrap = b.addSystemCommand(&.{
         getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"),
     });
     ensure_bootstrap.setCwd(.{ .cwd_relative = depot_tools_dir });
     addDepotToolsToPath(ensure_bootstrap, depot_tools_dir);
-    ensure_bootstrap.step.dependOn(&copy_depot_tools.step);
+    ensure_bootstrap.step.dependOn(&write_telemetry_config.step);
 
     const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
     create_marker.step.dependOn(&ensure_bootstrap.step);
