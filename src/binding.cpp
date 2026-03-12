@@ -2812,3 +2812,227 @@ v8::Private* v8__Private__New(
 }
 
 } // extern "C"
+
+// ValueSerializer
+// ---------------
+
+// MaybeBool struct compatible with C
+struct MaybeBool {
+    bool has_value;
+    bool value;
+};
+
+// Callback types for ValueSerializer delegate (C-compatible)
+typedef void (*ValueSerializerThrowDataCloneErrorCallback)(void* data, const v8::String* message);
+typedef MaybeBool (*ValueSerializerWriteHostObjectCallback)(void* data, v8::Isolate* isolate, const v8::Object* object);
+typedef bool (*ValueSerializerGetSharedArrayBufferIdCallback)(void* data, v8::Isolate* isolate, const v8::SharedArrayBuffer* sab, uint32_t* id_out);
+
+struct ValueSerializerDelegateCallbacks {
+    void* data;
+    ValueSerializerThrowDataCloneErrorCallback throw_data_clone_error;
+    ValueSerializerWriteHostObjectCallback write_host_object;
+    ValueSerializerGetSharedArrayBufferIdCallback get_shared_array_buffer_id;
+};
+
+class ValueSerializerDelegateImpl : public v8::ValueSerializer::Delegate {
+public:
+    ValueSerializerDelegateImpl(const ValueSerializerDelegateCallbacks* callbacks)
+        : callbacks_(callbacks ? *callbacks : ValueSerializerDelegateCallbacks{nullptr, nullptr, nullptr, nullptr}) {}
+
+    void ThrowDataCloneError(v8::Local<v8::String> message) override {
+        if (callbacks_.throw_data_clone_error) {
+            callbacks_.throw_data_clone_error(callbacks_.data, local_to_ptr(message));
+        }
+    }
+
+    v8::Maybe<bool> WriteHostObject(v8::Isolate* isolate, v8::Local<v8::Object> object) override {
+        if (callbacks_.write_host_object) {
+            MaybeBool result = callbacks_.write_host_object(callbacks_.data, isolate, local_to_ptr(object));
+            if (result.has_value) {
+                return v8::Just(result.value);
+            }
+        }
+        return v8::Nothing<bool>();
+    }
+
+    v8::Maybe<uint32_t> GetSharedArrayBufferId(v8::Isolate* isolate, v8::Local<v8::SharedArrayBuffer> shared_array_buffer) override {
+        if (callbacks_.get_shared_array_buffer_id) {
+            uint32_t id;
+            if (callbacks_.get_shared_array_buffer_id(callbacks_.data, isolate, local_to_ptr(shared_array_buffer), &id)) {
+                return v8::Just(id);
+            }
+        }
+        return v8::Nothing<uint32_t>();
+    }
+
+private:
+    ValueSerializerDelegateCallbacks callbacks_;
+};
+
+struct ValueSerializerWrapper {
+    ValueSerializerDelegateImpl delegate;
+    v8::ValueSerializer serializer;
+
+    ValueSerializerWrapper(v8::Isolate* isolate, const ValueSerializerDelegateCallbacks* callbacks)
+        : delegate(callbacks), serializer(isolate, &delegate) {}
+};
+
+extern "C" {
+
+ValueSerializerWrapper* v8__ValueSerializer__New(
+        v8::Isolate* isolate,
+        const ValueSerializerDelegateCallbacks* callbacks) {
+    return new ValueSerializerWrapper(isolate, callbacks);
+}
+
+void v8__ValueSerializer__DELETE(ValueSerializerWrapper* self) {
+    delete self;
+}
+
+void v8__ValueSerializer__WriteHeader(ValueSerializerWrapper* self) {
+    self->serializer.WriteHeader();
+}
+
+void v8__ValueSerializer__WriteValue(
+        ValueSerializerWrapper* self,
+        const v8::Context& ctx,
+        const v8::Value& value,
+        v8::Maybe<bool>* out) {
+    *out = self->serializer.WriteValue(ptr_to_local(&ctx), ptr_to_local(&value));
+}
+
+uint8_t* v8__ValueSerializer__Release(ValueSerializerWrapper* self, size_t* size_out) {
+    auto pair = self->serializer.Release();
+    *size_out = pair.second;
+    return pair.first;
+}
+
+void v8__ValueSerializer__FreeBuffer(uint8_t* buffer) {
+    free(buffer);
+}
+
+void v8__ValueSerializer__TransferArrayBuffer(
+        ValueSerializerWrapper* self,
+        uint32_t transfer_id,
+        const v8::ArrayBuffer& array_buffer) {
+    self->serializer.TransferArrayBuffer(transfer_id, ptr_to_local(&array_buffer));
+}
+
+void v8__ValueSerializer__WriteUint32(ValueSerializerWrapper* self, uint32_t value) {
+    self->serializer.WriteUint32(value);
+}
+
+void v8__ValueSerializer__WriteUint64(ValueSerializerWrapper* self, uint64_t value) {
+    self->serializer.WriteUint64(value);
+}
+
+void v8__ValueSerializer__WriteDouble(ValueSerializerWrapper* self, double value) {
+    self->serializer.WriteDouble(value);
+}
+
+void v8__ValueSerializer__WriteRawBytes(ValueSerializerWrapper* self, const void* source, size_t length) {
+    self->serializer.WriteRawBytes(source, length);
+}
+
+} // extern "C"
+
+// ValueDeserializer
+// -----------------
+
+typedef const v8::Object* (*ValueDeserializerReadHostObjectCallback)(void* data, v8::Isolate* isolate);
+typedef const v8::SharedArrayBuffer* (*ValueDeserializerGetSharedArrayBufferFromIdCallback)(void* data, v8::Isolate* isolate, uint32_t id);
+
+struct ValueDeserializerDelegateCallbacks {
+    void* data;
+    ValueDeserializerReadHostObjectCallback read_host_object;
+    ValueDeserializerGetSharedArrayBufferFromIdCallback get_shared_array_buffer_from_id;
+};
+
+class ValueDeserializerDelegateImpl : public v8::ValueDeserializer::Delegate {
+public:
+    ValueDeserializerDelegateImpl(const ValueDeserializerDelegateCallbacks* callbacks)
+        : callbacks_(callbacks ? *callbacks : ValueDeserializerDelegateCallbacks{nullptr, nullptr, nullptr}) {}
+
+    v8::MaybeLocal<v8::Object> ReadHostObject(v8::Isolate* isolate) override {
+        if (callbacks_.read_host_object) {
+            const v8::Object* result = callbacks_.read_host_object(callbacks_.data, isolate);
+            if (result) {
+                return ptr_to_local(result);
+            }
+        }
+        return v8::MaybeLocal<v8::Object>();
+    }
+
+    v8::MaybeLocal<v8::SharedArrayBuffer> GetSharedArrayBufferFromId(v8::Isolate* isolate, uint32_t clone_id) override {
+        if (callbacks_.get_shared_array_buffer_from_id) {
+            const v8::SharedArrayBuffer* result = callbacks_.get_shared_array_buffer_from_id(callbacks_.data, isolate, clone_id);
+            if (result) {
+                return ptr_to_local(result);
+            }
+        }
+        return v8::MaybeLocal<v8::SharedArrayBuffer>();
+    }
+
+private:
+    ValueDeserializerDelegateCallbacks callbacks_;
+};
+
+struct ValueDeserializerWrapper {
+    ValueDeserializerDelegateImpl delegate;
+    v8::ValueDeserializer deserializer;
+
+    ValueDeserializerWrapper(v8::Isolate* isolate, const uint8_t* data, size_t size, const ValueDeserializerDelegateCallbacks* callbacks)
+        : delegate(callbacks), deserializer(isolate, data, size, &delegate) {}
+};
+
+extern "C" {
+
+ValueDeserializerWrapper* v8__ValueDeserializer__New(
+        v8::Isolate* isolate,
+        const uint8_t* data,
+        size_t size,
+        const ValueDeserializerDelegateCallbacks* callbacks) {
+    return new ValueDeserializerWrapper(isolate, data, size, callbacks);
+}
+
+void v8__ValueDeserializer__DELETE(ValueDeserializerWrapper* self) {
+    delete self;
+}
+
+void v8__ValueDeserializer__ReadHeader(
+        ValueDeserializerWrapper* self,
+        const v8::Context& ctx,
+        v8::Maybe<bool>* out) {
+    *out = self->deserializer.ReadHeader(ptr_to_local(&ctx));
+}
+
+const v8::Value* v8__ValueDeserializer__ReadValue(
+        ValueDeserializerWrapper* self,
+        const v8::Context& ctx) {
+    return maybe_local_to_ptr(self->deserializer.ReadValue(ptr_to_local(&ctx)));
+}
+
+void v8__ValueDeserializer__TransferArrayBuffer(
+        ValueDeserializerWrapper* self,
+        uint32_t transfer_id,
+        const v8::ArrayBuffer& array_buffer) {
+    self->deserializer.TransferArrayBuffer(transfer_id, ptr_to_local(&array_buffer));
+}
+
+bool v8__ValueDeserializer__ReadUint32(ValueDeserializerWrapper* self, uint32_t* out) {
+    return self->deserializer.ReadUint32(out);
+}
+
+bool v8__ValueDeserializer__ReadUint64(ValueDeserializerWrapper* self, uint64_t* out) {
+    return self->deserializer.ReadUint64(out);
+}
+
+bool v8__ValueDeserializer__ReadDouble(ValueDeserializerWrapper* self, double* out) {
+    return self->deserializer.ReadDouble(out);
+}
+
+bool v8__ValueDeserializer__ReadRawBytes(ValueDeserializerWrapper* self, size_t length, const void** out) {
+    return self->deserializer.ReadRawBytes(length, out);
+}
+
+} // extern "C"

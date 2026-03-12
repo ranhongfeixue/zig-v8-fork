@@ -41,6 +41,7 @@ typedef Value Float16Array;
 typedef Value Float32Array;
 typedef Value Float64Array;
 typedef Value ArrayBuffer;
+typedef Value SharedArrayBuffer;
 typedef Value ArrayBufferView;
 typedef Value External;
 typedef Value Symbol;
@@ -1450,3 +1451,59 @@ void v8__StartupData__DELETE(const char* data);
 
 // Private
 Private* v8__Private__New(Isolate* isolate, const String* key);
+
+// ValueSerializer
+// ---------------
+// Used for structured cloning (e.g., structuredClone, postMessage)
+
+typedef struct ValueSerializer ValueSerializer;
+
+// Delegate callbacks for ValueSerializer
+typedef void (*ValueSerializerThrowDataCloneErrorCallback)(void* data, const String* message);
+typedef MaybeBool (*ValueSerializerWriteHostObjectCallback)(void* data, Isolate* isolate, const Object* object);
+typedef bool (*ValueSerializerGetSharedArrayBufferIdCallback)(void* data, Isolate* isolate, const SharedArrayBuffer* sab, uint32_t* id_out);
+
+typedef struct ValueSerializerDelegateCallbacks {
+    void* data;
+    ValueSerializerThrowDataCloneErrorCallback throw_data_clone_error;
+    ValueSerializerWriteHostObjectCallback write_host_object;
+    ValueSerializerGetSharedArrayBufferIdCallback get_shared_array_buffer_id;
+} ValueSerializerDelegateCallbacks;
+
+ValueSerializer* v8__ValueSerializer__New(Isolate* isolate, const ValueSerializerDelegateCallbacks* callbacks);
+void v8__ValueSerializer__DELETE(ValueSerializer* self);
+void v8__ValueSerializer__WriteHeader(ValueSerializer* self);
+void v8__ValueSerializer__WriteValue(ValueSerializer* self, const Context* ctx, const Value* value, MaybeBool* out);
+// Returns ownership of the buffer - caller must free with v8__ValueSerializer__FreeBuffer
+uint8_t* v8__ValueSerializer__Release(ValueSerializer* self, size_t* size_out);
+void v8__ValueSerializer__FreeBuffer(uint8_t* buffer);
+void v8__ValueSerializer__TransferArrayBuffer(ValueSerializer* self, uint32_t transfer_id, const ArrayBuffer* array_buffer);
+void v8__ValueSerializer__WriteUint32(ValueSerializer* self, uint32_t value);
+void v8__ValueSerializer__WriteUint64(ValueSerializer* self, uint64_t value);
+void v8__ValueSerializer__WriteDouble(ValueSerializer* self, double value);
+void v8__ValueSerializer__WriteRawBytes(ValueSerializer* self, const void* source, size_t length);
+
+// ValueDeserializer
+// -----------------
+
+typedef struct ValueDeserializer ValueDeserializer;
+
+// Delegate callbacks for ValueDeserializer
+typedef const Object* (*ValueDeserializerReadHostObjectCallback)(void* data, Isolate* isolate);
+typedef const SharedArrayBuffer* (*ValueDeserializerGetSharedArrayBufferFromIdCallback)(void* data, Isolate* isolate, uint32_t id);
+
+typedef struct ValueDeserializerDelegateCallbacks {
+    void* data;
+    ValueDeserializerReadHostObjectCallback read_host_object;
+    ValueDeserializerGetSharedArrayBufferFromIdCallback get_shared_array_buffer_from_id;
+} ValueDeserializerDelegateCallbacks;
+
+ValueDeserializer* v8__ValueDeserializer__New(Isolate* isolate, const uint8_t* data, size_t size, const ValueDeserializerDelegateCallbacks* callbacks);
+void v8__ValueDeserializer__DELETE(ValueDeserializer* self);
+void v8__ValueDeserializer__ReadHeader(ValueDeserializer* self, const Context* ctx, MaybeBool* out);
+const Value* v8__ValueDeserializer__ReadValue(ValueDeserializer* self, const Context* ctx);
+void v8__ValueDeserializer__TransferArrayBuffer(ValueDeserializer* self, uint32_t transfer_id, const ArrayBuffer* array_buffer);
+bool v8__ValueDeserializer__ReadUint32(ValueDeserializer* self, uint32_t* out);
+bool v8__ValueDeserializer__ReadUint64(ValueDeserializer* self, uint64_t* out);
+bool v8__ValueDeserializer__ReadDouble(ValueDeserializer* self, double* out);
+bool v8__ValueDeserializer__ReadRawBytes(ValueDeserializer* self, size_t length, const void** out);
