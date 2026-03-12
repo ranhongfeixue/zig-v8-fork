@@ -400,6 +400,22 @@ fn buildV8(
     addDepotToolsToPath(gn_run, depot_tools_dir);
     gn_run.step.dependOn(&bootstrapped_v8.step);
 
+    const build_telemetry_config_content =
+        \\ {
+        \\   "user": "lightpanda",
+        \\   "status": "opt-out",
+        \\   "countdown": 20,
+        \\   "version": 1
+        \\ }
+    ;
+
+    const write_telemetry_config = b.addSystemCommand(&.{ "sh", "-c" });
+    write_telemetry_config.addArg(b.fmt("echo '{s}' > {s}", .{
+        build_telemetry_config_content,
+        getDepotToolExePath(b, depot_tools_dir, "build_telemetry.cfg"),
+    }));
+    write_telemetry_config.step.dependOn(&gn_run.step);
+
     const ninja_run = b.addSystemCommand(&.{
         getDepotToolExePath(b, depot_tools_dir, "autoninja"),
         "-C",
@@ -408,7 +424,7 @@ fn buildV8(
     });
     ninja_run.setCwd(v8_dir_lazy_path);
     addDepotToolsToPath(ninja_run, depot_tools_dir);
-    ninja_run.step.dependOn(&gn_run.step);
+    ninja_run.step.dependOn(&write_telemetry_config.step);
 
     const wf = b.addWriteFiles();
     wf.step.dependOn(&ninja_run.step);
