@@ -14,21 +14,21 @@ jobs:
   build-x86_64-linux:
     uses: ./.github/workflows/_prebuild-v8.yml
     with:
-      runner: ubuntu-24.04
+      runner: ubuntu-22.04
       target: x86_64-linux
       build_type: release
 
   build-x86_64-linux-debug:
     uses: ./.github/workflows/_prebuild-v8.yml
     with:
-      runner: ubuntu-24.04
+      runner: ubuntu-22.04
       target: x86_64-linux
       build_type: debug
 
   build-arm64-linux:
     uses: ./.github/workflows/_prebuild-v8.yml
     with:
-      runner: ubuntu-24.04-arm
+      runner: ubuntu-22.04-arm
       target: aarch64-linux
       build_type: release
 
