@@ -231,6 +231,7 @@ void v8__Isolate__Enter(Isolate* isolate);
 void v8__Isolate__Exit(Isolate* isolate);
 void v8__Isolate__Dispose(Isolate* isolate);
 Context* v8__Isolate__GetCurrentContext(Isolate* isolate);
+Context* v8__Isolate__GetIncumbentContext(Isolate* isolate);
 const Value* v8__Isolate__ThrowException(
     Isolate* isolate,
     const Value* exception);

@@ -290,6 +290,10 @@ const v8::Context* v8__Isolate__GetCurrentContext(v8::Isolate* isolate) {
     return local_to_ptr(isolate->GetCurrentContext());
 }
 
+const v8::Context* v8__Isolate__GetIncumbentContext(v8::Isolate* isolate) {
+    return local_to_ptr(isolate->GetIncumbentContext());
+}
+
 int v8__Isolate__ContextDisposedNotification(v8::Isolate* isolate) {
     return isolate->ContextDisposedNotification();
 }
