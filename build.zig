@@ -87,22 +87,23 @@ pub fn build(b: *std.Build) !void {
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
         // Use prebuilt_v8 if available.
-        const wf = b.addWriteFiles();
-        _ = wf.addCopyFile(.{ .cwd_relative = path }, "libc_v8.a");
-        break :blk wf;
+        break :blk BuiltV8{
+            .step = b.step("prebuilt_v8", "Use prebuilt v8"),
+            .libc_v8_path = .{ .cwd_relative = path },
+        };
     } else blk: {
         const bootstrapped_depot_tools = try bootstrapDepotTools(b, depot_tools_dir);
         const bootstrapped_v8 = try bootstrapV8(b, bootstrapped_depot_tools, v8_dir, depot_tools_dir);
 
         const prepare_step = b.step("prepare-v8", "Prepare V8 source code");
-        prepare_step.dependOn(&bootstrapped_v8.step);
+        prepare_step.dependOn(bootstrapped_v8.step);
 
         // Otherwise, go through build process.
         break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, gn_args);
     };
 
     const build_step = b.step("build-v8", "Build v8");
-    build_step.dependOn(&built_v8.step);
+    build_step.dependOn(built_v8.step);
 
     b.getInstallStep().dependOn(build_step);
 
@@ -116,7 +117,7 @@ pub fn build(b: *std.Build) !void {
     });
     v8_module.addIncludePath(b.path("src"));
     v8_module.addImport("default_exports", build_opts.createModule());
-    v8_module.addObjectFile(built_v8.getDirectory().path(b, "libc_v8.a"));
+    v8_module.addObjectFile(built_v8.libc_v8_path);
 
     switch (target.result.os.tag) {
         .macos => {
@@ -141,15 +142,7 @@ pub fn build(b: *std.Build) !void {
         });
         tests.root_module.addImport("default_exports", build_opts.createModule());
 
-        const release_dir = if (optimize == .Debug) "debug" else "release";
-        const os = switch (target.result.os.tag) {
-            .linux => "linux",
-            .macos => "macos",
-            .ios => "ios",
-            else => return error.UnsupportedPlatform,
-        };
-
-        tests.addObjectFile(b.path(b.fmt("v8/out/{s}/{s}/obj/zig/libc_v8.a", .{ os, release_dir })));
+        tests.addObjectFile(built_v8.libc_v8_path);
         tests.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {
@@ -167,7 +160,12 @@ pub fn build(b: *std.Build) !void {
     }
 }
 
-fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.Step.Run {
+const V8BootstrapResult = struct {
+    step: *std.Build.Step,
+    needs_build: bool,
+};
+
+fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.Step {
     const depot_tools = b.dependency("depot_tools", .{});
     const marker_file = b.fmt("{s}/.bootstrap-complete", .{depot_tools_dir});
 
@@ -179,7 +177,7 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
     if (!needs_full_bootstrap) {
         std.debug.print("Using cached depot_tools bootstrap from {s}\n", .{depot_tools_dir});
         const noop = b.addSystemCommand(&.{"true"});
-        return noop;
+        return &noop.step;
     }
 
     std.debug.print("Bootstrapping depot_tools {s} in {s} (this will take a while)...\n", .{ V8_VERSION, depot_tools_dir });
@@ -214,15 +212,15 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
     const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
     create_marker.step.dependOn(&ensure_bootstrap.step);
 
-    return create_marker;
+    return &create_marker.step;
 }
 
 fn bootstrapV8(
     b: *std.Build,
-    bootstrapped_depot_tools: *std.Build.Step.Run,
+    bootstrapped_depot_tools: *std.Build.Step,
     v8_dir: []const u8,
     depot_tools_dir: []const u8,
-) !*std.Build.Step.Run {
+) !V8BootstrapResult {
     const marker_file = b.fmt("{s}/.bootstrap-complete", .{v8_dir});
 
     // Check if already bootstrapped
@@ -299,12 +297,12 @@ fn bootstrapV8(
             const update_marker = b.addSystemCommand(&.{ "touch", marker_file });
             update_marker.step.dependOn(&copy_gn.step);
 
-            return update_marker;
+            return .{ .step = &update_marker.step, .needs_build = true };
         } else {
             // Cached V8 is still valid.
             std.debug.print("Using cached V8 bootstrap from {s}\n", .{v8_dir});
             const noop = b.addSystemCommand(&.{"true"});
-            return noop;
+            return .{ .step = &noop.step, .needs_build = false };
         }
     }
 
@@ -312,7 +310,7 @@ fn bootstrapV8(
 
     // Create cache directory
     const mkdir = b.addSystemCommand(&.{ "mkdir", "-p", v8_dir });
-    mkdir.step.dependOn(&bootstrapped_depot_tools.step);
+    mkdir.step.dependOn(bootstrapped_depot_tools);
 
     // Write .gclient file
     const gclient_content = b.fmt(
@@ -387,49 +385,66 @@ fn bootstrapV8(
     const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
     create_marker.step.dependOn(&clang_update.step);
 
-    return create_marker;
+    return .{ .step = &create_marker.step, .needs_build = true };
 }
+
+const BuiltV8 = struct {
+    step: *std.Build.Step,
+    libc_v8_path: LazyPath,
+};
 
 fn buildV8(
     b: *std.Build,
     v8_dir: []const u8,
     depot_tools_dir: []const u8,
-    bootstrapped_v8: *std.Build.Step.Run,
+    bootstrapped_v8: V8BootstrapResult,
     target: std.Build.ResolvedTarget,
     gn_args: GnArgs,
-) !*std.Build.Step.WriteFile {
+) !BuiltV8 {
     const v8_dir_lazy_path: LazyPath = .{ .cwd_relative = v8_dir };
 
     const args_string = try gn_args.asString(b, target);
     const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(target.result.os.tag), if (gn_args.is_debug) "debug" else "release" });
-
-    const gn_run = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "gn"),
-        "--root=.",
-        "--root-target=//zig",
-        "--dotfile=zig/.gn",
-        "gen",
-        out_dir,
-        b.fmt("--args={s}", .{args_string}),
-    });
-    gn_run.setCwd(v8_dir_lazy_path);
-    addDepotToolsToPath(gn_run, depot_tools_dir);
-    gn_run.step.dependOn(&bootstrapped_v8.step);
-
-    const ninja_run = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "autoninja"),
-        "-C",
-        out_dir,
-        "c_v8",
-    });
-    ninja_run.setCwd(v8_dir_lazy_path);
-    addDepotToolsToPath(ninja_run, depot_tools_dir);
-    ninja_run.step.dependOn(&gn_run.step);
-
-    const wf = b.addWriteFiles();
-    wf.step.dependOn(&ninja_run.step);
     const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
-    _ = wf.addCopyFile(v8_dir_lazy_path.path(b, libc_v8_path), "libc_v8.a");
+    const full_libc_v8_lazy_path = v8_dir_lazy_path.path(b, libc_v8_path);
 
-    return wf;
+    const needs_build = bootstrapped_v8.needs_build or blk: {
+        std.fs.cwd().access(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path }), .{}) catch break :blk true;
+        break :blk false;
+    };
+
+    const final_step = b.step("build_v8_core", "Build V8 core");
+
+    if (needs_build) {
+        const gn_run = b.addSystemCommand(&.{
+            getDepotToolExePath(b, depot_tools_dir, "gn"),
+            "--root=.",
+            "--root-target=//zig",
+            "--dotfile=zig/.gn",
+            "gen",
+            out_dir,
+            b.fmt("--args={s}", .{args_string}),
+        });
+        gn_run.setCwd(v8_dir_lazy_path);
+        addDepotToolsToPath(gn_run, depot_tools_dir);
+        gn_run.step.dependOn(bootstrapped_v8.step);
+
+        const ninja_run = b.addSystemCommand(&.{
+            getDepotToolExePath(b, depot_tools_dir, "autoninja"),
+            "-C",
+            out_dir,
+            "c_v8",
+        });
+        ninja_run.setCwd(v8_dir_lazy_path);
+        addDepotToolsToPath(ninja_run, depot_tools_dir);
+        ninja_run.step.dependOn(&gn_run.step);
+        final_step.dependOn(&ninja_run.step);
+    } else {
+        final_step.dependOn(bootstrapped_v8.step);
+    }
+
+    return BuiltV8{
+        .step = final_step,
+        .libc_v8_path = full_libc_v8_lazy_path,
+    };
 }
