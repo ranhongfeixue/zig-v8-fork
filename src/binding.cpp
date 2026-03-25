@@ -1153,11 +1153,15 @@ void v8__Template__Set(
     ptr_to_local(&self)->Set(ptr_to_local(&key), ptr_to_local(&value), attr);
 }
 
-void v8__Template__SetAccessorProperty__DEFAULT(
+void v8__Template__SetAccessorProperty(
         const v8::Template& self,
         const v8::Name& key,
-        const v8::FunctionTemplate& getter) {
-    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), ptr_to_local(&getter));
+        const v8::FunctionTemplate* getter,
+        const v8::FunctionTemplate* setter,
+        v8::PropertyAttribute attribute) {
+    v8::Local<v8::FunctionTemplate> getter_local = getter ? ptr_to_local(getter) : v8::Local<v8::FunctionTemplate>();
+    v8::Local<v8::FunctionTemplate> setter_local = setter ? ptr_to_local(setter) : v8::Local<v8::FunctionTemplate>();
+    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), getter_local, setter_local, attribute);
 }
 
 // ObjectTemplate
@@ -1197,19 +1201,23 @@ void v8__ObjectTemplate__SetNamedHandler(
     ptr_to_local(&self)->SetHandler(configuration);
 }
 
-void v8__ObjectTemplate__SetAccessorProperty__DEFAULT(
-        const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        const v8::FunctionTemplate& getter) {
-    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), ptr_to_local(&getter));
-}
+typedef struct v8__AccessorPropertyConfig {
+    const v8::Name* key;
+    const v8::FunctionTemplate* getter;
+    const v8::FunctionTemplate* setter;
+    v8::PropertyAttribute attribute;
+} v8__AccessorPropertyConfig;
 
-void v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(
+void v8__ObjectTemplate__SetAccessorProperty__Config(
         const v8::ObjectTemplate& self,
-        const v8::Name& key,
-        const v8::FunctionTemplate& getter,
-        const v8::FunctionTemplate& setter) {
-    ptr_to_local(&self)->SetAccessorProperty(ptr_to_local(&key), ptr_to_local(&getter), ptr_to_local(&setter));
+        const v8__AccessorPropertyConfig* config) {
+    v8::Local<v8::FunctionTemplate> getter = config->getter ? ptr_to_local(config->getter) : v8::Local<v8::FunctionTemplate>();
+    v8::Local<v8::FunctionTemplate> setter = config->setter ? ptr_to_local(config->setter) : v8::Local<v8::FunctionTemplate>();
+    ptr_to_local(&self)->SetAccessorProperty(
+        ptr_to_local(config->key),
+        getter,
+        setter,
+        config->attribute);
 }
 
 void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(
@@ -1579,6 +1587,7 @@ typedef enum ConstructorBehavior {
 typedef struct v8__FunctionTemplateConfig {
     v8::FunctionCallback callback;
     const v8::Value* data;
+    const v8::Signature* signature;
     int length;
     ConstructorBehavior behavior;
     SideEffectType side_effect_type;
@@ -1608,16 +1617,24 @@ const v8::FunctionTemplate* v8__FunctionTemplate__New__Config(
     v8::SideEffectType side_effect = static_cast<v8::SideEffectType>(config->side_effect_type);
     v8::ConstructorBehavior behavior = static_cast<v8::ConstructorBehavior>(config->behavior);
     v8::Local<v8::Value> data = config->data ? ptr_to_local(config->data) : v8::Local<v8::Value>();
+    v8::Local<v8::Signature> signature = config->signature ? ptr_to_local(config->signature) : v8::Local<v8::Signature>();
 
     return local_to_ptr(v8::FunctionTemplate::New(
         isolate,
         config->callback,
         data,
-        v8::Local<v8::Signature>(),  // signature - default
+        signature,
         config->length,
         behavior,
         side_effect
     ));
+}
+
+const v8::Signature* v8__Signature__New(
+        v8::Isolate* isolate,
+        const v8::FunctionTemplate* receiver) {
+    v8::Local<v8::FunctionTemplate> recv = receiver ? ptr_to_local(receiver) : v8::Local<v8::FunctionTemplate>();
+    return local_to_ptr(v8::Signature::New(isolate, recv));
 }
 
 const v8::ObjectTemplate* v8__FunctionTemplate__InstanceTemplate(

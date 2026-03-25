@@ -15,6 +15,7 @@ typedef struct FunctionTemplate FunctionTemplate;
 typedef struct Message Message;
 typedef struct Data Context;
 typedef struct Data Private;
+typedef struct Data Signature;
 typedef struct MicrotaskQueue MicrotaskQueue;
 // Internally, all Value types have a base InternalAddress struct.
 typedef uintptr_t InternalAddress;
@@ -755,10 +756,12 @@ void v8__Template__Set(
     const Name* key,
     const Data* value,
     PropertyAttribute attr);
-void v8__Template__SetAccessorProperty__DEFAULT(
+void v8__Template__SetAccessorProperty(
     const Template* self,
     const Name* key,
-    const FunctionTemplate* getter);
+    const FunctionTemplate* getter,
+    const FunctionTemplate* setter,
+    PropertyAttribute attribute);
 
 typedef struct PropertyCallbackInfo PropertyCallbackInfo;
 typedef void (*AccessorNameGetterCallback)(const Name*, const PropertyCallbackInfo*);
@@ -846,6 +849,7 @@ typedef enum ConstructorBehavior {
 typedef struct v8__FunctionTemplateConfig {
     FunctionCallback callback;
     const Value* data;
+    const Signature* signature;
     int length;
     ConstructorBehavior behavior;
     SideEffectType side_effect_type;
@@ -863,6 +867,11 @@ const FunctionTemplate* v8__FunctionTemplate__New__DEFAULT3(
 const FunctionTemplate* v8__FunctionTemplate__New__Config(
     Isolate* isolate,
     const v8__FunctionTemplateConfig* config);
+
+// Signature
+const Signature* v8__Signature__New(
+    Isolate* isolate,
+    const FunctionTemplate* receiver);
 const ObjectTemplate* v8__FunctionTemplate__InstanceTemplate(
     const FunctionTemplate* self);
 const ObjectTemplate* v8__FunctionTemplate__PrototypeTemplate(
@@ -1005,15 +1014,16 @@ Object* v8__ObjectTemplate__NewInstance(
 void v8__ObjectTemplate__SetInternalFieldCount(
     const ObjectTemplate* self,
     int value);
-void v8__ObjectTemplate__SetAccessorProperty__DEFAULT(
+typedef struct v8__AccessorPropertyConfig {
+    const Name* key;
+    const FunctionTemplate* getter;
+    const FunctionTemplate* setter;
+    PropertyAttribute attribute;
+} v8__AccessorPropertyConfig;
+
+void v8__ObjectTemplate__SetAccessorProperty__Config(
     const ObjectTemplate* self,
-    const Name* key,
-    const FunctionTemplate* getter);
-void v8__ObjectTemplate__SetAccessorProperty__DEFAULT2(
-    const ObjectTemplate* self,
-    const Name* key,
-    const FunctionTemplate* getter,
-    const FunctionTemplate* setter);
+    const v8__AccessorPropertyConfig* config);
 void v8__ObjectTemplate__SetNativeDataProperty__DEFAULT(
     const ObjectTemplate* self,
     const Name* key,
