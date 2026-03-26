@@ -102,6 +102,10 @@ pub fn build(b: *std.Build) !void {
         break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, gn_args);
     };
 
+    // Fix dependency graph: build_opts generating options.zig must wait for V8 to finish.
+    // This ensures any executable depending on the v8 module will wait for libc_v8.a to be built.
+    build_opts.step.dependOn(built_v8.step);
+
     const build_step = b.step("build-v8", "Build v8");
     build_step.dependOn(built_v8.step);
 
