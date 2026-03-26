@@ -102,6 +102,10 @@ pub fn build(b: *std.Build) !void {
         break :blk try buildV8(b, v8_dir, depot_tools_dir, bootstrapped_v8, target, gn_args);
     };
 
+    // Fix dependency graph: build_opts generating options.zig must wait for V8 to finish.
+    // This ensures any executable depending on the v8 module will wait for libc_v8.a to be built.
+    build_opts.step.dependOn(built_v8.step);
+
     const build_step = b.step("build-v8", "Build v8");
     build_step.dependOn(built_v8.step);
 
@@ -237,6 +241,14 @@ fn bootstrapV8(
             const marker_stat = std.fs.cwd().statFile(marker_file) catch break :blk true;
             const marker_mtime = marker_stat.mtime;
 
+            // Check if build.zig itself changed
+            if (std.fs.cwd().statFile(b.pathFromRoot("build.zig"))) |stat| {
+                if (stat.mtime > marker_mtime) {
+                    std.debug.print("Source file build.zig changed, updating bootstrap\n", .{});
+                    break :blk true;
+                }
+            } else |_| {}
+
             const source_dirs = [_][]const u8{
                 b.pathFromRoot("src"),
                 b.pathFromRoot("build-tools"),
@@ -250,7 +262,7 @@ fn bootstrapV8(
                 while (try walker.next()) |entry| {
                     switch (entry.kind) {
                         .file => {
-                            const file = try entry.dir.openFile(entry.path, .{});
+                            const file = try entry.dir.openFile(entry.basename, .{});
                             defer file.close();
                             const stat = try file.stat();
                             const mtime = stat.mtime;
@@ -404,7 +416,13 @@ fn buildV8(
     const v8_dir_lazy_path: LazyPath = .{ .cwd_relative = v8_dir };
 
     const args_string = try gn_args.asString(b, target);
-    const out_dir = b.fmt("out/{s}/{s}", .{ @tagName(target.result.os.tag), if (gn_args.is_debug) "debug" else "release" });
+    // Simple string hashing (djb2 by Dan Bernstein) to ensure unique output directories for different GN args.
+    // We use wrapping operators (*% and +%) to avoid overflow panics during hashing.
+    var args_hash: u32 = 5381;
+    for (args_string) |c| {
+        args_hash = args_hash *% 33 +% c;
+    }
+    const out_dir = b.fmt("out/{s}/{s}_{x}", .{ @tagName(target.result.os.tag), if (gn_args.is_debug) "debug" else "release", args_hash });
     const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
     const full_libc_v8_lazy_path = v8_dir_lazy_path.path(b, libc_v8_path);
 
