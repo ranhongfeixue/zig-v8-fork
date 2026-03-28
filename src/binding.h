@@ -1039,6 +1039,14 @@ void v8__ObjectTemplate__SetCallAsFunctionHandler(
     const ObjectTemplate* self,
     FunctionCallback callback_or_null);
 
+typedef bool (*AccessCheckCallback)(const Context* accessing_context,
+                                    const Object* accessed_object,
+                                    const Value* data);
+void v8__ObjectTemplate__SetAccessCheckCallback(
+    const ObjectTemplate* self,
+    AccessCheckCallback callback,
+    const Value* data_or_null);
+
 typedef enum PropertyHandlerFlags {
        kNonMasking = 1,
        kOnlyInterceptStrings = 1 << 1,
