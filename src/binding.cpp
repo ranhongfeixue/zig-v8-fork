@@ -1246,6 +1246,15 @@ void v8__ObjectTemplate__SetCallAsFunctionHandler(
     ptr_to_local(&self)->SetCallAsFunctionHandler(callback_or_null);
 }
 
+void v8__ObjectTemplate__SetAccessCheckCallback(
+    const v8::ObjectTemplate& self,
+    v8::AccessCheckCallback callback,
+    const v8::Value* data_or_null) {
+    ptr_to_local(&self)->SetAccessCheckCallback(
+        callback,
+        data_or_null ? ptr_to_local(data_or_null) : v8::Local<v8::Value>());
+}
+
 // Array
 
 const v8::Array* v8__Array__New(
