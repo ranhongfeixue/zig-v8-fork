@@ -459,6 +459,7 @@ typedef struct v8__ContextConfig {
 Context* v8__Context__New(Isolate* isolate, const ObjectTemplate* global_tmpl, const Value* global_obj);
 Context* v8__Context__New__Config(Isolate* isolate, const v8__ContextConfig* config);
 Context* v8__Context__FromSnapshot(Isolate*, size_t);
+Context* v8__Context__FromSnapshot__Config(Isolate* isolate, size_t context_snapshot_index, const v8__ContextConfig* config);
 void v8__Context__Enter(const Context* context);
 void v8__Context__Exit(const Context* context);
 Isolate* v8__Context__GetIsolate(const Context* context);
@@ -1461,6 +1462,7 @@ typedef struct SnapshotCreator SnapshotCreator;
 SnapshotCreator* v8__SnapshotCreator__CREATE(const CreateParams*);
 Isolate* v8__SnapshotCreator__getIsolate(SnapshotCreator*);
 void v8__SnapshotCreator__setDefaultContext(SnapshotCreator*, const Context*);
+size_t v8__SnapshotCreator__AddContext(SnapshotCreator*, const Context*);
 size_t v8__SnapshotCreator__AddData(SnapshotCreator*, const Data* data);
 size_t v8__SnapshotCreator__AddData2(SnapshotCreator*, const Context* ctx, const Data* data);
 StartupData v8__SnapshotCreator__createBlob(SnapshotCreator*, FunctionCodeHandling);

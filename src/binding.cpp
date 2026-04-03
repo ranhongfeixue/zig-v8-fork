@@ -596,6 +596,24 @@ v8::Context* v8__Context__FromSnapshot(v8::Isolate* isolate, size_t index) {
     return local_to_ptr(maybe.ToLocalChecked());
 }
 
+v8::Context* v8__Context__FromSnapshot__Config(
+    v8::Isolate* isolate,
+    size_t context_snapshot_index,
+    const v8__ContextConfig* config) {
+    v8::MaybeLocal<v8::Context> maybe = v8::Context::FromSnapshot(
+        isolate,
+        context_snapshot_index,
+        v8::DeserializeInternalFieldsCallback(),
+        nullptr,  // extensions
+        v8::MaybeLocal<v8::Value>(),  // global_object
+        config ? config->microtask_queue : nullptr
+    );
+    if (maybe.IsEmpty()) {
+        return nullptr;
+    }
+    return local_to_ptr(maybe.ToLocalChecked());
+}
+
 void v8__Context__Enter(const v8::Context& context) { ptr_to_local(&context)->Enter(); }
 
 void v8__Context__Exit(const v8::Context& context) { ptr_to_local(&context)->Exit(); }
@@ -2809,6 +2827,12 @@ void v8__SnapshotCreator__setDefaultContext(
     v8::SnapshotCreator* self,
     const v8::Context& ctx) {
     return self->SetDefaultContext(ptr_to_local(&ctx));
+}
+
+size_t v8__SnapshotCreator__AddContext(
+    v8::SnapshotCreator* self,
+    const v8::Context& ctx) {
+    return self->AddContext(ptr_to_local(&ctx));
 }
 
 v8::StartupData v8__SnapshotCreator__createBlob(
