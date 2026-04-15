@@ -2473,6 +2473,10 @@ void v8_inspector__Inspector__ResetContextGroup(v8_inspector::V8Inspector *self,
     self->resetContextGroup(contextGroupId);
 }
 
+int v8__inspector__executionContextId(const v8::Context &ctx) {
+    return v8_inspector::V8ContextInfo::executionContextId(ptr_to_local(&ctx));
+}
+
 // InspectorSession
 
 void v8_inspector__Session__DELETE(v8_inspector::V8InspectorSession* self) {

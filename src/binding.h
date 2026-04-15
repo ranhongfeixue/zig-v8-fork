@@ -1357,6 +1357,7 @@ char* v8_inspector__Client__IMPL__valueSubtype(
 char* v8_inspector__Client__IMPL__descriptionForValueSubtype(
     InspectorClientImpl* self, Context context, Value value);
 
+
 // RemoteObject
 typedef struct RemoteObject RemoteObject;
 typedef struct WebDriverValue WebDriverValue;
@@ -1402,6 +1403,8 @@ void v8_inspector__Inspector__ContextCreated(Inspector *self, const char *name,
 void v8_inspector__Inspector__ContextDestroyed(Inspector *self, const Context *ctx);
 
 void v8_inspector__Inspector__ResetContextGroup(Inspector *self, int contextGroupId);
+
+int v8__inspector__executionContextId(const Context* context);
 
 // RemoteObject
 void v8_inspector__RemoteObject__DELETE(RemoteObject *self);
