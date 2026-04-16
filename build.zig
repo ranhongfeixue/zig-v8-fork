@@ -426,8 +426,17 @@ fn buildV8(
     const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
     const full_libc_v8_lazy_path = v8_dir_lazy_path.path(b, libc_v8_path);
 
+    // The bootstrap marker is shared across profiles, so once one profile touches
+    // it the other profile loses the source-changed signal. Compare the staged
+    // source files in v8_dir directly against this profile's libc_v8.a mtime so
+    // each profile tracks its own artifact freshness independently.
     const needs_build = bootstrapped_v8.needs_build or blk: {
-        std.fs.cwd().access(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path }), .{}) catch break :blk true;
+        const lib_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path })) catch break :blk true;
+        const staged_sources = [_][]const u8{ "binding.cpp", "inspector.h", "zig/BUILD.gn", "zig/.gn" };
+        for (staged_sources) |rel| {
+            const src_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, rel })) catch continue;
+            if (src_stat.mtime > lib_stat.mtime) break :blk true;
+        }
         break :blk false;
     };
 
