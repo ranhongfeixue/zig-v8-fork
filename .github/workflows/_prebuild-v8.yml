@@ -28,6 +28,7 @@ jobs:
 
       - uses: mlugg/setup-zig@v2.2.1
         with:
+          version: 0.15.2
           cache-key: ${{ inputs.target }}
 
       - uses: actions/checkout@v6.0.2
