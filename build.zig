@@ -4,6 +4,17 @@ const V8_VERSION: []const u8 = "14.0.365.4";
 
 const LazyPath = std.Build.LazyPath;
 
+// Shim files staged into the V8 checkout. `src` is relative to this repo,
+// `dest` is relative to the V8 source tree root. Any file added here is
+// automatically copied during bootstrap and watched by the freshness check.
+const StagedFile = struct { src: []const u8, dest: []const u8 };
+const staged_files = [_]StagedFile{
+    .{ .src = "src/binding.cpp", .dest = "binding.cpp" },
+    .{ .src = "src/inspector.h", .dest = "inspector.h" },
+    .{ .src = "build-tools/BUILD.gn", .dest = "zig/BUILD.gn" },
+    .{ .src = "build-tools/.gn", .dest = "zig/.gn" },
+};
+
 fn getDepotToolExePath(b: *std.Build, depot_tools_dir: []const u8, executable: []const u8) []const u8 {
     return b.fmt("{s}/{s}", .{ depot_tools_dir, executable });
 }
@@ -235,9 +246,6 @@ fn bootstrapV8(
 
     if (!needs_full_bootstrap) {
         const needs_source_update = blk: {
-            if (needs_full_bootstrap) break :blk false;
-
-            // Check if marker exists
             const marker_stat = std.fs.cwd().statFile(marker_file) catch break :blk true;
             const marker_mtime = marker_stat.mtime;
 
@@ -282,32 +290,19 @@ fn bootstrapV8(
         };
 
         if (needs_source_update) {
-            // Just needs the bindings to be updated, will reuse cached dir.
             std.debug.print("Updating source files in V8 bootstrap\n", .{});
 
-            // Just copy the updated files
-            const copy_binding = b.addSystemCommand(&.{"cp"});
-            copy_binding.addFileArg(b.path("src/binding.cpp"));
-            copy_binding.addArg(b.fmt("{s}/binding.cpp", .{v8_dir}));
+            var prev_step: *std.Build.Step = undefined;
+            for (staged_files, 0..) |f, i| {
+                const cp = b.addSystemCommand(&.{"cp"});
+                cp.addFileArg(b.path(f.src));
+                cp.addArg(b.fmt("{s}/{s}", .{ v8_dir, f.dest }));
+                if (i > 0) cp.step.dependOn(prev_step);
+                prev_step = &cp.step;
+            }
 
-            const copy_inspector = b.addSystemCommand(&.{"cp"});
-            copy_inspector.addFileArg(b.path("src/inspector.h"));
-            copy_inspector.addArg(b.fmt("{s}/inspector.h", .{v8_dir}));
-            copy_inspector.step.dependOn(&copy_binding.step);
-
-            const copy_build_gn = b.addSystemCommand(&.{"cp"});
-            copy_build_gn.addFileArg(b.path("build-tools/BUILD.gn"));
-            copy_build_gn.addArg(b.fmt("{s}/zig/BUILD.gn", .{v8_dir}));
-            copy_build_gn.step.dependOn(&copy_inspector.step);
-
-            const copy_gn = b.addSystemCommand(&.{"cp"});
-            copy_gn.addFileArg(b.path("build-tools/.gn"));
-            copy_gn.addArg(b.fmt("{s}/zig/.gn", .{v8_dir}));
-            copy_gn.step.dependOn(&copy_build_gn.step);
-
-            // Touch marker to update timestamp
             const update_marker = b.addSystemCommand(&.{ "touch", marker_file });
-            update_marker.step.dependOn(&copy_gn.step);
+            update_marker.step.dependOn(prev_step);
 
             return .{ .step = &update_marker.step, .needs_build = true };
         } else {
@@ -342,34 +337,23 @@ fn bootstrapV8(
     write_gclient.addArg(b.fmt("echo '{s}' > {s}/.gclient", .{ gclient_content, v8_dir }));
     write_gclient.step.dependOn(&mkdir.step);
 
-    // Copy binding files
-    const copy_binding = b.addSystemCommand(&.{"cp"});
-    copy_binding.addFileArg(b.path("src/binding.cpp"));
-    copy_binding.addArg(b.fmt("{s}/binding.cpp", .{v8_dir}));
-    copy_binding.step.dependOn(&write_gclient.step);
-
-    const copy_inspector = b.addSystemCommand(&.{"cp"});
-    copy_inspector.addFileArg(b.path("src/inspector.h"));
-    copy_inspector.addArg(b.fmt("{s}/inspector.h", .{v8_dir}));
-    copy_inspector.step.dependOn(&copy_binding.step);
-
-    // Create zig directory and copy build files
-    const mkdir_zig = b.addSystemCommand(&.{ "mkdir", "-p", b.fmt("{s}/zig", .{v8_dir}) });
-    mkdir_zig.step.dependOn(&copy_inspector.step);
-
-    const copy_build_gn = b.addSystemCommand(&.{"cp"});
-    copy_build_gn.addFileArg(b.path("build-tools/BUILD.gn"));
-    copy_build_gn.addArg(b.fmt("{s}/zig/BUILD.gn", .{v8_dir}));
-    copy_build_gn.step.dependOn(&mkdir_zig.step);
-
-    const copy_gn = b.addSystemCommand(&.{"cp"});
-    copy_gn.addFileArg(b.path("build-tools/.gn"));
-    copy_gn.addArg(b.fmt("{s}/zig/.gn", .{v8_dir}));
-    copy_gn.step.dependOn(&copy_build_gn.step);
+    var prev_stage_step: *std.Build.Step = &write_gclient.step;
+    for (staged_files) |f| {
+        if (std.fs.path.dirname(f.dest)) |parent| {
+            const mkdir_parent = b.addSystemCommand(&.{ "mkdir", "-p", b.fmt("{s}/{s}", .{ v8_dir, parent }) });
+            mkdir_parent.step.dependOn(prev_stage_step);
+            prev_stage_step = &mkdir_parent.step;
+        }
+        const cp = b.addSystemCommand(&.{"cp"});
+        cp.addFileArg(b.path(f.src));
+        cp.addArg(b.fmt("{s}/{s}", .{ v8_dir, f.dest }));
+        cp.step.dependOn(prev_stage_step);
+        prev_stage_step = &cp.step;
+    }
 
     // Create gclient_args.gni
     const mkdir_build_config = b.addSystemCommand(&.{ "mkdir", "-p", b.fmt("{s}/build/config", .{v8_dir}) });
-    mkdir_build_config.step.dependOn(&copy_gn.step);
+    mkdir_build_config.step.dependOn(prev_stage_step);
 
     const write_gclient_args = b.addSystemCommand(&.{ "sh", "-c" });
     write_gclient_args.addArg(b.fmt("echo '# Generated by Zig build system' > {s}/build/config/gclient_args.gni", .{v8_dir}));
@@ -426,8 +410,14 @@ fn buildV8(
     const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
     const full_libc_v8_lazy_path = v8_dir_lazy_path.path(b, libc_v8_path);
 
+    // Bootstrap marker is shared across profiles, so compare staged sources
+    // directly against this profile's libc_v8.a to track freshness per-profile.
     const needs_build = bootstrapped_v8.needs_build or blk: {
-        std.fs.cwd().access(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path }), .{}) catch break :blk true;
+        const lib_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path })) catch break :blk true;
+        for (staged_files) |f| {
+            const src_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, f.dest })) catch break :blk true;
+            if (src_stat.mtime > lib_stat.mtime) break :blk true;
+        }
         break :blk false;
     };
 
