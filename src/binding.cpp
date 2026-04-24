@@ -1544,6 +1544,11 @@ bool v8__FunctionCallbackInfo__IsConstructCall(
     return self.IsConstructCall();
 }
 
+const v8::Value* v8__FunctionCallbackInfo__NewTarget(
+        const v8::FunctionCallbackInfo<v8::Value>& self) {
+    return local_to_ptr(self.NewTarget());
+}
+
 // PropertyCallbackInfo
 
 v8::Isolate* v8__PropertyCallbackInfo__GetIsolate(
