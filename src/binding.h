@@ -845,8 +845,8 @@ typedef enum SideEffectType {
 } SideEffectType;
 
 typedef enum ConstructorBehavior {
-    kConstructorBehavior_Allow = 0,
-    kConstructorBehavior_Throw = 1,
+    kConstructorBehavior_Throw = 0,
+    kConstructorBehavior_Allow = 1,
 } ConstructorBehavior;
 
 typedef struct v8__FunctionTemplateConfig {
