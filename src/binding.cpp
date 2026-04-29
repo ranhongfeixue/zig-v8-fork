@@ -893,6 +893,33 @@ int v8__String__Utf8Length(const v8::String& self, v8::Isolate* isolate) {
     return self.Utf8LengthV2(isolate);
 }
 
+v8::String* v8__String__NewFromOneByte(
+        v8::Isolate* isolate,
+        const uint8_t* data,
+        v8::NewStringType type,
+        int length) {
+    return maybe_local_to_ptr(
+        v8::String::NewFromOneByte(isolate, data, type, length)
+    );
+}
+
+int v8__String__Length(const v8::String& self) {
+    return self.Length();
+}
+
+bool v8__String__ContainsOnlyOneByte(const v8::String& self) {
+    return self.ContainsOnlyOneByte();
+}
+
+void v8__String__WriteOneByte(
+        const v8::String& self,
+        v8::Isolate* isolate,
+        uint32_t offset,
+        uint32_t length,
+        uint8_t* buffer) {
+    self.WriteOneByteV2(isolate, offset, length, buffer);
+}
+
 // Boolean
 
 const v8::Boolean* v8__Boolean__New(
