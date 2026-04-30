@@ -14,7 +14,7 @@ ADD . /src/
 WORKDIR /src
 
 RUN zig build
-RUN zig build get-v8
+RUN zig build prepare-v8
 RUN zig build -Doptimize=ReleaseSafe build-v8
 
 RUN mv v8/out/linux/release/obj/zig/libc_v8.a /src/libc_v8.a

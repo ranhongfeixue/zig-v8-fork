@@ -19,7 +19,7 @@ if you come across this error:<br />
 Compiling v8 will take 20+ minutes.
 
 ```sh
-zig build get-v8
+zig build prepare-v8
 zig build build-v8
 ```
 
