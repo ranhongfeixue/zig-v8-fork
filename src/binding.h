@@ -519,6 +519,17 @@ String* v8__String__NewFromUtf8(Isolate* isolate, const char* data, NewStringTyp
 size_t v8__String__WriteUtf8(const String* str, Isolate* isolate, const char* buf, size_t len, WriteOptions options);
 int v8__String__Utf8Length(const String* str, Isolate* isolate);
 
+// One-byte (Latin-1) string APIs. NewFromOneByte maps each input byte 0..255
+// directly to a JS code unit 0..255 (no UTF-8 decoding). Length returns the
+// JS-level character count (code units). ContainsOnlyOneByte tells whether
+// every code unit fits in a uint8_t. WriteOneByte copies code units as bytes
+// (truncating any code unit >= 256, so callers should check ContainsOnlyOneByte
+// first if that distinction matters).
+String* v8__String__NewFromOneByte(Isolate* isolate, const uint8_t* data, NewStringType type, int length);
+int v8__String__Length(const String* str);
+bool v8__String__ContainsOnlyOneByte(const String* str);
+void v8__String__WriteOneByte(const String* str, Isolate* isolate, uint32_t offset, uint32_t length, uint8_t* buffer);
+
 // Value
 String* v8__Value__TypeOf(
     const Value* self,
