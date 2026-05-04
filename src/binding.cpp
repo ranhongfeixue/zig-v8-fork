@@ -1532,6 +1532,44 @@ const v8::Value* v8__Object__GetPrivate(
         ptr_to_local(&self)->GetPrivate(ptr_to_local(&ctx), ptr_to_local(&key))
     );
 }
+
+// RegExp
+
+const v8::RegExp* v8__RegExp__New(
+        const v8::Context& ctx,
+        const v8::String& pattern,
+        int flags) {
+    return maybe_local_to_ptr(
+        v8::RegExp::New(
+            ptr_to_local(&ctx),
+            ptr_to_local(&pattern),
+            static_cast<v8::RegExp::Flags>(flags))
+    );
+}
+
+const v8::RegExp* v8__RegExp__NewWithBacktrackLimit(
+        const v8::Context& ctx,
+        const v8::String& pattern,
+        int flags,
+        uint32_t backtrack_limit) {
+    return maybe_local_to_ptr(
+        v8::RegExp::NewWithBacktrackLimit(
+            ptr_to_local(&ctx),
+            ptr_to_local(&pattern),
+            static_cast<v8::RegExp::Flags>(flags),
+            backtrack_limit)
+    );
+}
+
+const v8::Object* v8__RegExp__Exec(
+        const v8::RegExp& self,
+        const v8::Context& ctx,
+        const v8::String& subject) {
+    return maybe_local_to_ptr(
+        ptr_to_local(&self)->Exec(ptr_to_local(&ctx), ptr_to_local(&subject))
+    );
+}
+
 // FunctionCallbackInfo
 
 v8::Isolate* v8__FunctionCallbackInfo__GetIsolate(
