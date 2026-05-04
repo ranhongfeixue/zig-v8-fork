@@ -50,6 +50,7 @@ typedef Value Boolean;
 typedef Value Promise;
 typedef Value Name;
 typedef Value PromiseResolver;
+typedef Value RegExp;
 typedef enum CompileOptions {
     kNoCompileOptions = 0,
     kConsumeCodeCache = 1,
@@ -78,6 +79,18 @@ typedef enum PromiseRejectEvent {
     kPromiseRejectAfterResolved = 2,
     kPromiseResolveAfterResolved = 3,
 } PromiseRejectEvent;
+typedef enum RegExpFlags {
+    kRegExpNone        = 0,
+    kRegExpGlobal      = 1 << 0,
+    kRegExpIgnoreCase  = 1 << 1,
+    kRegExpMultiline   = 1 << 2,
+    kRegExpSticky      = 1 << 3,
+    kRegExpUnicode     = 1 << 4,
+    kRegExpDotAll      = 1 << 5,
+    kRegExpLinear      = 1 << 6,
+    kRegExpHasIndices  = 1 << 7,
+    kRegExpUnicodeSets = 1 << 8,
+} RegExpFlags;
 typedef struct PromiseRejectMessage PromiseRejectMessage;
 typedef void (*PromiseRejectCallback)(PromiseRejectMessage);
 typedef Promise* (*HostImportModuleDynamicallyCallback)(Context*, Data*, Value*, String*, FixedArray*);
@@ -721,6 +734,21 @@ void v8__Object__HasPrivate(const Object* self, const Context *ctx, const Privat
 void v8__Object__DeletePrivate(const Object* self, const Context *ctx, const Private* private, MaybeBool* out);
 void v8__Object__SetPrivate(const Object* self, const Context *ctx, const Private* private, const Value* value, MaybeBool* out);
 const Value* v8__Object__GetPrivate(const Object* self, const Context *ctx, const Private* private);
+
+// RegExp
+const RegExp* v8__RegExp__New(
+    const Context* ctx,
+    const String* pattern,
+    int flags);
+const RegExp* v8__RegExp__NewWithBacktrackLimit(
+    const Context* ctx,
+    const String* pattern,
+    int flags,
+    uint32_t backtrack_limit);
+const Object* v8__RegExp__Exec(
+    const RegExp* self,
+    const Context* ctx,
+    const String* subject);
 
 // Exception
 const Value* v8__Exception__Error(const String* message);
