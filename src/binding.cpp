@@ -2440,14 +2440,35 @@ static inline v8_inspector::StringView toStringView(const std::string &str) {
 }
 
 static inline std::string fromStringView(v8::Isolate* isolate, const v8_inspector::StringView stringView) {
-  int length = static_cast<int>(stringView.length());
-  v8::Local<v8::String> message = (
-        stringView.is8Bit()
-          ? v8::String::NewFromOneByte(isolate, stringView.characters8(), v8::NewStringType::kNormal, length)
-          : v8::String::NewFromTwoByte(isolate, stringView.characters16(), v8::NewStringType::kNormal, length)
-      ).ToLocalChecked();
-  v8::String::Utf8Value result(isolate, message);
-  return *result;
+  // Convert the inspector StringView to UTF-8 *without* allocating a
+  // v8::String. The previous implementation round-tripped through
+  // v8::String::NewFromOneByte / NewFromTwoByte (just to use Utf8Value
+  // for the conversion), which calls into V8's heap allocator. That is
+  // forbidden during certain V8 internal phases -- in particular,
+  // weak callbacks during garbage collection, where V8's
+  // PromiseHandlerTracker can invoke EvaluateCallback::sendFailure,
+  // which lands in Channel::sendResponse, which calls this helper.
+  // Allocating in that context trips AllowHeapAllocation::IsAllowed()
+  // and aborts the process in debug builds (in release builds the
+  // allocation is undefined behavior).
+  //
+  // The 8-bit case can be a direct memcpy; the 16-bit case uses
+  // v8_inspector::UTF16ToUTF8 (a pure host-side helper that doesn't
+  // touch the V8 heap) -- the same path allocString() uses.
+  //
+  // The `isolate` parameter is preserved for API compatibility but is
+  // no longer needed.
+  (void)isolate;
+  if (stringView.is8Bit()) {
+    return std::string(
+      reinterpret_cast<const char*>(stringView.characters8()),
+      stringView.length()
+    );
+  }
+  return v8_inspector::UTF16ToUTF8(
+    reinterpret_cast<const char16_t*>(stringView.characters16()),
+    stringView.length()
+  );
 }
 
 /// Allocates a string as utf8 on the allocator without \0 terminator, for use in Zig.
