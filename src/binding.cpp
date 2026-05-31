@@ -397,6 +397,10 @@ void v8__Isolate__CancelTerminateExecution(v8::Isolate* self) {
     self->CancelTerminateExecution();
 }
 
+void v8__Isolate__RequestInterrupt(v8::Isolate* self, v8::InterruptCallback callback, void* data) {
+    self->RequestInterrupt(callback, data);
+}
+
 void v8__Isolate__LowMemoryNotification(v8::Isolate* self) {
     self->LowMemoryNotification();
 }
