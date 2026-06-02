@@ -726,6 +726,18 @@ v8::Value* v8__Script__Run(
     return maybe_local_to_ptr(ptr_to_local(&script)->Run(ptr_to_local(&context)));
 }
 
+const v8::UnboundScript* v8__Script__GetUnboundScript(const v8::Script& script) {
+    return local_to_ptr(ptr_to_local(&script)->GetUnboundScript());
+}
+
+v8::Script* v8__UnboundScript__BindToCurrentContext(const v8::UnboundScript& unbound) {
+    return local_to_ptr(ptr_to_local(&unbound)->BindToCurrentContext());
+}
+
+v8::ScriptCompiler::CachedData* v8__ScriptCompiler__CreateCodeCache(const v8::UnboundScript& unbound) {
+    return v8::ScriptCompiler::CreateCodeCache(ptr_to_local(&unbound));
+}
+
 // ScriptCompiler
 
 size_t v8__ScriptCompiler__Source__SIZEOF() {

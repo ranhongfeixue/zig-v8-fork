@@ -1237,8 +1237,20 @@ const Module* v8__ScriptCompiler__CompileModule(
 
 // Script
 typedef struct Script Script;
+typedef struct Data UnboundScript;
 Script* v8__Script__Compile(const Context* context, const String* src, const ScriptOrigin* origin);
 Value* v8__Script__Run(const Script* script, const Context* context);
+
+// A context-independent compiled script. Obtained from a bound Script and
+// re-bound to a context (possibly a different one, on the same isolate) to run
+// again, or serialized into a ScriptCompilerCachedData blob.
+const UnboundScript* v8__Script__GetUnboundScript(const Script* script);
+Script* v8__UnboundScript__BindToCurrentContext(const UnboundScript* unbound);
+
+// Serializes an UnboundScript into a code cache. The returned CachedData owns
+// its buffer (BufferOwned) and must be released with
+// v8__ScriptCompiler__CachedData__DELETE after the bytes have been copied out.
+ScriptCompilerCachedData* v8__ScriptCompiler__CreateCodeCache(const UnboundScript* unbound);
 
 // Module
 typedef enum ModuleStatus {
