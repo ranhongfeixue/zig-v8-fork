@@ -60,6 +60,11 @@ jobs:
             sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins-aarch64.a /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins.a
             sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/ /usr/lib/llvm-21/lib/clang/21/lib/aarch64-unknown-linux-gnu
 
+      - name: Select Xcode 26.3 (macOS/iOS — Zig 0.15.2 lacks 26.4 SDK stubs)
+        if: contains(inputs.target, 'macos') || contains(inputs.target, 'ios')
+        shell: bash
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app
+
       - shell: bash
         run: zig env
 
