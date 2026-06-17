@@ -609,7 +609,7 @@ v8::Context* v8__Context__FromSnapshot__Config(
         context_snapshot_index,
         v8::DeserializeInternalFieldsCallback(),
         nullptr,  // extensions
-        v8::MaybeLocal<v8::Value>(),  // global_object
+        config ? ptr_to_maybe_local(config->global_object) : v8::MaybeLocal<v8::Value>(),
         config ? config->microtask_queue : nullptr
     );
     if (maybe.IsEmpty()) {
