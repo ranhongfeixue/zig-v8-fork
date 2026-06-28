@@ -1097,11 +1097,11 @@ typedef enum PropertyHandlerFlags {
 } PropertyHandlerFlags;
 
 typedef struct PropertyDescriptor {} PropertyDescriptor;
-typedef uint8_t (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDefinerCallback)(uint32_t, PropertyDescriptor* desc, const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDescriptorCallback)(uint32_t, const PropertyCallbackInfo*);
 typedef uint32_t (*IndexedPropertyIndexOfCallback)(const Value*, uint32_t, uint32_t, uint32_t*, const PropertyCallbackInfo*);
@@ -1121,11 +1121,11 @@ void v8__ObjectTemplate__SetIndexedHandler(
     const ObjectTemplate* self,
     const IndexedPropertyHandlerConfiguration* configuration);
 
-typedef uint8_t (*NamedPropertyGetterCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertySetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyQueryCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyDeleterCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyGetterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertySetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyQueryCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyDeleterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
 typedef void (*NamedPropertyDefinerCallback)(const Name*, PropertyDescriptor* desc, const PropertyCallbackInfo*);
 typedef void (*NamedPropertyDescriptorCallback)(const Name*, const PropertyCallbackInfo*);
 typedef struct NamedPropertyHandlerConfiguration {
