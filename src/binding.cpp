@@ -286,6 +286,8 @@ void v8__Isolate__Enter(v8::Isolate* isolate) { isolate->Enter(); }
 
 void v8__Isolate__Exit(v8::Isolate* isolate) { isolate->Exit(); }
 
+v8::Isolate* v8__Isolate__GetCurrent() { return v8::Isolate::GetCurrent(); }
+
 const v8::Context* v8__Isolate__GetCurrentContext(v8::Isolate* isolate) {
     return local_to_ptr(isolate->GetCurrentContext());
 }
@@ -622,10 +624,6 @@ void v8__Context__Enter(const v8::Context& context) { ptr_to_local(&context)->En
 
 void v8__Context__Exit(const v8::Context& context) { ptr_to_local(&context)->Exit(); }
 
-v8::Isolate* v8__Context__GetIsolate(const v8::Context& self) {
-       return ptr_to_local(&self)->GetIsolate();
-}
-
 const v8::Object* v8__Context__Global(
         const v8::Context& self) {
     return local_to_ptr(ptr_to_local(&self)->Global());
@@ -647,14 +645,14 @@ void v8__Context__SetEmbedderData(
 void * v8__Context__GetAlignedPointerFromEmbedderData(
         const v8::Context* self,
         int idx) {
-    return ptr_to_local(self)->GetAlignedPointerFromEmbedderData(idx);
+    return ptr_to_local(self)->GetAlignedPointerFromEmbedderData(idx, v8::kEmbedderDataTypeTagDefault);
 }
 
 void v8__Context__SetAlignedPointerInEmbedderData(
         const v8::Context* self,
         int idx,
         void* ptr) {
-    ptr_to_local(self)->SetAlignedPointerInEmbedderData(idx, ptr);
+    ptr_to_local(self)->SetAlignedPointerInEmbedderData(idx, ptr, v8::kEmbedderDataTypeTagDefault);
 }
 
 int v8__Context__DebugContextId(const v8::Context& self) {
@@ -879,9 +877,8 @@ int v8__FixedArray__Length(const v8::FixedArray& self) {
 
 const v8::Data* v8__FixedArray__Get(
         const v8::FixedArray& self,
-        const v8::Context& ctx,
         int idx) {
-    return local_to_ptr(ptr_to_local(&self)->Get(ptr_to_local(&ctx), idx));
+    return local_to_ptr(ptr_to_local(&self)->Get(idx));
 }
 
 // String
@@ -1435,10 +1432,6 @@ void v8__Object__DefineOwnProperty(
     );
 }
 
-v8::Isolate* v8__Object__GetIsolate(const v8::Object& self) {
-    return ptr_to_local(&self)->GetIsolate();
-}
-
 const v8::Context* v8__Object__GetCreationContext(const v8::Object& self) {
     return maybe_local_to_ptr(ptr_to_local(&self)->GetCreationContext());
 }
@@ -1498,13 +1491,13 @@ void v8__Object__SetAlignedPointerInInternalField(
         const v8::Object* self,
         int idx,
         void* ptr) {
-    ptr_to_local(self)->SetAlignedPointerInInternalField(idx, ptr);
+    ptr_to_local(self)->SetAlignedPointerInInternalField(idx, ptr, v8::kEmbedderDataTypeTagDefault);
 }
 
 void * v8__Object__GetAlignedPointerFromInternalField(
         const v8::Object* self,
         int idx) {
-    return ptr_to_local(self)->GetAlignedPointerFromInternalField(idx);
+    return ptr_to_local(self)->GetAlignedPointerFromInternalField(idx, v8::kEmbedderDataTypeTagDefault);
 }
 
 void v8__Object__HasPrivate(
@@ -1645,7 +1638,7 @@ void v8__PropertyCallbackInfo__GetReturnValue(
 
 const v8::Object* v8__PropertyCallbackInfo__This(
         const v8::PropertyCallbackInfo<v8::Value>& self) {
-    return local_to_ptr(self.This());
+    return local_to_ptr(self.Holder());
 }
 
 const v8::Value* v8__PropertyCallbackInfo__Data(
@@ -1853,10 +1846,12 @@ void v8__Function__SetName(
 const v8::External* v8__External__New(
         v8::Isolate* isolate,
         void* value) {
-    return local_to_ptr(v8::External::New(isolate, value));
+    return local_to_ptr(v8::External::New(isolate, value, v8::kExternalPointerTypeTagDefault));
 }
 
-void* v8__External__Value(const v8::External& self) { return self.Value(); }
+void* v8__External__Value(const v8::External& self) {
+    return self.Value(v8::kExternalPointerTypeTagDefault);
+}
 
 // Symbol well-known
 
