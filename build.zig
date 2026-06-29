@@ -1,6 +1,6 @@
 const std = @import("std");
 
-const V8_VERSION: []const u8 = "14.0.365.4";
+const V8_VERSION: []const u8 = "14.9.207.35";
 
 const LazyPath = std.Build.LazyPath;
 
@@ -138,6 +138,7 @@ pub fn build(b: *std.Build) !void {
         .macos => {
             v8_module.addSystemFrameworkPath(.{ .cwd_relative = "/System/Library/Frameworks" });
             v8_module.linkFramework("CoreFoundation", .{});
+            v8_module.linkFramework("Security", .{});
         },
         else => {},
     }

@@ -244,6 +244,7 @@ Isolate* v8__Isolate__New(CreateParams* params);
 void v8__Isolate__Enter(Isolate* isolate);
 void v8__Isolate__Exit(Isolate* isolate);
 void v8__Isolate__Dispose(Isolate* isolate);
+Isolate* v8__Isolate__GetCurrent();
 Context* v8__Isolate__GetCurrentContext(Isolate* isolate);
 Context* v8__Isolate__GetIncumbentContext(Isolate* isolate);
 const Value* v8__Isolate__ThrowException(
@@ -309,6 +310,7 @@ typedef struct HeapStatistics {
     size_t number_of_detached_contexts;
     size_t total_global_handles_size;
     size_t used_global_handles_size;
+    uint64_t total_allocated_bytes;
 } HeapStatistics;
 void v8__Isolate__GetHeapStatistics(
     Isolate* self,
@@ -366,7 +368,6 @@ void v8__Isolate__CreateParams__CONSTRUCT(CreateParams* buf);
 int v8__FixedArray__Length(const FixedArray* self);
 const Data* v8__FixedArray__Get(
     const FixedArray* self,
-    const Context* ctx,
     int idx);
 
 // ArrayBuffer
@@ -477,7 +478,6 @@ Context* v8__Context__FromSnapshot(Isolate*, size_t);
 Context* v8__Context__FromSnapshot__Config(Isolate* isolate, size_t context_snapshot_index, const v8__ContextConfig* config);
 void v8__Context__Enter(const Context* context);
 void v8__Context__Exit(const Context* context);
-Isolate* v8__Context__GetIsolate(const Context* context);
 const Object* v8__Context__Global(const Context* self);
 const Value* v8__Context__GetEmbedderData(
     const Context* self,
@@ -699,7 +699,6 @@ void v8__Object__DefineOwnProperty(
     const Value* value,
     PropertyAttribute attr,
     MaybeBool* out);
-Isolate* v8__Object__GetIsolate(const Object* self);
 const Context* v8__Object__GetCreationContext(const Object* self);
 int v8__Object__GetIdentityHash(const Object* self);
 void v8__Object__Has(
@@ -1098,13 +1097,14 @@ typedef enum PropertyHandlerFlags {
 } PropertyHandlerFlags;
 
 typedef struct PropertyDescriptor {} PropertyDescriptor;
-typedef uint8_t (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
-typedef uint8_t (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyGetterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertySetterCallback)(uint32_t, const Value*, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyQueryCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyDeleterCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDefinerCallback)(uint32_t, PropertyDescriptor* desc, const PropertyCallbackInfo*);
 typedef void (*IndexedPropertyDescriptorCallback)(uint32_t, const PropertyCallbackInfo*);
+typedef uint32_t (*IndexedPropertyIndexOfCallback)(const Value*, uint32_t, uint32_t, uint32_t*, const PropertyCallbackInfo*);
 typedef struct IndexedPropertyHandlerConfiguration {
     IndexedPropertyGetterCallback getter;
     IndexedPropertySetterCallback setter;
@@ -1113,6 +1113,7 @@ typedef struct IndexedPropertyHandlerConfiguration {
     IndexedPropertyEnumeratorCallback enumerator;
     IndexedPropertyDefinerCallback definer;
     IndexedPropertyDescriptorCallback descriptor;
+    IndexedPropertyIndexOfCallback index_of;
     const Value* data;
     PropertyHandlerFlags flags;
 } IndexedPropertyHandlerConfiguration;
@@ -1120,11 +1121,11 @@ void v8__ObjectTemplate__SetIndexedHandler(
     const ObjectTemplate* self,
     const IndexedPropertyHandlerConfiguration* configuration);
 
-typedef uint8_t (*NamedPropertyGetterCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertySetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyQueryCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyDeleterCallback)(const Name*, const PropertyCallbackInfo*);
-typedef uint8_t (*NamedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyGetterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertySetterCallback)(const Name*, const Value*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyQueryCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyDeleterCallback)(const Name*, const PropertyCallbackInfo*);
+typedef uint32_t (*NamedPropertyEnumeratorCallback)(const PropertyCallbackInfo*);
 typedef void (*NamedPropertyDefinerCallback)(const Name*, PropertyDescriptor* desc, const PropertyCallbackInfo*);
 typedef void (*NamedPropertyDescriptorCallback)(const Name*, const PropertyCallbackInfo*);
 typedef struct NamedPropertyHandlerConfiguration {
