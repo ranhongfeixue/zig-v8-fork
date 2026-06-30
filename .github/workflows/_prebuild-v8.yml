@@ -56,9 +56,10 @@ jobs:
         shell: bash
         run: |
             wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh
-            sudo ./llvm.sh 21
-            sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins-aarch64.a /usr/lib/llvm-21/lib/clang/21/lib/linux/libclang_rt.builtins.a
-            sudo ln -nsf /usr/lib/llvm-21/lib/clang/21/lib/linux/ /usr/lib/llvm-21/lib/clang/21/lib/aarch64-unknown-linux-gnu
+            sudo ./llvm.sh 23
+            CLANG_DIR=/usr/lib/llvm-23/lib/clang/23
+            sudo ln -nsf "$CLANG_DIR/lib/linux/libclang_rt.builtins-aarch64.a" "$CLANG_DIR/lib/linux/libclang_rt.builtins.a"
+            sudo ln -nsf "$CLANG_DIR/lib/linux" "$CLANG_DIR/lib/aarch64-unknown-linux-gnu"
 
       - name: Select Xcode 26.3 (macOS/iOS — Zig 0.15.2 lacks 26.4 SDK stubs)
         if: contains(inputs.target, 'macos') || contains(inputs.target, 'ios')
