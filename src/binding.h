@@ -478,6 +478,7 @@ Context* v8__Context__FromSnapshot(Isolate*, size_t);
 Context* v8__Context__FromSnapshot__Config(Isolate* isolate, size_t context_snapshot_index, const v8__ContextConfig* config);
 void v8__Context__Enter(const Context* context);
 void v8__Context__Exit(const Context* context);
+void v8__Context__DetachGlobal(const Context* context);
 const Object* v8__Context__Global(const Context* self);
 const Value* v8__Context__GetEmbedderData(
     const Context* self,
@@ -606,6 +607,8 @@ bool v8__Value__IsNullOrUndefined(const Value* self);
 bool v8__Value__IsNativeError(const Value* self);
 bool v8__Value__IsBigInt(const Value* self);
 bool v8__Value__IsBigIntObject(const Value* self);
+bool v8__Value__IsDate(const Value* self);
+const Value* v8__Date__New(const Context* context, double time);
 void v8__Value__InstanceOf(
     const Value* self,
     const Context* ctx,

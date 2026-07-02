@@ -624,6 +624,8 @@ void v8__Context__Enter(const v8::Context& context) { ptr_to_local(&context)->En
 
 void v8__Context__Exit(const v8::Context& context) { ptr_to_local(&context)->Exit(); }
 
+void v8__Context__DetachGlobal(const v8::Context& context) { ptr_to_local(&context)->DetachGlobal(); }
+
 const v8::Object* v8__Context__Global(
         const v8::Context& self) {
     return local_to_ptr(ptr_to_local(&self)->Global());
@@ -1185,12 +1187,14 @@ bool v8__Value__IsNullOrUndefined(const v8::Value& self) { return self.IsNullOrU
 
 bool v8__Value__IsNativeError(const v8::Value& self) { return self.IsNativeError(); }
 
-bool v8__Value__IsBigInt(const v8::Value& self) {
-    return self.IsBigInt();
-}
+bool v8__Value__IsBigInt(const v8::Value& self) { return self.IsBigInt(); }
 
-bool v8__Value__IsBigIntObject(const v8::Value& self) {
-    return self.IsBigIntObject();
+bool v8__Value__IsBigIntObject(const v8::Value& self) { return self.IsBigIntObject(); }
+
+bool v8__Value__IsDate(const v8::Value& self) { return self.IsDate(); }
+
+const v8::Value* v8__Date__New(const v8::Context* context, double time) {
+    return maybe_local_to_ptr(v8::Date::New(ptr_to_local(context), time));
 }
 
 void v8__Value__InstanceOf(
