@@ -274,6 +274,10 @@ int v8__V8__Dispose() { return v8::V8::Dispose(); }
 
 void v8__V8__DisposePlatform() { v8::V8::DisposePlatform(); }
 
+void v8__V8__SetFlagsFromString(const char* str, size_t length) {
+    v8::V8::SetFlagsFromString(str, length);
+}
+
 // Isolate
 
 v8::Isolate* v8__Isolate__New(const v8::Isolate::CreateParams& params) {
@@ -415,6 +419,20 @@ void v8__Isolate__GetHeapStatistics(
         v8::Isolate* self,
         v8::HeapStatistics* stats) {
     self->GetHeapStatistics(stats);
+}
+
+void v8__Isolate__AddNearHeapLimitCallback(
+        v8::Isolate* self,
+        v8::NearHeapLimitCallback callback,
+        void* data) {
+    self->AddNearHeapLimitCallback(callback, data);
+}
+
+void v8__Isolate__RemoveNearHeapLimitCallback(
+        v8::Isolate* self,
+        v8::NearHeapLimitCallback callback,
+        size_t heap_limit) {
+    self->RemoveNearHeapLimitCallback(callback, heap_limit);
 }
 
 void* v8__Isolate__GetData(v8::Isolate* self, int idx) {
