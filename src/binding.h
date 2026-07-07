@@ -224,6 +224,9 @@ bool v8__V8__InitializeICU();
 int v8__V8__Dispose();
 void v8__V8__DisposePlatform();
 const char* v8__V8__GetVersion();
+// Must be called before v8__V8__Initialize; flags set afterwards are
+// ignored or unsafe.
+void v8__V8__SetFlagsFromString(const char* str, size_t length);
 
 // Microtask
 typedef enum MicrotasksPolicy { kExplicit, kScoped, kAuto } MicrotasksPolicy;
@@ -316,6 +319,12 @@ void v8__Isolate__GetHeapStatistics(
     Isolate* self,
     HeapStatistics* stats);
 usize v8__HeapStatistics__SIZEOF();
+// Called on the isolate thread, during a GC, when the heap is about to
+// exceed its limit. Returns the new limit (return current_heap_limit
+// unchanged to let V8 abort with an OOM).
+typedef size_t (*NearHeapLimitCallback)(void* data, size_t current_heap_limit, size_t initial_heap_limit);
+void v8__Isolate__AddNearHeapLimitCallback(Isolate* self, NearHeapLimitCallback callback, void* data);
+void v8__Isolate__RemoveNearHeapLimitCallback(Isolate* self, NearHeapLimitCallback callback, size_t heap_limit);
 void* v8__Isolate__GetData(Isolate* self, int idx);
 void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);
