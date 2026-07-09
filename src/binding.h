@@ -325,6 +325,7 @@ usize v8__HeapStatistics__SIZEOF();
 typedef size_t (*NearHeapLimitCallback)(void* data, size_t current_heap_limit, size_t initial_heap_limit);
 void v8__Isolate__AddNearHeapLimitCallback(Isolate* self, NearHeapLimitCallback callback, void* data);
 void v8__Isolate__RemoveNearHeapLimitCallback(Isolate* self, NearHeapLimitCallback callback, size_t heap_limit);
+void v8__Isolate__AutomaticallyRestoreInitialHeapLimit(Isolate* self, double threshold_percent);
 void* v8__Isolate__GetData(Isolate* self, int idx);
 void v8__Isolate__SetData(Isolate* self, int idx, void* val);
 void v8__Isolate__EnqueueMicrotask(Isolate* self, MicrotaskCallback callback, void* data);

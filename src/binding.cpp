@@ -435,6 +435,12 @@ void v8__Isolate__RemoveNearHeapLimitCallback(
     self->RemoveNearHeapLimitCallback(callback, heap_limit);
 }
 
+void v8__Isolate__AutomaticallyRestoreInitialHeapLimit(
+        v8::Isolate* self,
+        double threshold_percent) {
+    self->AutomaticallyRestoreInitialHeapLimit(threshold_percent);
+}
+
 void* v8__Isolate__GetData(v8::Isolate* self, int idx) {
     return self->GetData(idx);
 }
