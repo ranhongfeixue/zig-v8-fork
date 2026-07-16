@@ -97,3 +97,6 @@ jobs:
         with:
           allowUpdates: true
           artifacts: libc_v8_*.a
+          # Semver convention: hyphenated tags (v0.4.8-slim.0) are prereleases,
+          # so experimental builds never become the "latest" release.
+          prerelease: ${{ contains(github.ref_name, '-') }}
