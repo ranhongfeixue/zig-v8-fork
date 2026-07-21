@@ -68,6 +68,7 @@ const GnArgs = struct {
 };
 
 pub fn build(b: *std.Build) !void {
+    const io = b.graph.io;
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -87,8 +88,8 @@ pub fn build(b: *std.Build) !void {
     );
 
     const cache_root = b.option([]const u8, "cache_root", "Root directory for the V8 and depot_tools cache") orelse b.pathFromRoot(".lp-cache");
-    std.fs.cwd().access(cache_root, .{}) catch {
-        try std.fs.cwd().makeDir(cache_root);
+    std.Io.Dir.cwd().access(io, cache_root, .{}) catch {
+        try std.Io.Dir.cwd().createDirPath(io, cache_root);
     };
 
     const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
@@ -156,16 +157,16 @@ pub fn build(b: *std.Build) !void {
         const tests = b.addTest(.{
             .root_module = test_module,
         });
-        tests.root_module.addImport("default_exports", build_opts.createModule());
+        test_module.addImport("default_exports", build_opts.createModule());
 
-        tests.addObjectFile(built_v8.libc_v8_path);
-        tests.addIncludePath(b.path("src"));
+        test_module.addObjectFile(built_v8.libc_v8_path);
+        test_module.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {
             .macos => {
                 // v8 has a dependency, abseil-cpp, which, on Mac, uses CoreFoundation
-                tests.addSystemFrameworkPath(.{ .cwd_relative = "/System/Library/Frameworks" });
-                tests.linkFramework("CoreFoundation");
+                test_module.addSystemFrameworkPath(.{ .cwd_relative = "/System/Library/Frameworks" });
+                test_module.linkFramework("CoreFoundation", .{});
             },
             else => {},
         }
@@ -182,11 +183,12 @@ const V8BootstrapResult = struct {
 };
 
 fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.Step {
+    const io = b.graph.io;
     const depot_tools = b.dependency("depot_tools", .{});
     const marker_file = b.fmt("{s}/.bootstrap-complete", .{depot_tools_dir});
 
     const needs_full_bootstrap = blk: {
-        std.fs.cwd().access(marker_file, .{}) catch break :blk true;
+        std.Io.Dir.cwd().access(io, marker_file, .{}) catch break :blk true;
         break :blk false;
     };
 
@@ -237,22 +239,23 @@ fn bootstrapV8(
     v8_dir: []const u8,
     depot_tools_dir: []const u8,
 ) !V8BootstrapResult {
+    const io = b.graph.io;
     const marker_file = b.fmt("{s}/.bootstrap-complete", .{v8_dir});
 
     // Check if already bootstrapped
     const needs_full_bootstrap = blk: {
-        std.fs.cwd().access(marker_file, .{}) catch break :blk true;
+        std.Io.Dir.cwd().access(io, marker_file, .{}) catch break :blk true;
         break :blk false;
     };
 
     if (!needs_full_bootstrap) {
         const needs_source_update = blk: {
-            const marker_stat = std.fs.cwd().statFile(marker_file) catch break :blk true;
+            const marker_stat = std.Io.Dir.cwd().statFile(io, marker_file, .{}) catch break :blk true;
             const marker_mtime = marker_stat.mtime;
 
             // Check if build.zig itself changed
-            if (std.fs.cwd().statFile(b.pathFromRoot("build.zig"))) |stat| {
-                if (stat.mtime > marker_mtime) {
+            if (std.Io.Dir.cwd().statFile(io, b.pathFromRoot("build.zig"), .{})) |stat| {
+                if (stat.mtime.nanoseconds > marker_mtime.nanoseconds) {
                     std.debug.print("Source file build.zig changed, updating bootstrap\n", .{});
                     break :blk true;
                 }
@@ -264,19 +267,19 @@ fn bootstrapV8(
             };
 
             for (source_dirs) |dir_path| {
-                var dir = try std.fs.cwd().openDir(dir_path, .{ .iterate = true });
-                defer dir.close();
+                var dir = try std.Io.Dir.cwd().openDir(io, dir_path, .{ .iterate = true });
+                defer dir.close(io);
 
                 var walker = try dir.walk(b.allocator);
-                while (try walker.next()) |entry| {
+                while (try walker.next(io)) |entry| {
                     switch (entry.kind) {
                         .file => {
-                            const file = try entry.dir.openFile(entry.basename, .{});
-                            defer file.close();
-                            const stat = try file.stat();
+                            const file = try entry.dir.openFile(io, entry.basename, .{});
+                            defer file.close(io);
+                            const stat = try file.stat(io);
                             const mtime = stat.mtime;
 
-                            if (mtime > marker_mtime) {
+                            if (mtime.nanoseconds > marker_mtime.nanoseconds) {
                                 std.debug.print("Source file {s} changed, updating bootstrap\n", .{entry.path});
                                 break :blk true;
                             }
@@ -398,6 +401,7 @@ fn buildV8(
     target: std.Build.ResolvedTarget,
     gn_args: GnArgs,
 ) !BuiltV8 {
+    const io = b.graph.io;
     const v8_dir_lazy_path: LazyPath = .{ .cwd_relative = v8_dir };
 
     const args_string = try gn_args.asString(b, target);
@@ -414,10 +418,10 @@ fn buildV8(
     // Bootstrap marker is shared across profiles, so compare staged sources
     // directly against this profile's libc_v8.a to track freshness per-profile.
     const needs_build = bootstrapped_v8.needs_build or blk: {
-        const lib_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path })) catch break :blk true;
+        const lib_stat = std.Io.Dir.cwd().statFile(io, b.fmt("{s}/{s}", .{ v8_dir, libc_v8_path }), .{}) catch break :blk true;
         for (staged_files) |f| {
-            const src_stat = std.fs.cwd().statFile(b.fmt("{s}/{s}", .{ v8_dir, f.dest })) catch break :blk true;
-            if (src_stat.mtime > lib_stat.mtime) break :blk true;
+            const src_stat = std.Io.Dir.cwd().statFile(io, b.fmt("{s}/{s}", .{ v8_dir, f.dest }), .{}) catch break :blk true;
+            if (src_stat.mtime.nanoseconds > lib_stat.mtime.nanoseconds) break :blk true;
         }
         break :blk false;
     };
