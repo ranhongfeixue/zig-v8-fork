@@ -298,6 +298,9 @@ typedef enum MemoryPressureLevel {
     kCritical = 2
 } MemoryPressureLevel;
 void v8__Isolate__MemoryPressureNotification(Isolate* self, MemoryPressureLevel level);
+int64_t v8__Isolate__AdjustAmountOfExternalAllocatedMemory(
+    Isolate* self,
+    int64_t change_in_bytes);
 typedef struct HeapStatistics {
     size_t total_heap_size;
     size_t total_heap_size_executable;
