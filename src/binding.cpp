@@ -415,6 +415,12 @@ void v8__Isolate__MemoryPressureNotification(v8::Isolate* self, v8::MemoryPressu
     self->MemoryPressureNotification(level);
 }
 
+int64_t v8__Isolate__AdjustAmountOfExternalAllocatedMemory(
+        v8::Isolate* self,
+        int64_t change_in_bytes) {
+    return self->AdjustAmountOfExternalAllocatedMemory(change_in_bytes);
+}
+
 void v8__Isolate__GetHeapStatistics(
         v8::Isolate* self,
         v8::HeapStatistics* stats) {
