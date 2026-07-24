@@ -26,10 +26,15 @@ jobs:
           echo "OS=$(echo "${{ inputs.target }}" | cut -d- -f2)" >> "$GITHUB_ENV"
           echo "ARCH=$(echo "${{ inputs.target }}" | cut -d- -f1)" >> "$GITHUB_ENV"
 
-      - uses: mlugg/setup-zig@v2.2.1
-        with:
-          version: 0.15.2
-          cache-key: ${{ inputs.target }}
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+
+      # Zig 0.16 writes fetched .zip archives to <global cache>/tmp but no longer
+      # creates that directory, so zip dependencies (sqlite amalgamation) fail
+      # with "failed to create temporary zip file: FileNotFound" on the fresh
+      # cache dir setup-zig points ZIG_GLOBAL_CACHE_DIR at.
+      - name: Zig 0.16 zip-fetch workaround
+        shell: bash
+        run: mkdir -p "${ZIG_GLOBAL_CACHE_DIR:-$HOME/.cache/zig}/tmp"
 
       - uses: actions/checkout@v6.0.2
         with:
@@ -60,11 +65,6 @@ jobs:
             CLANG_DIR=/usr/lib/llvm-23/lib/clang/23
             sudo ln -nsf "$CLANG_DIR/lib/linux/libclang_rt.builtins-aarch64.a" "$CLANG_DIR/lib/linux/libclang_rt.builtins.a"
             sudo ln -nsf "$CLANG_DIR/lib/linux" "$CLANG_DIR/lib/aarch64-unknown-linux-gnu"
-
-      - name: Select Xcode 26.3 (macOS/iOS — Zig 0.15.2 lacks 26.4 SDK stubs)
-        if: contains(inputs.target, 'macos') || contains(inputs.target, 'ios')
-        shell: bash
-        run: sudo xcode-select -s /Applications/Xcode_26.3.app
 
       - shell: bash
         run: zig env
