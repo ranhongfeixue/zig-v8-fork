@@ -123,6 +123,13 @@ pub fn build(b: *std.Build) !void {
 
     b.getInstallStep().dependOn(build_step);
 
+    const binding = b.addTranslateC(.{
+        .root_source_file = b.path("src/binding.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const binding_module = binding.createModule();
+
     // the module we export as a library
     const v8_module = b.addModule("v8", .{
         .root_source_file = b.path("src/v8.zig"),
@@ -131,7 +138,7 @@ pub fn build(b: *std.Build) !void {
         .link_libc = true,
         .link_libcpp = true,
     });
-    v8_module.addIncludePath(b.path("src"));
+    v8_module.addImport("binding", binding_module);
     v8_module.addImport("default_exports", build_opts.createModule());
     v8_module.addObjectFile(built_v8.libc_v8_path);
 
@@ -157,10 +164,10 @@ pub fn build(b: *std.Build) !void {
         const tests = b.addTest(.{
             .root_module = test_module,
         });
+        test_module.addImport("binding", binding_module);
         test_module.addImport("default_exports", build_opts.createModule());
 
         test_module.addObjectFile(built_v8.libc_v8_path);
-        test_module.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {
             .macos => {
