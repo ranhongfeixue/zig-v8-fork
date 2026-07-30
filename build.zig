@@ -140,7 +140,15 @@ pub fn build(b: *std.Build) !void {
     });
     v8_module.addImport("binding", binding_module);
     v8_module.addImport("default_exports", build_opts.createModule());
-    v8_module.addObjectFile(built_v8.libc_v8_path);
+
+    // Consumers that link the archive per final-link artifact (so it doesn't
+    // get embedded into their own static libraries) opt out of the module
+    // attach and take the path from the named LazyPath instead.
+    b.addNamedLazyPath("libc_v8", built_v8.libc_v8_path);
+    const attach_v8_archive = b.option(bool, "attach_v8_archive", "Attach libc_v8.a to the v8 module (default true)") orelse true;
+    if (attach_v8_archive) {
+        v8_module.addObjectFile(built_v8.libc_v8_path);
+    }
 
     switch (target.result.os.tag) {
         .macos => {
