@@ -29,6 +29,7 @@ const GnArgs = struct {
     is_debug: bool,
     symbol_level: u8,
     v8_enable_sandbox: bool,
+    for_shared_library: bool,
 
     fn asString(self: GnArgs, b: *std.Build, target: std.Build.ResolvedTarget) ![]const u8 {
         const tag = target.result.os.tag;
@@ -47,6 +48,18 @@ const GnArgs = struct {
         try args.appendSlice(gpa, b.fmt("is_asan={}\n", .{self.is_asan}));
         try args.appendSlice(gpa, b.fmt("is_tsan={}\n", .{self.is_tsan}));
         try args.appendSlice(gpa, b.fmt("v8_enable_sandbox={}\n", .{self.v8_enable_sandbox}));
+
+        if (self.for_shared_library) {
+            // Defines V8_TLS_USED_IN_LIBRARY: the isolate thread-locals get a
+            // TLS model that is legal inside a shared library (the default
+            // local-exec model is exe-only).
+            try args.appendSlice(gpa, "v8_monolithic=true\n");
+            try args.appendSlice(gpa, "v8_monolithic_for_shared_library=true\n");
+            // No malloc interposition: inside a shared library the shim binds
+            // locally, so libc-allocated memory freed through it crashes (and
+            // a library must not hijack the host's malloc anyway).
+            try args.appendSlice(gpa, "use_allocator_shim=false\n");
+        }
 
         switch (tag) {
             .ios => {
@@ -78,6 +91,7 @@ pub fn build(b: *std.Build) !void {
         .is_asan = b.option(bool, "is_asan", "Address sanitizer") orelse false,
         .is_tsan = b.option(bool, "is_tsan", "Thread sanitizer") orelse false,
         .v8_enable_sandbox = b.option(bool, "v8_enable_sandbox", "V8 lightable sandbox") orelse false,
+        .for_shared_library = b.option(bool, "for_shared_library", "Build V8 with a TLS model usable inside a shared library") orelse false,
     };
 
     var build_opts = b.addOptions();
@@ -123,6 +137,13 @@ pub fn build(b: *std.Build) !void {
 
     b.getInstallStep().dependOn(build_step);
 
+    const binding = b.addTranslateC(.{
+        .root_source_file = b.path("src/binding.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const binding_module = binding.createModule();
+
     // the module we export as a library
     const v8_module = b.addModule("v8", .{
         .root_source_file = b.path("src/v8.zig"),
@@ -131,9 +152,17 @@ pub fn build(b: *std.Build) !void {
         .link_libc = true,
         .link_libcpp = true,
     });
-    v8_module.addIncludePath(b.path("src"));
+    v8_module.addImport("binding", binding_module);
     v8_module.addImport("default_exports", build_opts.createModule());
-    v8_module.addObjectFile(built_v8.libc_v8_path);
+
+    // Consumers that link the archive per final-link artifact (so it doesn't
+    // get embedded into their own static libraries) opt out of the module
+    // attach and take the path from the named LazyPath instead.
+    b.addNamedLazyPath("libc_v8", built_v8.libc_v8_path);
+    const attach_v8_archive = b.option(bool, "attach_v8_archive", "Attach libc_v8.a to the v8 module (default true)") orelse true;
+    if (attach_v8_archive) {
+        v8_module.addObjectFile(built_v8.libc_v8_path);
+    }
 
     switch (target.result.os.tag) {
         .macos => {
@@ -157,10 +186,10 @@ pub fn build(b: *std.Build) !void {
         const tests = b.addTest(.{
             .root_module = test_module,
         });
+        test_module.addImport("binding", binding_module);
         test_module.addImport("default_exports", build_opts.createModule());
 
         test_module.addObjectFile(built_v8.libc_v8_path);
-        test_module.addIncludePath(b.path("src"));
 
         switch (target.result.os.tag) {
             .macos => {

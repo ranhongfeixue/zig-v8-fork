@@ -1,8 +1,6 @@
 const std = @import("std");
 
-pub const c = @cImport({
-    @cInclude("binding.h");
-});
+pub const c = @import("binding");
 
 /// Enables C to allocate using the given Zig allocator.
 pub export fn zigAlloc(self: *anyopaque, bytes: usize) callconv(.c) ?[*]u8 {
