@@ -29,6 +29,7 @@ const GnArgs = struct {
     is_debug: bool,
     symbol_level: u8,
     v8_enable_sandbox: bool,
+    use_allocator_shim: bool,
 
     fn asString(self: GnArgs, b: *std.Build, target: std.Build.ResolvedTarget) ![]const u8 {
         const tag = target.result.os.tag;
@@ -53,10 +54,10 @@ const GnArgs = struct {
         // exe-only); executables relax back to local-exec at link time.
         try args.appendSlice(gpa, "v8_monolithic=true\n");
         try args.appendSlice(gpa, "v8_monolithic_for_shared_library=true\n");
-        // No malloc interposition: inside a version-scripted .so the shim
-        // binds locally, so libc-allocated memory freed through it crashes —
-        // and a library must not hijack the host's malloc anyway.
-        try args.appendSlice(gpa, "use_allocator_shim=false\n");
+        // Keep malloc interposition opt-in: inside a version-scripted .so the
+        // shim binds locally, so libc-allocated memory freed through it
+        // crashes, and a library must not hijack the host's malloc anyway.
+        try args.appendSlice(gpa, b.fmt("use_allocator_shim={}\n", .{self.use_allocator_shim}));
 
         switch (tag) {
             .ios => {
@@ -82,12 +83,19 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const use_allocator_shim = b.option(
+        bool,
+        "use_allocator_shim",
+        "Request V8's allocator shim (sanitizer/platform constraints may disable PA-as-malloc)",
+    ) orelse false;
+
     const gn_args = GnArgs{
         .is_debug = optimize == .Debug,
         .symbol_level = b.option(u8, "symbol_level", "Symbol level") orelse if (optimize == .Debug) 1 else 0,
         .is_asan = b.option(bool, "is_asan", "Address sanitizer") orelse false,
         .is_tsan = b.option(bool, "is_tsan", "Thread sanitizer") orelse false,
         .v8_enable_sandbox = b.option(bool, "v8_enable_sandbox", "V8 lightable sandbox") orelse false,
+        .use_allocator_shim = use_allocator_shim,
     };
 
     var build_opts = b.addOptions();
@@ -96,6 +104,7 @@ pub fn build(b: *std.Build) !void {
         "inspector_subtype",
         b.option(bool, "inspector_subtype", "Export default valueSubtype and descriptionForValueSubtype") orelse true,
     );
+    build_opts.addOption(bool, "use_allocator_shim", use_allocator_shim);
 
     const cache_root = b.option([]const u8, "cache_root", "Root directory for the V8 and depot_tools cache") orelse b.pathFromRoot(".lp-cache");
     std.Io.Dir.cwd().access(io, cache_root, .{}) catch {

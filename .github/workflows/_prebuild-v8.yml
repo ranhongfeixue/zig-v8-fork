@@ -9,6 +9,9 @@ on:
         type: string
       build_type:
         type: string
+      use_allocator_shim:
+        type: boolean
+        default: false
       lp_cache:
         type: string
         default: '.lp-cache'
@@ -73,9 +76,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ inputs.build_type }}" = "debug" ]; then
-            zig build -Dtarget="${{ inputs.target }}" -Doptimize=Debug -Dis_tsan=true -Dv8_enable_sandbox=true build-v8
+            zig build -Dtarget="${{ inputs.target }}" -Doptimize=Debug -Dis_tsan=true -Dv8_enable_sandbox=true -Duse_allocator_shim=${{ inputs.use_allocator_shim }} build-v8
           else
-            zig build -Dtarget="${{ inputs.target }}" -Doptimize=ReleaseSafe build-v8
+            zig build -Dtarget="${{ inputs.target }}" -Doptimize=ReleaseSafe -Duse_allocator_shim=${{ inputs.use_allocator_shim }} build-v8
           fi
 
       - name: Find v8 library

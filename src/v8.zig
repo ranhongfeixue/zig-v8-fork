@@ -14,3 +14,12 @@ comptime {
         _ = @import("inspector_subtypes.zig");
     }
 }
+
+test "PartitionAlloc memory reclaimer bridge reports allocator shim support" {
+    const enabled = c.v8__PartitionAlloc__EnableMemoryReclaimer();
+    if (!@import("default_exports").use_allocator_shim) {
+        try std.testing.expect(!enabled);
+    }
+    c.v8__PartitionAlloc__ReclaimFast();
+    c.v8__PartitionAlloc__ReclaimAll();
+}

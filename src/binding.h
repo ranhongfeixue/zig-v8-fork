@@ -3,6 +3,11 @@
 #include <stdbool.h>
 
 typedef uintptr_t usize;
+
+bool v8__PartitionAlloc__EnableMemoryReclaimer(void);
+void v8__PartitionAlloc__ReclaimFast(void);
+void v8__PartitionAlloc__ReclaimAll(void);
+
 typedef struct Data Data;
 typedef struct ArrayBufferAllocator ArrayBufferAllocator;
 typedef struct CreateParams CreateParams;

@@ -1,6 +1,7 @@
 // Based on https://github.com/denoland/rusty_v8/blob/main/src/binding.cc
 
 #include <cassert>
+#include <mutex>
 #include "include/libplatform/libplatform.h"
 #include "include/v8-inspector.h"
 #include "include/v8-profiler.h"
@@ -9,6 +10,9 @@
 #include "src/inspector/protocol/Runtime.h"
 #include "src/inspector/v8-string-conversions.h"
 #include "src/debug/debug-interface.h"
+#include "partition_alloc/buildflags.h"
+#include "partition_alloc/memory_reclaimer.h"
+#include "partition_alloc/shim/allocator_shim.h"
 
 #include "inspector.h"
 
@@ -101,6 +105,28 @@ struct make_pod {
 };
 
 extern "C" {
+
+// PartitionAlloc
+
+bool v8__PartitionAlloc__EnableMemoryReclaimer() {
+#if PA_BUILDFLAG(USE_PARTITION_ALLOC_AS_MALLOC)
+    static std::once_flag once;
+    std::call_once(once, [] {
+        allocator_shim::EnablePartitionAllocMemoryReclaimer();
+    });
+    return true;
+#else
+    return false;
+#endif
+}
+
+void v8__PartitionAlloc__ReclaimFast() {
+    partition_alloc::MemoryReclaimer::Instance()->ReclaimFast();
+}
+
+void v8__PartitionAlloc__ReclaimAll() {
+    partition_alloc::MemoryReclaimer::Instance()->ReclaimAll();
+}
 
 // Platform
 
