@@ -51,12 +51,3 @@ jobs:
       target: x86_64-macos
       build_type: release
       use_allocator_shim: true
-
-  build-aarch64-ios:
-    uses: ./.github/workflows/_prebuild-v8.yml
-    with:
-      runner: macos-26
-      target: aarch64-ios-simulator
-      build_type: release
-      # iOS does not support PartitionAlloc-as-malloc.
-      use_allocator_shim: false
