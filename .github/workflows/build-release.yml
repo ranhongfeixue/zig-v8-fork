@@ -31,7 +31,7 @@ jobs:
   build-arm64-linux:
     uses: ./.github/workflows/_prebuild-v8.yml
     with:
-      runner: ubuntu-22.04-arm
+      runner: ubuntu-24.04-arm
       target: aarch64-linux
       build_type: release
       use_allocator_shim: true
