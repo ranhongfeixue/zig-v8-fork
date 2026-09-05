@@ -111,16 +111,18 @@ pub fn build(b: *std.Build) !void {
         try std.Io.Dir.cwd().createDirPath(io, cache_root);
     };
 
-    const prebuilt_v8_path = b.option([]const u8, "prebuilt_v8_path", "Path to prebuilt libc_v8.a");
+    const prebuilt_v8_path = b.option(LazyPath, "prebuilt_v8_path", "Path to prebuilt libc_v8.a; may be a generated file");
 
     const v8_dir = b.fmt("{s}/v8-{s}", .{ cache_root, V8_VERSION });
     const depot_tools_dir = b.fmt("{s}/depot_tools-{s}", .{ cache_root, V8_VERSION });
 
     const built_v8 = if (prebuilt_v8_path) |path| blk: {
-        // Use prebuilt_v8 if available.
+        // Use prebuilt_v8 if available. Taking a LazyPath (rather than a
+        // string) lets the consumer pass an archive produced by its own build
+        // steps, which is what the orderfile's hot-section marking does.
         break :blk BuiltV8{
             .step = b.step("prebuilt_v8", "Use prebuilt v8"),
-            .libc_v8_path = .{ .cwd_relative = path },
+            .libc_v8_path = path,
         };
     } else blk: {
         const bootstrapped_depot_tools = try bootstrapDepotTools(b, depot_tools_dir);
