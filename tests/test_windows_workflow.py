@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 import yaml
@@ -20,6 +22,30 @@ def load_workflow(name: str) -> dict:
 
 
 class WindowsWorkflowTests(unittest.TestCase):
+    def test_depot_tools_copy_materializes_symlink_launchers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            source = root / "depot_tools"
+            destination = root / "copied_depot_tools"
+            source.mkdir()
+            (source / "tool.py").write_text("launcher contents\n", encoding="utf-8")
+            (source / "tool").symlink_to("tool.py")
+
+            subprocess.run(
+                ["cp", "-rL", source, destination],
+                check=True,
+            )
+
+            copied_launcher = destination / "tool"
+            self.assertFalse(copied_launcher.is_symlink())
+            self.assertEqual(
+                copied_launcher.read_text(encoding="utf-8"),
+                "launcher contents\n",
+            )
+
+        build_script = (ROOT / "build.zig").read_text(encoding="utf-8")
+        self.assertIn('b.addSystemCommand(&.{ "cp", "-rL" })', build_script)
+
     def test_reusable_workflow_inherits_each_callers_permissions(self) -> None:
         reusable = load_workflow("_prebuild-v8.yml")
         windows = load_workflow("build-windows.yml")

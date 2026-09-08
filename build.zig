@@ -258,7 +258,7 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
 
     std.debug.print("Bootstrapping depot_tools {s} in {s} (this will take a while)...\n", .{ V8_VERSION, depot_tools_dir });
 
-    const copy_depot_tools = b.addSystemCommand(&.{ "cp", "-r" });
+    const copy_depot_tools = b.addSystemCommand(&.{ "cp", "-rL" });
     copy_depot_tools.addDirectoryArg(depot_tools.path(""));
     copy_depot_tools.addArg(depot_tools_dir);
 
