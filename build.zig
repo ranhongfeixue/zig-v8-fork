@@ -38,8 +38,9 @@ const GnArgs = struct {
         var args: std.ArrayList(u8) = .empty;
         const gpa = b.allocator;
 
-        // Use modern siso instead of outdated ninja to speed up the build.
-        try args.appendSlice(gpa, "use_siso=true\n");
+        // Siso does not support this isolated Linux-to-Windows toolchain. The
+        // bundled Linux Ninja does, and native platforms retain Siso.
+        try args.appendSlice(gpa, if (tag == .windows) "use_siso=false\n" else "use_siso=true\n");
 
         // official builds depend on pgo
         try args.appendSlice(gpa, "is_official_build=false\n");
@@ -70,6 +71,17 @@ const GnArgs = struct {
                     try args.appendSlice(gpa, "clang_use_chrome_plugins=false\n");
                     try args.appendSlice(gpa, "treat_warnings_as_errors=false\n");
                 }
+            },
+            .windows => {
+                const target_cpu = switch (arch) {
+                    .x86_64 => "x64",
+                    .x86 => "x86",
+                    .aarch64 => "arm64",
+                    else => return error.UnsupportedWindowsArchitecture,
+                };
+                try args.appendSlice(gpa, "target_os=\"win\"\n");
+                try args.appendSlice(gpa, b.fmt("target_cpu=\"{s}\"\n", .{target_cpu}));
+                try args.appendSlice(gpa, "v8_enable_private_mapping_fork_optimization=false\n");
             },
             else => {},
         }
@@ -157,7 +169,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-        .link_libcpp = true,
+        .link_libcpp = target.result.abi != .msvc,
     });
     v8_module.addImport("binding", binding_module);
     v8_module.addImport("default_exports", build_opts.createModule());
@@ -179,7 +191,7 @@ pub fn build(b: *std.Build) !void {
             .target = target,
             .optimize = optimize,
             .link_libc = true,
-            .link_libcpp = true,
+            .link_libcpp = target.result.abi != .msvc,
         });
 
         // test
@@ -441,7 +453,8 @@ fn buildV8(
         args_hash = args_hash *% 33 +% c;
     }
     const out_dir = b.fmt("out/{s}/{s}_{x}", .{ @tagName(target.result.os.tag), if (gn_args.is_debug) "debug" else "release", args_hash });
-    const libc_v8_path = b.fmt("{s}/obj/zig/libc_v8.a", .{out_dir});
+    const archive_name = if (target.result.os.tag == .windows) "c_v8.lib" else "libc_v8.a";
+    const libc_v8_path = b.fmt("{s}/obj/zig/{s}", .{ out_dir, archive_name });
     const full_libc_v8_lazy_path = v8_dir_lazy_path.path(b, libc_v8_path);
 
     // Bootstrap marker is shared across profiles, so compare staged sources
