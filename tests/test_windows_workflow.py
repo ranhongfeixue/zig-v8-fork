@@ -23,6 +23,33 @@ def load_workflow(name: str) -> dict:
 
 
 class WindowsWorkflowTests(unittest.TestCase):
+    def test_shell_file_writes_preserve_windows_backslashes(self) -> None:
+        contents = '{"status":"opt-out"}\n'
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            destination = (
+                Path(temporary_directory)
+                / r"D:\a\zig-v8-fork\.lp-cache\build_telemetry.cfg"
+            )
+
+            subprocess.run(
+                [
+                    "sh",
+                    "-c",
+                    "printf '%s' \"$1\" > \"$2\"",
+                    "write-file",
+                    contents,
+                    destination,
+                ],
+                check=True,
+            )
+
+            self.assertEqual(destination.read_text(encoding="utf-8"), contents)
+
+        build_script = (ROOT / "build.zig").read_text(encoding="utf-8")
+        self.assertIn("fn addWriteFileCommand(", build_script)
+        self.assertEqual(build_script.count("addWriteFileCommand("), 4)
+        self.assertNotIn('b.fmt("echo ', build_script)
+
     def test_depot_tools_copy_materializes_symlink_launchers(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
