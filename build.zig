@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 const V8_VERSION: []const u8 = "14.9.207.35";
 
@@ -21,6 +22,22 @@ fn getDepotToolExePath(b: *std.Build, depot_tools_dir: []const u8, executable: [
 
 fn addDepotToolsToPath(step: *std.Build.Step.Run, depot_tools_dir: []const u8) void {
     step.addPathDir(depot_tools_dir);
+}
+
+fn addDepotToolCommand(
+    b: *std.Build,
+    depot_tools_dir: []const u8,
+    executable: []const u8,
+    args: []const []const u8,
+) *std.Build.Step.Run {
+    const run = if (builtin.os.tag == .windows) blk: {
+        const command = b.addSystemCommand(&.{ "cmd.exe", "/d", "/c" });
+        command.addArg(b.fmt("{s}/{s}.bat", .{ depot_tools_dir, executable }));
+        break :blk command;
+    } else b.addSystemCommand(&.{getDepotToolExePath(b, depot_tools_dir, executable)});
+    run.addArgs(args);
+    addDepotToolsToPath(run, depot_tools_dir);
+    return run;
 }
 
 const GnArgs = struct {
@@ -261,9 +278,8 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
     }));
     write_telemetry_config.step.dependOn(&copy_depot_tools.step);
 
-    const ensure_bootstrap = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"),
-    });
+    const ensure_bootstrap = b.addSystemCommand(&.{"bash"});
+    ensure_bootstrap.addArg(getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"));
     ensure_bootstrap.setCwd(.{ .cwd_relative = depot_tools_dir });
     addDepotToolsToPath(ensure_bootstrap, depot_tools_dir);
     ensure_bootstrap.step.dependOn(&write_telemetry_config.step);
@@ -405,21 +421,13 @@ fn bootstrapV8(
     write_gclient_args.step.dependOn(&mkdir_build_config.step);
 
     // Run gclient sync
-    const gclient_sync = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "gclient"),
-        "sync",
-    });
+    const gclient_sync = addDepotToolCommand(b, depot_tools_dir, "gclient", &.{"sync"});
     gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
-    addDepotToolsToPath(gclient_sync, depot_tools_dir);
     gclient_sync.step.dependOn(&write_gclient_args.step);
 
     // Run clang update
-    const clang_update = b.addSystemCommand(&.{
-        getDepotToolExePath(b, depot_tools_dir, "python-bin/python3"),
-        "tools/clang/scripts/update.py",
-    });
+    const clang_update = addDepotToolCommand(b, depot_tools_dir, "python-bin/python3", &.{"tools/clang/scripts/update.py"});
     clang_update.setCwd(.{ .cwd_relative = v8_dir });
-    addDepotToolsToPath(clang_update, depot_tools_dir);
     clang_update.step.dependOn(&gclient_sync.step);
 
     // Create marker file
@@ -471,8 +479,7 @@ fn buildV8(
     const final_step = b.step("build_v8_core", "Build V8 core");
 
     if (needs_build) {
-        const gn_run = b.addSystemCommand(&.{
-            getDepotToolExePath(b, depot_tools_dir, "gn"),
+        const gn_run = addDepotToolCommand(b, depot_tools_dir, "gn", &.{
             "--root=.",
             "--root-target=//zig",
             "--dotfile=zig/.gn",
@@ -481,17 +488,14 @@ fn buildV8(
             b.fmt("--args={s}", .{args_string}),
         });
         gn_run.setCwd(v8_dir_lazy_path);
-        addDepotToolsToPath(gn_run, depot_tools_dir);
         gn_run.step.dependOn(bootstrapped_v8.step);
 
-        const ninja_run = b.addSystemCommand(&.{
-            getDepotToolExePath(b, depot_tools_dir, "autoninja"),
+        const ninja_run = addDepotToolCommand(b, depot_tools_dir, "autoninja", &.{
             "-C",
             out_dir,
             "c_v8",
         });
         ninja_run.setCwd(v8_dir_lazy_path);
-        addDepotToolsToPath(ninja_run, depot_tools_dir);
         ninja_run.step.dependOn(&gn_run.step);
         final_step.dependOn(&ninja_run.step);
     } else {

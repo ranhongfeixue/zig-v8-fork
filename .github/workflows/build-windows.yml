@@ -1,0 +1,23 @@
+name: build-windows
+
+on:
+  push:
+    branches:
+      - zig-v8-fork/windows-msvc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-x86_64-windows:
+    uses: ./.github/workflows/_prebuild-v8.yml
+    with:
+      runner: windows-2022
+      target: x86_64-windows-msvc
+      build_type: release
+      use_allocator_shim: true
