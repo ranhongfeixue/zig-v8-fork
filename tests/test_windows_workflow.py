@@ -20,6 +20,15 @@ def load_workflow(name: str) -> dict:
 
 
 class WindowsWorkflowTests(unittest.TestCase):
+    def test_reusable_workflow_inherits_each_callers_permissions(self) -> None:
+        reusable = load_workflow("_prebuild-v8.yml")
+        windows = load_workflow("build-windows.yml")
+        release = load_workflow("build-release.yml")
+
+        self.assertNotIn("permissions", reusable)
+        self.assertEqual(windows["permissions"], {"contents": "read"})
+        self.assertEqual(release["permissions"], {"contents": "write"})
+
     def test_windows_branch_builds_on_a_windows_runner(self) -> None:
         workflow = load_workflow("build-windows.yml")
 
