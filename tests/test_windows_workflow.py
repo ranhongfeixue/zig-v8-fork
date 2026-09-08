@@ -23,6 +23,52 @@ def load_workflow(name: str) -> dict:
 
 
 class WindowsWorkflowTests(unittest.TestCase):
+    def test_prepare_v8_disables_depot_tools_auto_update(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            cache_root = root / "lp-cache"
+            depot_tools = cache_root / "depot_tools-14.9.207.35"
+            depot_tools.mkdir(parents=True)
+            (depot_tools / ".bootstrap-complete").touch()
+
+            gclient = depot_tools / "gclient"
+            gclient.write_text(
+                """#!/bin/sh
+if [ "${DEPOT_TOOLS_UPDATE:-}" != "0" ]; then
+    echo "depot_tools auto update was not disabled" >&2
+    exit 23
+fi
+""",
+                encoding="utf-8",
+            )
+            gclient.chmod(0o755)
+
+            python = depot_tools / "python-bin" / "python3"
+            python.parent.mkdir()
+            python.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            python.chmod(0o755)
+
+            result = subprocess.run(
+                [
+                    "zig",
+                    "build",
+                    "prepare-v8",
+                    "-Dtarget=x86_64-windows-msvc",
+                    f"-Dcache_root={cache_root}",
+                    "--cache-dir",
+                    str(root / "zig-cache"),
+                ],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(
+                result.returncode,
+                0,
+                f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+            )
+
     def test_shell_file_writes_preserve_windows_backslashes(self) -> None:
         contents = '{"status":"opt-out"}\n'
         with tempfile.TemporaryDirectory() as temporary_directory:

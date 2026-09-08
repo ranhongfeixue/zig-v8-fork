@@ -22,6 +22,7 @@ fn getDepotToolExePath(b: *std.Build, depot_tools_dir: []const u8, executable: [
 
 fn addDepotToolsToPath(step: *std.Build.Step.Run, depot_tools_dir: []const u8) void {
     step.addPathDir(depot_tools_dir);
+    step.setEnvironmentVariable("DEPOT_TOOLS_UPDATE", "0");
 }
 
 fn addWriteFileCommand(b: *std.Build, destination: []const u8, contents: []const u8) *std.Build.Step.Run {
