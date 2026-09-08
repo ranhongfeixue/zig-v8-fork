@@ -186,6 +186,7 @@ fi
         self.assertIn('@import("builtin")', build_script)
         self.assertIn('"cmd.exe", "/d", "/c"', build_script)
         self.assertIn('"{s}/{s}.bat"', build_script)
+        self.assertIn('"{s}/bootstrap/win_tools.bat"', build_script)
 
 
 if __name__ == "__main__":

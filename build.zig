@@ -50,6 +50,21 @@ fn addDepotToolCommand(
     return run;
 }
 
+fn addDepotToolsBootstrapCommand(b: *std.Build, depot_tools_dir: []const u8) *std.Build.Step.Run {
+    const run = if (builtin.os.tag == .windows) blk: {
+        const command = b.addSystemCommand(&.{ "cmd.exe", "/d", "/c" });
+        command.addArg(b.fmt("{s}/bootstrap/win_tools.bat", .{depot_tools_dir}));
+        break :blk command;
+    } else blk: {
+        const command = b.addSystemCommand(&.{"bash"});
+        command.addArg(getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"));
+        break :blk command;
+    };
+    run.setCwd(.{ .cwd_relative = depot_tools_dir });
+    addDepotToolsToPath(run, depot_tools_dir);
+    return run;
+}
+
 const GnArgs = struct {
     is_asan: bool,
     is_tsan: bool,
@@ -288,10 +303,7 @@ fn bootstrapDepotTools(b: *std.Build, depot_tools_dir: []const u8) !*std.Build.S
     );
     write_telemetry_config.step.dependOn(&copy_depot_tools.step);
 
-    const ensure_bootstrap = b.addSystemCommand(&.{"bash"});
-    ensure_bootstrap.addArg(getDepotToolExePath(b, depot_tools_dir, "ensure_bootstrap"));
-    ensure_bootstrap.setCwd(.{ .cwd_relative = depot_tools_dir });
-    addDepotToolsToPath(ensure_bootstrap, depot_tools_dir);
+    const ensure_bootstrap = addDepotToolsBootstrapCommand(b, depot_tools_dir);
     ensure_bootstrap.step.dependOn(&write_telemetry_config.step);
 
     const create_marker = b.addSystemCommand(&.{ "touch", marker_file });
