@@ -98,7 +98,7 @@ jobs:
           fi
           if [ "${{ env.OS }}" = "windows" ]; then
             V8_LIB_PATH=(${{ inputs.lp_cache }}/v8-${{ env.V8_REVISION }}/out/windows/${{ inputs.build_type }}_*/obj/zig/c_v8.lib)
-            llvm-lib.exe /list "${V8_LIB_PATH[0]}" > archive-members.txt
+            MSYS2_ARG_CONV_EXCL=/list llvm-lib.exe /list "${V8_LIB_PATH[0]}" > archive-members.txt
           else
             V8_LIB_PATH=(${{ inputs.lp_cache }}/v8-${{ env.V8_REVISION }}/out/${{ env.OS }}/${{ inputs.build_type }}_*/obj/zig/libc_v8.a)
             ar -t "${V8_LIB_PATH[0]}" > archive-members.txt

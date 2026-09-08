@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -94,6 +95,17 @@ class WindowsWorkflowTests(unittest.TestCase):
         self.assertEqual(len(uploads), 1)
         self.assertEqual(uploads[0]["with"]["path"], "libc_v8_*.a")
         self.assertNotIn("if", uploads[0])
+
+    def test_windows_archive_listing_preserves_llvm_lib_option_in_git_bash(self) -> None:
+        workflow = load_workflow("_prebuild-v8.yml")
+        steps = workflow["jobs"]["build"]["steps"]
+        package = next(step for step in steps if step.get("name") == "Find v8 library")
+
+        self.assertRegex(
+            package["run"],
+            re.compile(r"(?m)^\s*MSYS2_ARG_CONV_EXCL=/list\s+llvm-lib\.exe\s+/list\b"),
+            "Git Bash must not rewrite llvm-lib's /list option as a filesystem path",
+        )
 
     def test_windows_host_runs_depot_tools_batch_launchers_through_cmd(self) -> None:
         build_script = (ROOT / "build.zig").read_text(encoding="utf-8")
