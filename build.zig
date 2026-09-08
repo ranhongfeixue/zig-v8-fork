@@ -449,7 +449,7 @@ fn bootstrapV8(
     write_gclient_args.step.dependOn(&mkdir_build_config.step);
 
     // Run gclient sync
-    const gclient_sync = addDepotToolCommand(b, depot_tools_dir, "gclient", &.{"sync"});
+    const gclient_sync = addDepotToolCommand(b, depot_tools_dir, "gclient", &.{ "sync", "--no-history" });
     gclient_sync.setCwd(.{ .cwd_relative = v8_dir });
     gclient_sync.step.dependOn(&write_gclient_args.step);
 
