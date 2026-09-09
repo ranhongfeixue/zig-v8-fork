@@ -65,6 +65,14 @@ fn addDepotToolsBootstrapCommand(b: *std.Build, depot_tools_dir: []const u8) *st
     return run;
 }
 
+fn normalizeGnArgsForHost(args: []u8, host_os: std.Target.Os.Tag) void {
+    if (host_os != .windows) return;
+
+    for (args) |*character| {
+        if (character.* == '\n') character.* = ' ';
+    }
+}
+
 const GnArgs = struct {
     is_asan: bool,
     is_tsan: bool,
@@ -128,6 +136,7 @@ const GnArgs = struct {
             else => {},
         }
 
+        normalizeGnArgsForHost(args.items, builtin.os.tag);
         return gpa.dupe(u8, args.items);
     }
 };
@@ -534,4 +543,26 @@ fn buildV8(
         .step = final_step,
         .libc_v8_path = full_libc_v8_lazy_path,
     };
+}
+
+test "Windows GN arguments are passed without command-line newlines" {
+    var args = [_]u8{
+        'i', 's', '_', 'd', 'e', 'b', 'u', 'g', '=', 'f', 'a', 'l', 's', 'e', '\n',
+        's', 'y', 'm', 'b', 'o', 'l', '_', 'l', 'e', 'v', 'e', 'l', '=', '0', '\n',
+    };
+
+    normalizeGnArgsForHost(&args, .windows);
+
+    try std.testing.expectEqualStrings("is_debug=false symbol_level=0 ", &args);
+}
+
+test "non-Windows GN arguments retain multiline formatting" {
+    var args = [_]u8{
+        'i', 's', '_', 'd', 'e', 'b', 'u', 'g', '=', 'f', 'a', 'l', 's', 'e', '\n',
+        's', 'y', 'm', 'b', 'o', 'l', '_', 'l', 'e', 'v', 'e', 'l', '=', '0', '\n',
+    };
+
+    normalizeGnArgsForHost(&args, .linux);
+
+    try std.testing.expectEqualStrings("is_debug=false\nsymbol_level=0\n", &args);
 }
